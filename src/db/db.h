@@ -1,0 +1,1 @@
+uint32_t get_prt_sn(char* sn);
