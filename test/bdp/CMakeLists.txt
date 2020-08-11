@@ -15,5 +15,7 @@ include_directories("../../src/crypto/bdp")
 aux_source_directory(. DIR_SRCS)
 aux_source_directory(../../src/crypto/bdp DIR_SRCS)
 
+link_directories("../../src/crypto/bdp")
+
 add_executable(bdptest ${DIR_SRCS})
-TARGET_LINK_LIBRARIES(bdptest libpahafs.a)
+target_link_libraries(bdptest libpahafs.so)
