@@ -1,10 +1,9 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <syslog.h>
+#include "global.h"
 #include "net.h"
 #include "db.h"
-#include "global.h"
 #include "prt.h"
+#include "crypto.h"
+#include "main.h"
 
 /*
 d9main
@@ -19,7 +18,22 @@ int main(int argc, char **argv)
 {
     int i = 0;
     openlog("D9SMART", LOG_CONS | LOG_PID, 0);  
-    prt_connect();
+    if(powerup())
+    {
+         mprintf(0,"powerup error %d \n");
+         return 0;      
+    }
+    if(selfcheck())
+    {
+         mprintf(0,"selfcheck error %d \n");
+         return 0;      
+    }
+    if(data_sync())
+    {
+         mprintf(0,"sync error %d \n");
+         return 0;      
+    }
+
     tcp_init("9100");
     while (1)
     {

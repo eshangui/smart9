@@ -1,0 +1,1 @@
+uint32_t data_sync(void);
