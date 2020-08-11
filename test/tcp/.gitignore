@@ -1,0 +1,10 @@
+.o
+*.[oa]
+build
+*.d
+*.crf
+*.axf
+*.hex
+*.*log
+*.dep
+*.htm
