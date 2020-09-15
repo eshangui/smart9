@@ -2,6 +2,7 @@
 #include "global.h"
 #include "mongoose.h"
 #include "db.h"
+#include "prt.h"
 #include "net.h"
 
 static const char *s_user_name = "admin";
@@ -10,6 +11,7 @@ static const char *pub_topic_heartbeat = "/smart9/up/heartbeat/";
 static const char *sub_topic_heartbeat = "/smart9/down/heartbeat/1122334455667788";
 static const char *pub_topic_upload = "/smart9/up/upload/1122334455667788";
 static const char *sub_topic_upload = "/smart9/down/upload/1122334455667788";
+static const char *sub_topic_d9 = "UPLOAD";
 static struct mg_mqtt_topic_expression s_topic_expr = {NULL, 0};
 
 uint32_t tcp_init(const char *port)
@@ -33,6 +35,7 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
         //mg_send(nc, io->buf, io->len); // Echo message back
         memcpy(pn_data.data, io->buf, io->len);
         printf("get through socket len = %d\n",io->len);
+        prt_print(io->buf,io->len);
         mbuf_remove(io, io->len); // Discard message from recv buffer
         break;
     default:
@@ -81,11 +84,8 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
             printf("Got mqtt connection error: %d\n", msg->connack_ret_code);
             exit(1);
         }
-        s_topic_expr.topic = sub_topic_heartbeat;
-        printf("Subscribing to '%s'\n", sub_topic_heartbeat);
-        mg_mqtt_subscribe(nc, &s_topic_expr, 1, 42);
-        s_topic_expr.topic = sub_topic_upload;
-        printf("Subscribing to '%s'\n", sub_topic_upload);
+        s_topic_expr.topic = sub_topic_d9;
+        printf("Subscribing to '%s'\n", sub_topic_d9);
         mg_mqtt_subscribe(nc, &s_topic_expr, 1, 42);
         break;
     case MG_EV_MQTT_PUBACK:
@@ -95,8 +95,10 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
         printf("Subscription acknowledged\n");
         break;
     case MG_EV_MQTT_PUBLISH: {
-        printf("Got incoming message %.*s: %.*s\n", (int)msg->topic.len,
-            msg->topic.p, (int)msg->payload.len, msg->payload.p);
+        printf("Got incoming message %.*s: %d\n", (int)msg->topic.len,
+            msg->topic.p, (int)msg->payload.len);
+        print_array(msg->payload.p,(int)msg->payload.len);
+        //prt_print(io->buf,io->len);
         mqtt_state = 1;
         break;
     }
@@ -121,7 +123,7 @@ uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
             mg_mqtt_publish(m_mqtt.active_connections, pub_topic_heartbeat, 65, MG_MQTT_QOS(0),sn,strlen(sn));
             break;
         case MQTT_TOPIC_UPLOAD:
-            mg_mqtt_publish(m_mqtt.active_connections, pub_topic_upload, 65, MG_MQTT_QOS(0),sn,strlen(sn));
+            mg_mqtt_publish(m_mqtt.active_connections, sub_topic_d9, 65, MG_MQTT_QOS(0),sn,strlen(sn));
             break;
     }
     
