@@ -4,7 +4,10 @@
 #include "db.h"
 #include "prt.h"
 #include "net.h"
+#include "uart.h"
 
+
+unsigned char g_upload_flag = 0;
 static const char *s_user_name = "admin";
 static const char *s_password = "password";
 static const char *pub_topic_heartbeat = "/smart9/up/heartbeat/";
@@ -12,6 +15,7 @@ static const char *sub_topic_heartbeat = "/smart9/down/heartbeat/112233445566778
 static const char *pub_topic_upload = "/smart9/up/upload/1122334455667788";
 static const char *sub_topic_upload = "/smart9/down/upload/1122334455667788";
 static const char *sub_topic_d9 = "UPLOAD";
+static const char *sub_topic_prt = "100000000018330045";
 static struct mg_mqtt_topic_expression s_topic_expr = {NULL, 0};
 
 uint32_t tcp_init(const char *port)
@@ -34,9 +38,15 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
     case MG_EV_RECV:
         //mg_send(nc, io->buf, io->len); // Echo message back
         memcpy(pn_data.data, io->buf, io->len);
-        printf("get through socket len = %d\n",io->len);
-        prt_print(io->buf,io->len);
+        pn_data.len = io->len;
+        printf("get through socket len = %d\n",(int)io->len);
+        print_array(io->buf,io->len);
+        system("rm ./escode/code.bin");
+        dump_data("./escode/code.bin", io->buf,io->len);
+        system("rm ./escode/upload.zip");
+        system("zip -r ./escode/upload.zip ./escode/*");
         mbuf_remove(io, io->len); // Discard message from recv buffer
+        g_upload_flag = 1;
         break;
     default:
         break;
@@ -87,6 +97,9 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
         s_topic_expr.topic = sub_topic_d9;
         printf("Subscribing to '%s'\n", sub_topic_d9);
         mg_mqtt_subscribe(nc, &s_topic_expr, 1, 42);
+        s_topic_expr.topic = sub_topic_prt;
+        printf("Subscribing to '%s'\n", sub_topic_prt);
+        mg_mqtt_subscribe(nc, &s_topic_expr, 1, 42);
         break;
     case MG_EV_MQTT_PUBACK:
         printf("Message publishing acknowledged (msg_id: %d)\n", msg->message_id);
@@ -97,8 +110,16 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
     case MG_EV_MQTT_PUBLISH: {
         printf("Got incoming message %.*s: %d\n", (int)msg->topic.len,
             msg->topic.p, (int)msg->payload.len);
-        print_array(msg->payload.p,(int)msg->payload.len);
-        //prt_print(io->buf,io->len);
+        print_array((unsigned char*)msg->payload.p,(int)msg->payload.len);
+        if(memcmp(msg->topic.p, sub_topic_prt, msg->topic.len) == 0)
+        {
+           //dump_data("./prt.bin", msg->payload.p,(int)msg->payload.len);
+           prt_print(pn_data.data, pn_data.len);
+           escpos_printer_feed(3);
+           prt_print ((unsigned char*)msg->payload.p,(int)msg->payload.len); 
+           escpos_printer_feed(3);
+           escpos_printer_cut(1);
+        }
         mqtt_state = 1;
         break;
     }
@@ -115,15 +136,19 @@ void mqtt_poll(uint32_t i_time)
 
 uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
 {
-    char sn[16] = { 0 };
-    get_prt_sn(sn);
+    int32_t length = 0;
+    char sn[1024 * 2] = { 0 };
+   
+    load_data("./escode/upload.zip", sn, &length);
+    printf("length = %d\n", length);
+
     switch(topic)
     {
         case MQTT_TOPIC_HEARTBEAT:
             mg_mqtt_publish(m_mqtt.active_connections, pub_topic_heartbeat, 65, MG_MQTT_QOS(0),sn,strlen(sn));
             break;
         case MQTT_TOPIC_UPLOAD:
-            mg_mqtt_publish(m_mqtt.active_connections, sub_topic_d9, 65, MG_MQTT_QOS(0),sn,strlen(sn));
+            mg_mqtt_publish(m_mqtt.active_connections, sub_topic_d9, 65, MG_MQTT_QOS(0),sn,length);
             break;
     }
     

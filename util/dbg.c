@@ -109,49 +109,49 @@ void load_data(char *path, uint8_t *data, int32_t *len)
 }
 
 int seq = 1;
-void fbmp(uint8_t *img, int32_t w, int32_t h, char *name)
-{
-#ifdef M_BMP
-        char pth[1024] = {0};
-        ClImage *bmp = (ClImage *)malloc(sizeof(ClImage));
-        sprintf(pth + strlen(pth), "%d %s.bmp", seq, name);
-SAVE_BMP:
-        bmp->channels = 1;
-        bmp->width = w;
-        bmp->height = h;
-        bmp->imageData = (signed char *)img;
+// void fbmp(uint8_t *img, int32_t w, int32_t h, char *name)
+// {
+// #ifdef M_BMP
+//         char pth[1024] = {0};
+//         ClImage *bmp = (ClImage *)malloc(sizeof(ClImage));
+//         sprintf(pth + strlen(pth), "%d %s.bmp", seq, name);
+// SAVE_BMP:
+//         bmp->channels = 1;
+//         bmp->width = w;
+//         bmp->height = h;
+//         bmp->imageData = (signed char *)img;
 
-        bool flag = clSaveImage(pth, bmp);
-        seq++;
-#endif
-}
+//         bool flag = clSaveImage(pth, bmp);
+//         seq++;
+// #endif
+// }
 
-void fbmp_print(uint8_t *img, int32_t w, int32_t h, char *name, const char *cmd, ...)
-{
-        va_list args;
-#ifdef M_BMP
-        char pth[1024] = {0};
-        ClImage *bmp = (ClImage *)malloc(sizeof(ClImage));
-        sprintf(pth + strlen(pth), "%d %s.bmp", seq, name);
+// void fbmp_print(uint8_t *img, int32_t w, int32_t h, char *name, const char *cmd, ...)
+// {
+//         va_list args;
+// #ifdef M_BMP
+//         char pth[1024] = {0};
+//         ClImage *bmp = (ClImage *)malloc(sizeof(ClImage));
+//         sprintf(pth + strlen(pth), "%d %s.bmp", seq, name);
       
-SAVE_BMP:
-        bmp->channels = 1;
-        bmp->width = w;
-        bmp->height = h;
-        bmp->imageData = (signed char *)img;
+// SAVE_BMP:
+//         bmp->channels = 1;
+//         bmp->width = w;
+//         bmp->height = h;
+//         bmp->imageData = (signed char *)img;
 
-        bool flag = clSaveImage(pth, bmp);
-        seq++;
+//         bool flag = clSaveImage(pth, bmp);
+//         seq++;
 
-        va_start(args, cmd);
-        vprintf(cmd, args);
-        va_end(args);
-#endif
-}
+//         va_start(args, cmd);
+//         vprintf(cmd, args);
+//         va_end(args);
+// #endif
+// }
 
 void print_array(unsigned char *buf, int len)
 {
         for (int i = 0; i < len; i++)
-                printf("0x%x ", buf[i]);
+                printf("0x%02X ", buf[i]);
         printf("\n");
 }

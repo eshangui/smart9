@@ -9,7 +9,7 @@ int g_dev = 0;
 
 int uart_init (int *dev){
     int fd;
-    fd = open ("/dev/tty.usbserial-14240", O_RDWR | O_NOCTTY | O_NONBLOCK);
+    fd = open ("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (fd < 0) {
         printf ("\n Open Error \n");
         return 0;
@@ -27,6 +27,8 @@ int uart_init (int *dev){
     SerialPortSettings.c_cflag |= CS8;     /* Set the data bits = 8                                 */
 
     SerialPortSettings.c_cflag &= ~CRTSCTS;       /* No Hardware flow Control                         */
+    //SerialPortSettings.c_cflag |= CRTSCTS;       /* No Hardware flow Control                         */
+
     SerialPortSettings.c_cflag |= CREAD | CLOCAL; /* Enable receiver,Ignore Modem Control lines       */
 
     SerialPortSettings.c_iflag &= ~(IXON | IXOFF | IXANY);         /* Disable XON/XOFF flow control both i/p and o/p */
@@ -50,13 +52,26 @@ int uart_init (int *dev){
 int uart_write (unsigned char *data, int len)
 {
     int rv = 0;
+    int i = 0;
+    unsigned char leave = 0;
+    unsigned char time = 0;
     if (g_dev == 0 || g_dev < 0){
         rv = uart_init (&g_dev);
         if (rv == 0){
             return 0;
         }
     }
-    rv = write (g_dev, data, len);
+
+    time = len / 512;
+    leave = len % 512; 
+
+    for(i = 0; i < time; i++)
+    {
+        rv = write (g_dev, &data[i * 512], 512);
+            usleep(200000);
+    }
+
+    rv = write (g_dev, &data[time * 512], leave);
     return rv;
 }
 

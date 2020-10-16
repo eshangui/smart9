@@ -5,6 +5,10 @@ project (d9main)
 #set(CMAKE_BUILD_TYPE "Release")
 #set(CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -g")
 
+
+
+#set(CMAKE_BUILD_NAME linux)
+#set(CMAKE_C_COMPILER "aarch64-linux-gnu-gcc")
 set(CMAKE_BUILD_TYPE "Debug")
 set(CMAKE_CXX_FLAGS_DEBUG "-O0 -Wall -g -ggdb")
 

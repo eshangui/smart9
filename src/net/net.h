@@ -1,4 +1,9 @@
 
+
+#include "mongoose.h"
+
+extern unsigned char g_upload_flag;
+
 //tcp group provice TCP server for RAW printer
 uint32_t tcp_init(const char* port);
 void tcp_poll(uint32_t i_time);

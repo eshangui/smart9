@@ -13,7 +13,9 @@ task:
 2. waitng top event like initialize and data exchange and dispatch them to process
 3. TBD
 */
-const char* server_ip = "121.36.3.243:61613";
+
+unsigned char prt_buff[1024*30] = {0};
+const char* server_ip = "203.207.198.134:61613";
 int main(int argc, char **argv)
 {
     int i = 0;
@@ -32,16 +34,20 @@ int main(int argc, char **argv)
          mprintf(0,"sync error %d \n");
          return 0;      
     }
-    //prt_connect();
+    prt_connect();
     mqtt_init(server_ip);
-    //tcp_init("9100");
+    tcp_init("9100");
+
     while (1)
     {
-       // tcp_poll(100);
+        tcp_poll(100);
         mqtt_poll(100);
-        i++;
-        if(i==10)
-          mqtt_publish_sync(MQTT_TOPIC_UPLOAD,"bbb",3);
+        if(g_upload_flag == 1)
+        {
+          g_upload_flag = 0;
+          mqtt_publish_sync(MQTT_TOPIC_UPLOAD,"bbb",NULL);
+          printf("mqtt_publish end!\n");
+        }
 
     }
 }

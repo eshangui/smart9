@@ -1,5 +1,6 @@
 #include "global.h"
 #include "db.h"
+#include <string.h>
 
 uint32_t get_prt_sn(char* sn)
 {
