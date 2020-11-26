@@ -1,0 +1,11 @@
+[Unit]
+Description=smart9 main ctl service Daemon
+
+[Service]
+User=root
+WorkingDirectory=/home/merilin/smart9
+ExecStart=/home/merilin/smart9/d9main
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

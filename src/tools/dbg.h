@@ -1,6 +1,3 @@
-#ifndef _DBG_H_
-#define _DBG_H_
-
 void mprintf(int32_t level,const char *cmd, ...);
 void dump_data(char* path, uint8_t *data, int32_t len);
 void fbmp(uint8_t * img, int32_t w, int32_t h, char* name);
@@ -10,6 +7,3 @@ void print_array(unsigned char* buf, int len);
 void load_data(char *path, uint8_t *data, int32_t *len);
 
 extern long long app_start_time;
-
-
-#endif

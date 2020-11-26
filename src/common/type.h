@@ -6,7 +6,7 @@ typedef unsigned char uint8_t;
 
 typedef unsigned int uint32_t;
 #ifndef __cplusplus
-//typedef int bool;
+typedef int bool;
 #define true 1
 #define false 0
 #endif

@@ -1,10 +1,8 @@
 #include "global.h"
 #include "net.h"
-#include "db.h"
 #include "prt.h"
-#include "crypto.h"
-#include "main.h"
-
+#include "uart.h"
+#include <pthread.h>
 /*
 d9main
 main service to maintain biz logic of 3308 device
@@ -15,10 +13,9 @@ task:
 */
 
 unsigned char prt_buff[1024*30] = {0};
-const char* server_ip = "203.207.198.134:61613";
 int main(int argc, char **argv)
 {
-    int i = 0;
+    pthread_t p_ble_read;
     if(powerup())
     {
          mprintf(0,"powerup error %d \n");
@@ -35,9 +32,10 @@ int main(int argc, char **argv)
          return 0;      
     }
     prt_connect();
-    mqtt_init(server_ip);
-    tcp_init("9100");
-
+    mqtt_init("203.207.198.134:61613");
+    //tcp_init("9100");
+    pthread_create(&p_ble_read, NULL, ble_read_thread, NULL);
+    pthread_detach(p_ble_read);
     while (1)
     {
         tcp_poll(100);

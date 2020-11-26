@@ -1,4 +1,5 @@
-
+#ifndef _NET_H_
+#define _NET_H_
 
 #include "mongoose.h"
 
@@ -14,3 +15,6 @@ uint32_t mqtt_init(const char* address);
 void mqtt_poll(uint32_t i_time);
 void mqtt_handler(struct mg_connection *nc, int ev, void *p);
 uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len);
+
+
+#endif

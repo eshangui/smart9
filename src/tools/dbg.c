@@ -2,7 +2,7 @@
 #include <stdarg.h>
 #include "type.h"
 #include "var.h"
-#include "bmp.h"
+//#include "bmp.h"
 #include "dbg.h"
 #if _WIN32
 #include <stdint.h>
@@ -44,7 +44,7 @@ void mprintf(int32_t level, const char *cmd, ...)
 #ifdef PRT_TIME
         printf("time: %lld ms -- ", this_print_time-app_start_time);
 #endif
-//PRT:
+PRT:
 
         va_start(args, cmd);
         vprintf(cmd, args);
@@ -82,8 +82,8 @@ int i = 1;
 void dump_data(char *path, uint8_t *data, int32_t len)
 {
         FILE *pf;
-        //char dest[1024 * 40] = {0};
-        //char fi[12] = {0};
+        char dest[1024 * 40] = {0};
+        char fi[12] = {0};
         pf = fopen(path, "w+");
         fwrite(data, len, 1, pf);
         fclose(pf);

@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include "global.h"
 #include "mongoose.h"
-#include "db.h"
 #include "prt.h"
 #include "net.h"
 #include "uart.h"

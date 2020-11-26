@@ -1,4 +1,6 @@
-
+#ifndef _PRT_H_
+#define _PRT_H_
+#include "mongoose.h"
 
 
 typedef struct escpos_config {
@@ -44,10 +46,10 @@ typedef struct
  
 typedef struct 
 {
-	uint8_t rgbBlue; //该颜色的蓝色分量
-	uint8_t rgbGreen; //该颜色的绿色分量
-	uint8_t rgbRed; //该颜色的红色分量
-	uint8_t rgbReserved; //保留值
+	uint8_t rgbBlue; //该�?�色的蓝色分�?
+	uint8_t rgbGreen; //该�?�色的绿色分�?
+	uint8_t rgbRed; //该�?�色的红色分�?
+	uint8_t rgbReserved; //保留�?
 } ClRgbQuad;
  
 typedef struct
@@ -61,8 +63,8 @@ typedef struct
 ClImage* clLoadImage(char* path);
 bool clSaveImage(char* path, ClImage* bmpImg);
 
-static const char *ESCPOS_CMD_INIT = "\x1b\x40";
-static const char *ESCPOS_CMD_PRINT_RASTER_BIT_IMAGE = "\x1d\x76\x30\x00";
+//static const char *ESCPOS_CMD_INIT = "\x1b\x40";
+//static const char *ESCPOS_CMD_PRINT_RASTER_BIT_IMAGE = "\x1d\x76\x30\x00";
 static const char *ESCPOS_CMD_CUT = "\x1d\x56\x42";
 static const char *ESCPOS_CMD_FEED = "\x1b\x64";
 
@@ -86,3 +88,6 @@ int escpos_printer_image(escpos_printer *printer,
                          const unsigned char * const image_data,
                          const int width,
                          const int height);
+
+
+#endif

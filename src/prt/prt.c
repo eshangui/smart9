@@ -8,12 +8,12 @@ unsigned char test_cmd[] = { 0x1b, 0x1b, 0x52, 0x45, 0x43, 0x45, 0x49, 0x56, 0x4
 void prt_connect (void)
 {
     mprintf (0, "prt_connect \n");
-    //uart_write (test_cmd, sizeof (test_cmd));
+    uart_write (test_cmd, sizeof (test_cmd));
 }
 
 void prt_print (unsigned char* data, int len)
 {
-   mprintf (0, "prt_print \n");
+   printf ("start prt_print! \n");
    uart_write (data, len);
 }
 

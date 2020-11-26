@@ -1,7 +1,8 @@
 
 #ifndef CHENLEECV_H
 #define CHENLEECV_H
- 
+ #include "mongoose.h"
+
 typedef struct
 {
 	//unsigned short    bfType;
