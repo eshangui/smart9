@@ -75,7 +75,7 @@ static const int ESCPOS_MAX_DOT_WIDTH = 576;
 // will cut the images into chunks of (w x ESCPOS_CHUNK_DOT_HEIGHT)
 static const int ESCPOS_CHUNK_DOT_HEIGHT = 512;
 
-void prt_connect(void);
+void prt_init(void);
 void prt_print (unsigned char* data, int len);
 
 int escpos_printer_cut(const int lines);

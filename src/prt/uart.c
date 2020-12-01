@@ -7,6 +7,8 @@
 #include "net.h"
 #include "var.h"
 #include "dbg.h"
+#include "cJSON.h"
+
 
 
 int g_dev = 0;
@@ -48,7 +50,7 @@ int ble_uart_init(void)
 
     /* Setting Time outs */
     SerialPortSettings.c_cc[VMIN] = 1;  /* Read at least 10 characters */
-    SerialPortSettings.c_cc[VTIME] = 0; /* Wait indefinetly   */
+    SerialPortSettings.c_cc[VTIME] = 20; /* Wait indefinetly   */
 
     if ((tcsetattr (fd, TCSANOW, &SerialPortSettings)) != 0) /* Set the attributes to the termios structure*/
     {
@@ -234,17 +236,28 @@ void uart_test(void)
 
 }
 
+// wpa_cli -i wlan0 set_network 0 ssid '"name"'
+// wpa_cli -i wlan0 set_network 0 psk '"psk"'
+// wpa_cli -i wlan0 set_network 0 key_mgmt WPA-PSK
+// wpa_cli -i wlan0 enable_network 0    //Ê¹ÄÜWiFi
+
 void *ble_read_thread(void *arg)
-{
-    int bp, bp1;
-    unsigned char tmp_data = 0;
+{   
     int i = 0;
-    pthread_t p_test;
+    int bp, bp1, j;
+    unsigned int rec_len = 0;
+    unsigned char tmp_data = 0;
+ 
+    char *content = NULL;
+    char shell_str[128] = {0};
+    
+    cJSON *json, *ssid_val, *pwd_val;
 
     printf("ble read pthread creat success!\n");
     while(1)
     {
         ble_read(&tmp_data, 1);
+        printf("-0x%02X ", tmp_data);
         if(tmp_data== 0x1b)
         {
             g_ble_data[i] = tmp_data;
@@ -264,20 +277,7 @@ void *ble_read_thread(void *arg)
                     }
                 }
                 printf("data len = %d, data is:\n", i);
-                print_array(g_ble_data, i);
-
-                // bp = easy_serial_open("/dev/ttyS1", "115200");
-                // printf("\nhandle = %08x\n", bp);
-                // printf("1111socket handle = %08x\n", m_mqtt.active_connections->sock);
-                // bp1 = 1;
-                // printf("bp = %d\n", bp1);
-                // if (esc2bmp_init(&prt_handle, bp1)) {
-                //     printf("Initial failed!!!\n");
-                //     exit(1);
-                // }
-                // printf("init success!\n");
-                
-                
+                print_array(g_ble_data, i);              
                 
                 memcpy(pn_data.data, g_ble_data, i - 2);
                 pn_data.len = i - 2;
@@ -294,7 +294,56 @@ void *ble_read_thread(void *arg)
             }
 
         }   
-        usleep(1000);     
+        if(tmp_data== 0xEF)
+        {
+            g_ble_data[i] = tmp_data;
+            i++;
+            ble_read(&tmp_data, 1);
+            if(tmp_data = 0x01)
+            {
+                g_ble_data[i] = tmp_data;
+                i++;
+                for(j = 0; j < 7; j++)
+                {
+                   ble_read(&g_ble_data[i], 1);
+                   i += 1; 
+                }
+                rec_len = g_ble_data[6] * 256 + g_ble_data[7];
+                printf("rec_len = %d\n", rec_len);
+                for(j = 0; j < rec_len + 2; j++)
+                {
+                   ble_read(&g_ble_data[i], 1);
+                   i += 1; 
+                }
+                print_array(g_ble_data, rec_len + 10);
+                
+                content = (char*)malloc(rec_len);
+                memset(content, 0, rec_len);
+                memcpy(content, &g_ble_data[9], rec_len - 1);\
+                printf("str:%s\n", content);
+                json = cJSON_Parse(content);
+                if(!json)
+                {
+                    printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
+                }
+                char *str = cJSON_Print(json); 
+
+                ssid_val = cJSON_GetObjectItem(json, "SSID");
+                printf("SSID = %s\n", ssid_val->valuestring);
+
+                pwd_val = cJSON_GetObjectItem(json, "passWord");
+                printf("password = %s\n", pwd_val->valuestring);
+                sprintf(shell_str, "./test.sh \"%s\" \"%s\"", ssid_val->valuestring, pwd_val->valuestring);
+                printf("shell---->%s\n", shell_str);
+
+                system(shell_str);
+
+                i = 0;
+                printf("end\n");
+            }
+
+        }   
+        //usleep(1000);     
     }
 
 

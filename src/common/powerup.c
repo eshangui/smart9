@@ -20,7 +20,7 @@ uint32_t powerup(void)
 uint32_t var_init(void)
 {
     uint32_t ret = 0;
-    //ret = config_init();
+    ret = config_init();
 
     return D9_OK;
 }
@@ -48,7 +48,7 @@ uint32_t config_init(void)
     {
         printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
     }
-    //char *str = cJSON_Print(json);
+    char *str = cJSON_Print(json);
 
     json_ip = cJSON_GetObjectItem(json, "config");
     json_ip = cJSON_GetObjectItem(json_ip, "server info");

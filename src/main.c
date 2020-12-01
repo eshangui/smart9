@@ -3,6 +3,7 @@
 #include "prt.h"
 #include "uart.h"
 #include <pthread.h>
+#include "esc2bmp.h"
 /*
 d9main
 main service to maintain biz logic of 3308 device
@@ -12,7 +13,6 @@ task:
 3. TBD
 */
 
-unsigned char prt_buff[1024*30] = {0};
 int main(int argc, char **argv)
 {
     pthread_t p_ble_read;
@@ -31,7 +31,8 @@ int main(int argc, char **argv)
          mprintf(0,"sync error %d \n");
          return 0;      
     }
-    prt_connect();
+    cs_log_set_level(5);
+    prt_init();
     mqtt_init("203.207.198.134:61613");
     //tcp_init("9100");
     pthread_create(&p_ble_read, NULL, ble_read_thread, NULL);

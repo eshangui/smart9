@@ -4,6 +4,7 @@
 #include "prt.h"
 #include "net.h"
 #include "uart.h"
+#include <errno.h>
 
 
 unsigned char g_upload_flag = 0;
@@ -124,6 +125,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
     }
     case MG_EV_CLOSE:
         printf("Connection closed\n");
+        printf("errno = %d\n", errno);
         exit(1);
     }
 }
