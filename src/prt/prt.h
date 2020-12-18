@@ -1,6 +1,9 @@
 #ifndef _PRT_H_
 #define _PRT_H_
 #include "mongoose.h"
+#include "esc2bmp.h"
+
+extern esc2bmp_handle_t prt_handle;
 
 
 typedef struct escpos_config {
@@ -88,6 +91,9 @@ int escpos_printer_image(escpos_printer *printer,
                          const unsigned char * const image_data,
                          const int width,
                          const int height);
+
+void get_offline_code(void);
+
 
 
 #endif

@@ -5,6 +5,7 @@
 #include "net.h"
 #include "uart.h"
 #include <errno.h>
+#include "var.h"
 
 
 unsigned char g_upload_flag = 0;
@@ -31,22 +32,30 @@ uint32_t tcp_init(const char *port)
 void tcp_handler(struct mg_connection *nc, int ev, void *p)
 {
     struct mbuf *io = &nc->recv_mbuf;
+    static int tcp_rec_len = 0;
     (void)p;
 
     switch (ev)
     {
     case MG_EV_RECV:
         //mg_send(nc, io->buf, io->len); // Echo message back
-        memcpy(pn_data.data, io->buf, io->len);
-        pn_data.len = io->len;
         printf("get through socket len = %d\n",(int)io->len);
         print_array(io->buf,io->len);
-        system("rm ./escode/code.bin");
-        dump_data("./escode/code.bin", io->buf,io->len);
-        system("rm ./escode/upload.zip");
-        system("zip -r ./escode/upload.zip ./escode/*");
+        memcpy(&pn_data.data[tcp_rec_len], io->buf, io->len);
+        tcp_rec_len += io->len;
         mbuf_remove(io, io->len); // Discard message from recv buffer
-        g_upload_flag = 1;
+        if(pn_data.data[tcp_rec_len - 1] == 0x69 && pn_data.data[tcp_rec_len - 2] == 0x1b)
+        {
+            pn_data.len = tcp_rec_len - 2;
+            tcp_rec_len = 0;
+            system("rm ./escode/code.bin");
+            dump_data("./escode/code.bin", pn_data.data, pn_data.len);
+            system("rm ./escode/upload.zip");
+            system("zip -r ./escode/upload.zip ./escode/*");
+            
+            g_upload_flag = 1;            
+        }
+
         break;
     default:
         break;
@@ -70,6 +79,11 @@ uint32_t mqtt_init(const char* address)
     mqtt_state = 0;
 
 }
+
+
+
+unsigned char test_feed[3] = {0x1b, 0x64, 0x06};
+unsigned char test_cut[4] = {0x1d, 0x56, 0x42, 0x40};
 
 void mqtt_handler(struct mg_connection *nc, int ev, void *p)
 {
@@ -114,11 +128,20 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
         if(memcmp(msg->topic.p, sub_topic_prt, msg->topic.len) == 0)
         {
            //dump_data("./prt.bin", msg->payload.p,(int)msg->payload.len);
-           prt_print(pn_data.data, pn_data.len);
-           escpos_printer_feed(3);
-           prt_print ((unsigned char*)msg->payload.p,(int)msg->payload.len); 
-           escpos_printer_feed(3);
-           escpos_printer_cut(1);
+           //prt_print(pn_data.data, pn_data.len);
+           //escpos_printer_feed(3);
+           memcpy(&pn_data.data[pn_data.len], (unsigned char*)msg->payload.p, (int)msg->payload.len);
+           pn_data.len += (int)msg->payload.len;
+           prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+           usleep(10000);
+           //prt_handle.esc_2_prt((unsigned char*)msg->payload.p,(int)msg->payload.len);
+           usleep(10000);
+        //    prt_handle.esc_2_prt(test_feed, 3);
+            prt_handle.printer_cut(96);
+            prt_handle.push_process_id(0x01);
+           //prt_handle.printer_cut();
+           //escpos_printer_feed(3);
+           //escpos_printer_cut(1);
         }
         mqtt_state = 1;
         break;
@@ -142,13 +165,20 @@ uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
    
     load_data("./escode/upload.zip", sn, &length);
     printf("length = %d\n", length);
-
+    printf("g_offline_flag = %d\n", g_offline_flag);
     switch(topic)
     {
         case MQTT_TOPIC_HEARTBEAT:
             mg_mqtt_publish(m_mqtt.active_connections, pub_topic_heartbeat, 65, MG_MQTT_QOS(0),sn,strlen(sn));
             break;
         case MQTT_TOPIC_UPLOAD:
+            if(g_offline_flag == 1)
+            {
+                g_wait_net_flag = 1;
+                return D9_OK;
+            }
+            g_timer_flag = 1;
+            g_timer_count = 6;
             mg_mqtt_publish(m_mqtt.active_connections, sub_topic_d9, 65, MG_MQTT_QOS(0),sn,length);
             break;
     }
@@ -157,4 +187,29 @@ uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
         mqtt_poll(100);
     mqtt_state = 0;
     return D9_OK;
+}
+
+int init_network (void)
+{
+
+    printf("g_net_status == %d\n", g_net_status);
+    if(g_net_status < 5)
+    {
+        printf("start 9100 server!\n");
+        tcp_init("9100"); 
+        prt_handle.esc_2_prt("9100 start!\n", 13);
+    }
+    if(g_net_status < 4)
+    {
+        printf("start mqtt connect!\n");
+        mqtt_init("203.207.198.134:61613");
+        prt_handle.esc_2_prt("MQTT SERVER CON!\n", 18);
+    }
+    else
+    {
+        g_offline_flag = 1;
+    }
+    
+    prt_handle.printer_cut(128);
+    return 0;
 }

@@ -8,4 +8,10 @@ extern struct mg_mgr m_mqtt;
 
 extern prt_net_data pn_data;
 
+extern unsigned char g_net_status;
+
+extern volatile unsigned char g_timer_flag;
+extern volatile unsigned char g_timer_count;
+extern volatile unsigned char g_offline_flag;
+extern volatile unsigned char g_wait_net_flag;
 #endif

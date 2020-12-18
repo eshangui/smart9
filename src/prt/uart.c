@@ -13,7 +13,7 @@
 
 int g_dev = 0;
 int g_ble_uart_dev = 0;
-unsigned char g_ble_data[1024 * 20];
+unsigned char g_ble_data[1024 * 40];
 
 int ble_uart_init(void)
 {
@@ -236,22 +236,13 @@ void uart_test(void)
 
 }
 
-// wpa_cli -i wlan0 set_network 0 ssid '"name"'
-// wpa_cli -i wlan0 set_network 0 psk '"psk"'
-// wpa_cli -i wlan0 set_network 0 key_mgmt WPA-PSK
-// wpa_cli -i wlan0 enable_network 0    //Ê¹ÄÜWiFi
-
 void *ble_read_thread(void *arg)
 {   
     int i = 0;
+    int ret = 0;
     int bp, bp1, j;
     unsigned int rec_len = 0;
     unsigned char tmp_data = 0;
- 
-    char *content = NULL;
-    char shell_str[128] = {0};
-    
-    cJSON *json, *ssid_val, *pwd_val;
 
     printf("ble read pthread creat success!\n");
     while(1)
@@ -277,19 +268,26 @@ void *ble_read_thread(void *arg)
                     }
                 }
                 printf("data len = %d, data is:\n", i);
-                print_array(g_ble_data, i);              
-                
+                print_array(g_ble_data, i);   
+
+
+                //prt_handle.esc_2_prt(prt_cmd, sizeof(prt_cmd));
+                //prt_handle.esc_2_prt(g_ble_data, i);
+                //prt_handle.esc_2_lib(g_ble_data, i);   
+
+
                 memcpy(pn_data.data, g_ble_data, i - 2);
                 pn_data.len = i - 2;
+
                 //uart_write (g_ble_data, i);
                 //system("rm ./escode/100000000018330045_100000000018330045_0017.bmp");
                 system("rm ./escode/code.bin");
                 dump_data("./escode/code.bin", g_ble_data, i);
-                //prt_handle.esc_2_lib(g_ble_data, i);
-                system("rm ./escode/upload.zip");
-                system("zip -r ./escode/upload.zip ./escode/*");
+                prt_handle.esc_2_lib(g_ble_data, i);
+                // system("rm ./escode/upload.zip");
+                // system("zip -r ./escode/upload.zip ./escode/*");
+                // g_upload_flag = 1;
                 i = 0;
-                g_upload_flag = 1;
                 printf("end\n");
             }
 
@@ -315,29 +313,8 @@ void *ble_read_thread(void *arg)
                    ble_read(&g_ble_data[i], 1);
                    i += 1; 
                 }
-                print_array(g_ble_data, rec_len + 10);
-                
-                content = (char*)malloc(rec_len);
-                memset(content, 0, rec_len);
-                memcpy(content, &g_ble_data[9], rec_len - 1);\
-                printf("str:%s\n", content);
-                json = cJSON_Parse(content);
-                if(!json)
-                {
-                    printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
-                }
-                char *str = cJSON_Print(json); 
-
-                ssid_val = cJSON_GetObjectItem(json, "SSID");
-                printf("SSID = %s\n", ssid_val->valuestring);
-
-                pwd_val = cJSON_GetObjectItem(json, "passWord");
-                printf("password = %s\n", pwd_val->valuestring);
-                sprintf(shell_str, "./test.sh \"%s\" \"%s\"", ssid_val->valuestring, pwd_val->valuestring);
-                printf("shell---->%s\n", shell_str);
-
-                system(shell_str);
-
+                print_array(g_ble_data, rec_len + 10);      
+                ret = parse_ble_data(&g_ble_data[9], rec_len - 1);
                 i = 0;
                 printf("end\n");
             }
@@ -346,7 +323,118 @@ void *ble_read_thread(void *arg)
         //usleep(1000);     
     }
 
+}
+
+unsigned char parse_ble_data(unsigned char *data, unsigned int len)
+{
+
+    FILE *h_file = NULL;
+    long file_len = 0;
+    cJSON *cfc_json, *json_ip;
+    char *content = NULL;
+    char shell_str[128] = {0};
+    
+    cJSON *json, *ssid_val, *pwd_val;
+
+    content = (char*)malloc(len + 1);
+    memset(content, 0, len + 1);
+    memcpy(content, data, len);
+    printf("str:%s\n", content);
+    json = cJSON_Parse(content);
+    if(!json)
+    {
+        printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
+    }
+    char *str = cJSON_Print(json); 
+
+    ssid_val = cJSON_GetObjectItem(json, "SSID");
+    pwd_val = cJSON_GetObjectItem(json, "passWord");
+    if((strcmp(ssid_val->valuestring, "") != 0) && (strcmp(pwd_val->valuestring, "") != 0) )
+    {
+        printf("set net ssid&pwd\n");    
+        sprintf(shell_str, "./test.sh \"%s\" \"%s\"", ssid_val->valuestring, pwd_val->valuestring);
+        printf("shell---->%s\n", shell_str);
+        system(shell_str);    
+    }
+
+    ssid_val = cJSON_GetObjectItem(json, "webTypePriority");
+    if(strcmp(ssid_val->valuestring, "4g") == 0)
+    {
+        printf("change network to 4G\n");
+        system("ifconfig wlan0 down");
+        system("ifconfig usb0 up");
+        sleep(1);
+        system("echo -e \"AT^NDISDUP=1,1\r\n\" > /dev/ttyUSB0");
+        sleep(1);
+        system("udhcpc -i usb0"); 
+
+        h_file = fopen("./smart9_scheme.json", "rb");
+        fseek(h_file, 0, SEEK_END);
+        file_len = ftell(h_file);
+        char *tmp_con = (char*)malloc(file_len + 1);
+        fseek(h_file, 0, SEEK_SET);
+        fread(tmp_con, 1, file_len, h_file);
+        fclose(h_file);
+        system("rm ./smart9_scheme.json");
+        cfc_json = cJSON_Parse(tmp_con);
+        if(!cfc_json)
+        {
+            printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
+        }
+        //char *str = cJSON_Print(json);
+
+        json_ip = cJSON_GetObjectItem(cfc_json, "config");
+        json_ip = cJSON_GetObjectItem(json_ip, "network");
+        json_ip = cJSON_GetObjectItem(json_ip, "priority");
+        cJSON_SetValuestring(json_ip, "cellar");
+
+        char *str1 = cJSON_Print(cfc_json);
+
+        printf("json --->\n%s", str1);
+        printf("str1 len = %d\n", strlen(str1));
+
+        h_file = fopen("./smart9_scheme.json", "wb");
+        fwrite(str1, 1, strlen(str1), h_file);
+        fclose(h_file); 
 
 
+        free(tmp_con);          
+    }
+    cJSON_free(cfc_json);
+    cJSON_free(json_ip);  
+    cJSON_free(json);  
+    cJSON_free(ssid_val);  
+    cJSON_free(pwd_val);  
+
+}
+
+
+void *timer_thread(void *arg)
+{
+    unsigned int count = 0;
+    while(1)
+    {
+        if(g_wait_net_flag == 1)
+        {
+            g_wait_net_flag = 0;
+            get_offline_code();
+            prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+            prt_handle.esc_2_prt("---------DATA COLLECTED--------\n", 33);
+            prt_handle.printer_cut(128);            
+        }
+               
+        if(g_timer_flag == 1)
+        {
+            count++;
+            if(count == g_timer_count)
+            {
+                count = 0;
+                g_timer_flag = 0;
+                g_timer_count = 0;
+                g_wait_net_flag = 1;
+            }
+        }
+        sleep(1); 
+    }
 }
 

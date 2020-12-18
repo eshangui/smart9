@@ -4,6 +4,8 @@
     "var.h": "c",
     "dbg.h": "c",
     "net.h": "c",
-    "global.h": "c"
+    "global.h": "c",
+    "powerup.h": "c",
+    "cjson.h": "c"
   }
 }

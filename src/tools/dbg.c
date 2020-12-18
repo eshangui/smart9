@@ -155,3 +155,75 @@ void print_array(unsigned char *buf, int len)
                 printf("0x%02X ", buf[i]);
         printf("\n");
 }
+
+void hex2str( uint8_t *in, uint32_t len, char *out, uint32_t *out_len )
+{
+    uint32_t i = 0;
+    uint8_t tmp = 0;
+    char *bak = out;
+
+    if ( !in || !out || !out_len ) {
+        return;
+    }
+
+    for ( i=0; i<len; i++ ) {
+       tmp = ((*in)>>4)&0x0f;
+       if ( tmp > 9 ) {
+           *out++ = 'A' + tmp-0x0a;
+       } else {
+           *out++ = '0' + tmp;
+       }
+       tmp = (*in++)&0x0f;
+       if ( tmp > 9 ) {
+           *out++ = 'A' + tmp-0x0a;
+       } else {
+           *out++ = '0' + tmp;
+       }
+    }
+
+    *out_len = out-bak;
+
+}
+
+
+void str2hex( char *in, uint32_t len, uint8_t *out, uint32_t *out_len )
+{
+    uint8_t low = 0;
+    uint8_t high = 0;
+    uint8_t *bak = out;
+    char *end = in+len;
+
+    if ( !in || !out || !out_len ) {
+        return;
+    }
+
+    //LOG("len = %d\n", len);
+    if ( len%2 != 0 ) {
+        /*if ( len == 55 ) {*/
+            /*dbg_backtrace();*/
+        /*}*/
+        /*LOG("len error\n");*/
+        return;
+    }
+    while ( in < end ) {
+        //LOG("in = %p\n", in);
+        //LOG("end = %p\n", end);
+
+        if ( (*in) >= 'A' ) {
+            high = (*in++) - 'A' + 0x0A;
+        } else {
+            high = (*in++) - '0' + 0;
+        }
+
+        if ( (*in) >= 'A' ) {
+            low = (*in++) - 'A' + 0x0A;
+        } else {
+            low = (*in++) - '0' + 0;
+        }
+
+        //LOG("called\n");
+        *out++ = (high<<4)|low;
+    }
+
+    *out_len =  out - bak;
+}

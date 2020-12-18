@@ -3667,6 +3667,7 @@ void mg_set_non_blocking_mode(sock_t sock) {
 
 static int mg_is_error(void) {
   int err = mg_get_errno();
+  printf("-----------err = %d-------------\n", err);
   return err != EINPROGRESS && err != EWOULDBLOCK
 #ifndef WINCE
          && err != EAGAIN && err != EINTR
@@ -3732,6 +3733,8 @@ static int mg_socket_if_listen_udp(struct mg_connection *nc,
 
 static int mg_socket_if_tcp_send(struct mg_connection *nc, const void *buf,
                                  size_t len) {
+
+  printf("send fd = %d\n", nc->sock);
   int n = (int) MG_SEND_FUNC(nc->sock, buf, len, 0);
   if (n < 0 && !mg_is_error()) n = 0;
   return n;

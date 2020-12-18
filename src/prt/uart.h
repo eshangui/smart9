@@ -3,7 +3,7 @@
 #include "prt.h"
 
 extern int g_ble_uart_dev;
-extern unsigned char g_ble_data[1024 * 20];
+extern unsigned char g_ble_data[1024 * 40];
 
 int uart_init(int* dev);
 int uart_write(unsigned char* data, int len);
@@ -15,6 +15,7 @@ int ble_write(unsigned char *data, int len);
 int ble_read(unsigned char *data, int len);
 int ble_at_read(unsigned char* data, int *len);
 void *ble_read_thread(void *arg);
-
+unsigned char parse_ble_data(unsigned char *data, unsigned int len);
+void *timer_thread(void *arg);
 
 #endif

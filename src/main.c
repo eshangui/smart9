@@ -4,6 +4,7 @@
 #include "uart.h"
 #include <pthread.h>
 #include "esc2bmp.h"
+#include "db_api.h"
 /*
 d9main
 main service to maintain biz logic of 3308 device
@@ -16,27 +17,31 @@ task:
 int main(int argc, char **argv)
 {
     pthread_t p_ble_read;
-    if(powerup())
+    pthread_t p_timer;
+
+    if(powerup() != 0)
     {
          mprintf(0,"powerup error %d \n");
          return 0;      
     }
-    if(selfcheck())
+    if(selfcheck() != 0)
     {
          mprintf(0,"selfcheck error %d \n");
          return 0;      
     }
-    if(data_sync())
+    if(data_sync() != 0)
     {
          mprintf(0,"sync error %d \n");
          return 0;      
     }
-    cs_log_set_level(5);
-    prt_init();
-    mqtt_init("203.207.198.134:61613");
-    //tcp_init("9100");
+    prt_init();    
+    init_network();
+
     pthread_create(&p_ble_read, NULL, ble_read_thread, NULL);
     pthread_detach(p_ble_read);
+    pthread_create(&p_timer, NULL, timer_thread, NULL);
+    pthread_detach(p_timer);
+    
     while (1)
     {
         tcp_poll(100);
@@ -50,3 +55,4 @@ int main(int argc, char **argv)
 
     }
 }
+

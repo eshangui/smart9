@@ -1,0 +1,71 @@
+{
+  "profile": {
+    "printer sn": "11223344556677889900",
+    "board sn": "22334455667788990011",
+    "processor": {
+      "name": "3308"
+    },
+    "cellar": {
+      "name": "790"
+    },
+    "wifi": {
+      "name": "8266"
+    },
+    "ble": {
+      "name": "2141E",
+      "broadcast_name": "smart9 printer"
+    },
+    "ram": {},
+    "flash": {},
+    "manufacturing info": {
+      "pcb": "1.0.0.0",
+      "smt": "203301",
+      "test": "1.0.0.0",
+      "oqc": "1.0.0.0",
+      "remark": "fisrt round"
+    },
+    "software": {
+      "linux": {
+        "kenerl": {
+          "version": "4.1"
+        },
+        "driver": {
+          "version": "1.0.0.0"
+        }
+      },
+      "app": {
+        "version": "1.0.0.0"
+      }
+    }
+  },
+  "config": {
+    "version": "1.0.0.0",
+    "merchants info": {
+      "sn": "1122334455667788",
+      "name": "coffe shop",
+      "type": "small",
+      "extra": {}
+    },
+    "server info": {
+      "ip": [
+        "202.4.3.100"
+      ],
+      "username": "user",
+      "password": "password"
+    },
+    "network": {
+      "priority": "wifi",
+      "dhcp": false,
+      "static": {
+        "ip": "192.168.1.100",
+        "mask": "255.255.255.0",
+        "gate": "192.168.1.1",
+        "dns": "202.4.130.100"
+      },
+      "cellar": {
+        "type": "4G",
+        "telcom": "CMMC"
+      }
+    }
+  }
+}
