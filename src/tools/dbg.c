@@ -10,6 +10,7 @@
 #include <unistd.h>
 #endif
 #include <sys/timeb.h>
+#include <sys/time.h>
 
 #define M_PRT
 #define M_BMP
@@ -226,4 +227,19 @@ void str2hex( char *in, uint32_t len, uint8_t *out, uint32_t *out_len )
     }
 
     *out_len =  out - bak;
+}
+
+unsigned char print_time(char *buff)
+{
+    struct timeval tv;
+    struct timezone tz;   
+    struct tm *t;
+    int i;
+ 
+    gettimeofday(&tv, &tz);
+    t = localtime(&tv.tv_sec);
+    printf("time_now:%d-%d-%d %d:%d:%d.%ld\n", 1900+t->tm_year, 1+t->tm_mon, t->tm_mday, t->tm_hour, t->tm_min, t->tm_sec, tv.tv_usec);
+    i = sprintf(buff, "%02d:", t->tm_hour);   
+    i += sprintf(buff + i, "%02d:", t->tm_min);   
+    i += sprintf(buff + i, "%02d\n", t->tm_sec);   
 }

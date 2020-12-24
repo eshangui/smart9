@@ -53,7 +53,7 @@ void prt_init (void)
 	}
     printf("init success!\n");
 
-    prt_handle.esc_2_prt(prt_str, 10);
+    //prt_handle.esc_2_prt(prt_str, 10);
     //prt_handle.printer_cut(96);
     // while(1)
     // {

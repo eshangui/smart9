@@ -6,6 +6,8 @@
     "net.h": "c",
     "global.h": "c",
     "powerup.h": "c",
-    "cjson.h": "c"
+    "cjson.h": "c",
+    "netstatus.h": "c",
+    "prt.h": "c"
   }
 }

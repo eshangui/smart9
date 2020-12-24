@@ -24,9 +24,9 @@ uint32_t ble_check(void)
     int rv = 0;
     int read_len = 0;
     unsigned short len = 0;
-    unsigned char getv_data[] = {"AT+LBDADDR?\r\n"};
+    unsigned char getv_data[] = {"AT+GVER?\r\n"};
     //unsigned char test_data[] = {"AT>\x01\x01\x05\x00\x80\x00123\r"};
-    unsigned char test_data[] = {"123456789"};
+    unsigned char test_data[] = {"AT+ADVPARAM=200,240\r\n"};
     unsigned char rec_buff[512] = {0};
     rv =  ble_uart_init();
     if(rv != 0)
@@ -47,10 +47,37 @@ uint32_t ble_check(void)
         //     printf("ble read len = %d, data is:%s\n", read_len, rec_buff);
         // }
         // tcflush(g_ble_uart_dev, 2);
-        // // rv = ble_write(test_data, sizeof(test_data));
-        // // sleep(1);
-        // // rv = ble_read(rec_buff,10); 
-        // // printf("rec data: %s\n", rec_buff);              
+
+        // rv = ble_write(test_data, sizeof(test_data));
+        // if(rv == -1)
+        // {
+        //     printf("ble uart write error!\n");
+        // }
+        // else
+        // {
+        //     usleep(100000);
+        //     rv = ble_at_read(rec_buff,&read_len);
+        //     printf("ble read len = %d, data is:%s\n", read_len, rec_buff);
+        // }
+        // tcflush(g_ble_uart_dev, 2);
+
+        // rv = ble_write(getv_data, sizeof(getv_data));
+        // if(rv == -1)
+        // {
+        //     printf("ble uart write error!\n");
+        // }
+        // else
+        // {
+        //     usleep(100000);
+        //     rv = ble_at_read(rec_buff,&read_len);
+        //     printf("ble read len = %d, data is:%s\n", read_len, rec_buff);
+        // }
+        // tcflush(g_ble_uart_dev, 2);
+
+        // rv = ble_write(test_data, sizeof(test_data));
+        // sleep(1);
+        // rv = ble_read(rec_buff,10); 
+        // printf("rec data: %s\n", rec_buff);              
     }
     
 

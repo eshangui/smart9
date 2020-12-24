@@ -357,65 +357,68 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
         system(shell_str);    
     }
 
-    ssid_val = cJSON_GetObjectItem(json, "webTypePriority");
-    if(strcmp(ssid_val->valuestring, "4g") == 0)
-    {
-        printf("change network to 4G\n");
-        system("ifconfig wlan0 down");
-        system("ifconfig usb0 up");
-        sleep(1);
-        system("echo -e \"AT^NDISDUP=1,1\r\n\" > /dev/ttyUSB0");
-        sleep(1);
-        system("udhcpc -i usb0"); 
+    printf("set net end!-------------------------------------\n");
+    prt_handle.esc_2_prt("Please Reboot!\n", strlen("Please Reboot!\n"));
+    prt_handle.printer_cut(196);
+    // ssid_val = cJSON_GetObjectItem(json, "webTypePriority");
+    // if(strcmp(ssid_val->valuestring, "4g") == 0)
+    // {
+    //     printf("change network to 4G\n");
+    //     system("ifconfig wlan0 down");
+    //     system("ifconfig usb0 up");
+    //     sleep(1);
+    //     system("echo -e \"AT^NDISDUP=1,1\r\n\" > /dev/ttyUSB0");
+    //     sleep(1);
+    //     system("udhcpc -i usb0"); 
 
-        h_file = fopen("./smart9_scheme.json", "rb");
-        fseek(h_file, 0, SEEK_END);
-        file_len = ftell(h_file);
-        char *tmp_con = (char*)malloc(file_len + 1);
-        fseek(h_file, 0, SEEK_SET);
-        fread(tmp_con, 1, file_len, h_file);
-        fclose(h_file);
-        system("rm ./smart9_scheme.json");
-        cfc_json = cJSON_Parse(tmp_con);
-        if(!cfc_json)
-        {
-            printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
-        }
-        //char *str = cJSON_Print(json);
+    //     h_file = fopen("./smart9_scheme.json", "rb");
+    //     fseek(h_file, 0, SEEK_END);
+    //     file_len = ftell(h_file);
+    //     char *tmp_con = (char*)malloc(file_len + 1);
+    //     fseek(h_file, 0, SEEK_SET);
+    //     fread(tmp_con, 1, file_len, h_file);
+    //     fclose(h_file);
+    //     system("rm ./smart9_scheme.json");
+    //     cfc_json = cJSON_Parse(tmp_con);
+    //     if(!cfc_json)
+    //     {
+    //         printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
+    //     }
+    //     //char *str = cJSON_Print(json);
 
-        json_ip = cJSON_GetObjectItem(cfc_json, "config");
-        json_ip = cJSON_GetObjectItem(json_ip, "network");
-        json_ip = cJSON_GetObjectItem(json_ip, "priority");
-        cJSON_SetValuestring(json_ip, "cellar");
+    //     json_ip = cJSON_GetObjectItem(cfc_json, "config");
+    //     json_ip = cJSON_GetObjectItem(json_ip, "network");
+    //     json_ip = cJSON_GetObjectItem(json_ip, "priority");
+    //     cJSON_SetValuestring(json_ip, "cellar");
 
-        char *str1 = cJSON_Print(cfc_json);
+    //     char *str1 = cJSON_Print(cfc_json);
 
-        printf("json --->\n%s", str1);
-        printf("str1 len = %d\n", strlen(str1));
+    //     printf("json --->\n%s", str1);
+    //     printf("str1 len = %d\n", strlen(str1));
 
-        h_file = fopen("./smart9_scheme.json", "wb");
-        fwrite(str1, 1, strlen(str1), h_file);
-        fclose(h_file); 
+    //     h_file = fopen("./smart9_scheme.json", "wb");
+    //     fwrite(str1, 1, strlen(str1), h_file);
+    //     fclose(h_file); 
 
 
-        free(tmp_con);          
-    }
-    cJSON_free(cfc_json);
-    cJSON_free(json_ip);  
-    cJSON_free(json);  
-    cJSON_free(ssid_val);  
-    cJSON_free(pwd_val);  
+    //     free(tmp_con);          
+    // }
+    // cJSON_free(cfc_json);
+    // cJSON_free(json_ip);  
+    // cJSON_free(json);  
+    // cJSON_free(ssid_val);  
+    // cJSON_free(pwd_val);  
 
 }
 
 
 void *timer_thread(void *arg)
 {
-    unsigned int count = 0;
     while(1)
     {
         if(g_wait_net_flag == 1)
         {
+            //g_overtime_flag = 0;
             g_wait_net_flag = 0;
             get_offline_code();
             prt_handle.esc_2_prt(pn_data.data, pn_data.len);
@@ -425,10 +428,11 @@ void *timer_thread(void *arg)
                
         if(g_timer_flag == 1)
         {
-            count++;
-            if(count == g_timer_count)
+            g_add_count++;
+            if(g_add_count == g_timer_count)
             {
-                count = 0;
+                g_add_count = 0;
+                g_overtime_flag = 1;
                 g_timer_flag = 0;
                 g_timer_count = 0;
                 g_wait_net_flag = 1;
