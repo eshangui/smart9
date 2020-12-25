@@ -4,6 +4,7 @@
 //#include "hafs.h"
 #include <string.h>
 #include "net.h"
+#include <termios.h>
 
 
 int g_usb_fd;
@@ -37,7 +38,7 @@ uint32_t config_init(void)
     char *content = NULL;
     cJSON *json, *json_ip;
 
-    h_file = fopen("./smart9_scheme.json", "rb+");
+    h_file = fopen("/userdata/smart9_scheme.json", "rb+");
     fseek(h_file, 0, SEEK_END);
     len = ftell(h_file);
     content = (char*)malloc(len + 1);
@@ -131,27 +132,194 @@ static int check_interface_fromproc(char *interface)
 
 unsigned char usb_read(int usb_fd, unsigned char *rec_buff)
 {
-    int count = 1000;
+    int count = 0;
     int fd;
     int nread, i;
-    unsigned char tmp[1024] = {0};
-    unsigned char tmp_buff[1024] = {0};
+    unsigned char tmp_buff[1024 * 10] = {0};
 
-
+    while(1)
+    {
         nread = read(usb_fd, tmp_buff, sizeof(tmp_buff));
-        printf("first read nread = %d\n", nread);            
-        printf("rec %d byte : \n", nread);
-        for(i = 0; i < nread; i++)
+        printf("first read nread = %d\n", nread);
+        if(nread > 0)
         {
-            printf("%c", tmp_buff[i]);
-        }
-        printf("\n");
-        memcpy(rec_buff, tmp_buff, nread);
+            while(1)
+            {
+                i = read(usb_fd, &tmp_buff[nread], sizeof(tmp_buff));
+                if(i > 0)
+                {
+                    printf("i = %d\n", i);
+                    nread += i;
+                }
+                else
+                {
+                    count++;
+                    usleep(1000 * 1);
+                }
+                if(count == 1000)
+                {
+                    printf("rec %d byte : \n", nread);
+                    for(i = 0; i < nread; i++)
+                    {
+                        printf("%c", tmp_buff[i]);
+                    }
+                    printf("\n");
+                    memcpy(rec_buff, tmp_buff, nread);   
+                    return nread;                 
+                }
+                
+            }
+            
+        }            
+        usleep(1 * 1000);        
+    }
 
-
-        usleep(1 * 1000);
 
         
+    return nread;
+}
+
+char searial_parameter[32];
+
+int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop)
+{
+	speed_t speed;
+    struct termios newtio, oldtio;
+    if (tcgetattr(fd, &oldtio) != 0)
+    {
+        perror("SetupSerial 1");
+        return -1;
+    }
+    bzero(&newtio, sizeof(newtio));
+    newtio.c_cflag |= CLOCAL | CREAD;
+    newtio.c_cflag &= ~CSIZE;
+
+    switch (nSpeed)
+    {
+    case 9600:
+        speed = B9600;
+        strcat(searial_parameter," 9600");
+        break;
+    case 19200:
+    	speed = B19200;
+        strcat(searial_parameter," 19200");
+        break;
+    case 38400:
+        speed = B38400;
+        strcat(searial_parameter," 38400");
+        break;
+    case 57600:
+        speed = B57600;
+        strcat(searial_parameter," 57600");
+        break;
+    case 115200:
+        speed = B115200;
+        strcat(searial_parameter," 115200");
+        break;
+   	case 230400:
+        speed = B230400;
+        strcat(searial_parameter," 230400");
+        break;
+	case 460800:
+        speed = B460800;
+        strcat(searial_parameter," 460800");
+        break;
+	case 500000:
+        speed = B500000;
+        strcat(searial_parameter," 500000");
+        break;
+	case 576000:
+        speed = B576000;
+        strcat(searial_parameter," 576000");
+        break;
+	case 921600:
+        speed = B921600;
+        strcat(searial_parameter," 921600");
+        break;
+	case 1000000:
+        speed = B1000000;
+        strcat(searial_parameter," 1000000");
+        break;
+	case 1152000:
+        speed = B1152000;
+        strcat(searial_parameter," 1152000");
+        break;
+	case 1500000:
+        speed = B1500000;
+        strcat(searial_parameter," 1500000");
+        break;
+    default:
+        speed = B115200;
+        strcat(searial_parameter," 115200");
+        break;
+    }
+    
+    switch (nBits)
+    {
+    case 7:
+        newtio.c_cflag |= CS7;
+        
+        break;
+    case 8:
+        newtio.c_cflag |= CS8;
+        break;
+    }
+
+    switch (nEvent)
+    {
+    case 'O': //奇校�?
+        newtio.c_cflag |= PARENB;
+        newtio.c_cflag |= PARODD;
+        newtio.c_iflag |= (INPCK | ISTRIP);
+        strcat(searial_parameter," O");
+        break;
+    case 'E': //偶校�?
+        newtio.c_iflag |= (INPCK | ISTRIP);
+        newtio.c_cflag |= PARENB;
+        newtio.c_cflag &= ~PARODD;
+        strcat(searial_parameter," E");
+        break;
+    case 'N': //无校�?
+        newtio.c_cflag &= ~PARENB;
+        strcat(searial_parameter," N");
+        break;
+    }
+
+    cfsetispeed(&newtio, speed);
+    cfsetospeed(&newtio, speed);
+    if (nStop == 1)
+    {
+        newtio.c_cflag &= ~CSTOPB;
+        strcat(searial_parameter," 1");
+    }
+    else if (nStop == 2)
+    {
+        newtio.c_cflag |= CSTOPB;
+        strcat(searial_parameter," 2");
+    }
+    newtio.c_cc[VTIME] = 0;
+    newtio.c_cc[VMIN] = 0;
+#if 0
+	switch(flow_ctrl)
+    {    
+       case 0 ://不使用流控制
+              newtio.c_cflag &= ~CRTSCTS;
+              break;   
+       case 1 ://使用�?件流控制
+              newtio.c_cflag |= CRTSCTS;
+              break;
+       case 2 ://使用�?件流控制
+              newtio.c_cflag |= IXON | IXOFF | IXANY;
+              break;
+    }
+#endif
+    tcflush(fd, TCIFLUSH);
+    if ((tcsetattr(fd, TCSANOW, &newtio)) != 0)
+    {
+        perror("com set error");
+        return -1;
+    }
+
     return 0;
 }
 
@@ -161,8 +329,8 @@ unsigned char check_celler(void)
     int fd;
     int ret;
     int nread, i;
-    unsigned char rec_buff[1024];
-    unsigned char tmp[1024];
+    unsigned char rec_buff[1024 * 10];
+    unsigned char tmp[1024 * 10];
 
 
     while(count--)
@@ -180,69 +348,82 @@ unsigned char check_celler(void)
     if(count == 0x00)
         return 1;
 
-    fd = open ("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NDELAY);
+    fd = open ("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (fd < 0) {
         printf ("\n Open Error \n");
         return 0;
     }
 
-    // ret = write(fd, " AT^CURC\r\n", strlen(" AT^CURC\r\n") + 1);
-    // printf("AT^CURC write ret = %d\n", ret);
-    // memset(rec_buff, 0x00, sizeof(rec_buff));
-    // usleep(100 * 1000);
-    // ret = usb_read(fd, rec_buff);
-    // if(ret != 0)
-    // {
-    //     printf("CURC_REC len = %d----->:%s\n", ret, rec_buff);
-    // }
-    // else
-    // {
-    //     printf("AT_REC Faild\n");
-    // }
+    if(set_opt(fd, 115200, 8, 'N', 1) < 0)
+    {
+        perror("set_opt error");
+        return -1;
+    }
 
-    // ret = write(fd, " AT+CPIN?\r\n", strlen(" AT+CPIN?\r\n") + 1);
-    // printf("CPINusb write ret = %d\n", ret);
-    // memset(rec_buff, 0x00, sizeof(rec_buff));
-    // usleep(100 * 1000);
-    // ret = usb_read(fd, rec_buff);
-    // if(ret != 0)
-    // {
-    //     printf("CPIN_REC len = %d----->:%s\n", ret, rec_buff);
-    // }
-    // else
-    // {
-    //     printf("AT_REC Faild\n");
-    // }
+    ret = write(fd, " AT^CURC=0\r\n", strlen(" AT^CURC=0\r\n") + 1);
+    printf("AT^CURC write ret = %d\n", ret);
+    memset(rec_buff, 0x00, sizeof(rec_buff));
+    usleep(1 * 1000);
+    ret = usb_read(fd, rec_buff);
+    if(ret != 0)
+    {
+        //printf("CURC_REC len = %d----->:%s\n", ret, rec_buff);
+    }
+    else
+    {
+        printf("AT_REC Faild\n");
+    }
 
-    // ret = write(fd, " AT+CPIN?\r\n", strlen(" AT+CPIN?\r\n") + 1);
-    // printf("CPINusb write ret = %d\n", ret);
-    // memset(rec_buff, 0x00, sizeof(rec_buff));
-    // usleep(100 * 1000);
-    // ret = usb_read(fd, rec_buff);
-    // if(ret != 0)
-    // {
-    //     printf("CPIN_REC len = %d----->:%s\n", ret, rec_buff);
-    // }
-    // else
-    // {
-    //     printf("AT_REC Faild\n");
-    // }
+    // sleep(2);
+    // printf("-----------------------------------\n");
+    // usb_read(fd, rec_buff);
+    // printf("===================================\n");
+    // sleep(2);
+
+    ret = write(fd, "AT+CPIN?\r\n", strlen("AT+CPIN?\r\n") + 1);
+    printf("CPINusb write ret = %d\n", ret);
+    memset(rec_buff, 0x00, sizeof(rec_buff));
+    usleep(10 * 1000);
+    ret = usb_read(fd, rec_buff);
+    if(ret != 0)
+    {
+        //printf("CPIN_REC len = %d----->:%s\n", ret, rec_buff);
+    }
+    else
+    {
+        printf("AT_REC Faild\n");
+    }
+
+    ret = write(fd, " AT+CSQ\r\n", strlen(" AT+CSQ\r\n") + 1);
+    printf("CSQusb write ret = %d\n", ret);
+    memset(rec_buff, 0x00, sizeof(rec_buff));
+    usleep(100 * 1000);
+    ret = usb_read(fd, rec_buff);
+    if(ret != 0)
+    {
+        //printf("CSQ_REC len = %d----->:%s\n", ret, rec_buff);
+    }
+    else
+    {
+        printf("AT_REC Faild\n");
+    }
 
     ret = write(fd, " AT^NDISDUP=1,1\r\n", strlen(" AT^NDISDUP=1,1\r\n") + 1);
     printf("usb write ret = %d\n", ret);
     memset(rec_buff, 0x00, sizeof(rec_buff));
     usleep(10 * 1000);
-    // ret = usb_read(fd, rec_buff);
-    // if(ret == 0)
-    // {
-    //     printf("NDISDUPAT_REC----->:%s\n", rec_buff);
-    // }
-    // else
-    // {
-    //     printf("AT_REC Faild\n");
-    // }
-    popen("udhcpc -i usb0", "r");
+    ret = usb_read(fd, rec_buff);
+    if(ret != 0)
+    {
+        //printf("NDISDUPAT_REC----->:%s\n", rec_buff);
+    }
+    else
+    {
+        printf("AT_REC Faild\n");
+    }
+    //popen("udhcpc -i usb0", "r");
 
+    //close(fd);
     return 0;    
 }
 

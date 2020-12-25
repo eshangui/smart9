@@ -352,7 +352,7 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
     if((strcmp(ssid_val->valuestring, "") != 0) && (strcmp(pwd_val->valuestring, "") != 0) )
     {
         printf("set net ssid&pwd\n");    
-        sprintf(shell_str, "./test.sh \"%s\" \"%s\"", ssid_val->valuestring, pwd_val->valuestring);
+        sprintf(shell_str, "/userdata/test.sh \"%s\" \"%s\"", ssid_val->valuestring, pwd_val->valuestring);
         printf("shell---->%s\n", shell_str);
         system(shell_str);    
     }

@@ -28,7 +28,7 @@ TARGET = d9main
 $(TARGET):$(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 
-	adb push ./d9main /smart9
+	adb push ./d9main /oem
 
 %.o:%c 
 	$(CC) ${CFLAGS} -c $< -o $@

@@ -40,8 +40,10 @@ void prt_init (void)
     char *prt_str = "INIT OK!\n";
     printf ("prt_init \n");
     char bmp_path[] = "/smart9/escode/100000000018330045_100000000018330045_0017.bmp";
+    char f_path[] = "/userdata/fonts_gb18030.bin";
     memset(&prt_handle, 0, sizeof(prt_handle));
 
+    strcpy(prt_handle.font_path, f_path);
     prt_handle.bmp_callback = bmp_cb;
 	prt_handle.usb_data_cb = usb_data_cb;
     //strcpy(prt_handle.bmp_path, bmp_path);
@@ -128,7 +130,7 @@ extern void lib_event_callback(hprt_lib_event_t e, const void *arg, unsigned int
 void get_offline_code(void)
 {
     int32_t len;
-    load_data("./prt.bin", &pn_data.data[pn_data.len], &len);
+    load_data("/userdata/prt.bin", &pn_data.data[pn_data.len], &len);
     pn_data.len += (len - 2);
 }
 
