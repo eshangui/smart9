@@ -119,7 +119,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
         s_topic_expr.topic = sub_topic_prt;
         printf("Subscribing to '%s'\n", sub_topic_prt);
         mg_mqtt_subscribe(nc, &s_topic_expr, 1, 42);
-        pthread_mutex_unlock(&net_lock);
+        //pthread_mutex_unlock(&net_lock);
         break;
     case MG_EV_MQTT_PUBACK:
         printf("Message publishing acknowledged (msg_id: %d)\n", msg->message_id);
@@ -147,8 +147,8 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                 //prt_handle.esc_2_prt((unsigned char*)msg->payload.p,(int)msg->payload.len);
                 usleep(10000);
                 //    prt_handle.esc_2_prt(test_feed, 3);
-                    prt_handle.printer_cut(96);
-                    prt_handle.push_process_id(0x01);
+                prt_handle.printer_cut(96);
+                //prt_handle.push_printer_process_id(0x01);
                 //prt_handle.printer_cut();
                 //escpos_printer_feed(3);
                 //escpos_printer_cut(1);               
@@ -167,10 +167,11 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
 
 void mqtt_poll(uint32_t i_time)
 {
-    if(pthread_mutex_trylock(&net_lock) == 0)
+    //if(pthread_mutex_trylock(&net_lock) == 0)
+    if(1)
     {
         mg_mgr_poll(&m_mqtt, i_time);
-        pthread_mutex_unlock(&net_lock);
+        //pthread_mutex_unlock(&net_lock);
     }
     else
     {
@@ -200,7 +201,7 @@ uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
                 return D9_OK;
             }
             g_timer_flag = 1;
-            g_timer_count = 6;
+            g_timer_count = 20;
             g_overtime_flag = 0;
             mg_mqtt_publish(m_mqtt.active_connections, sub_topic_d9, 65, MG_MQTT_QOS(0),sn,length);
             break;

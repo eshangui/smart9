@@ -40,7 +40,7 @@ void prt_init (void)
     char *prt_str = "INIT OK!\n";
     printf ("prt_init \n");
     char bmp_path[] = "/smart9/escode/100000000018330045_100000000018330045_0017.bmp";
-    char f_path[] = "/userdata/fonts_gb18030.bin";
+    char f_path[] = "/oem/fonts_gb18030.bin";
     memset(&prt_handle, 0, sizeof(prt_handle));
 
     strcpy(prt_handle.font_path, f_path);
@@ -98,7 +98,7 @@ extern void lib_event_callback(hprt_lib_event_t e, const void *arg, unsigned int
     volatile static unsigned char re_prt_flag = 0;
     unsigned char tmp_data = 0;
     printf("callback id = %d, size = %d, data is:\n", e, size);
-    //print_array(arg, size);
+    print_array(arg, size);
     switch(e)
     {
         case HPRT_LIB_EVENT_STATUS:
@@ -113,7 +113,9 @@ extern void lib_event_callback(hprt_lib_event_t e, const void *arg, unsigned int
                 printf("prt close!\n");
                 prt_handle.esc_2_prt(pn_data.data, pn_data.len);
                 prt_handle.printer_cut(84);
-                prt_handle.push_process_id(0x01);
+                //prt_handle.push_printer_process_id(0x01);
+                memset(pn_data.data, 0x00, pn_data.len);
+                pn_data.len = 0;
                 re_prt_flag = 0;
             }
         break;
@@ -123,6 +125,13 @@ extern void lib_event_callback(hprt_lib_event_t e, const void *arg, unsigned int
             // pn_data.len = 0;
         break;
 
+        case HPRT_LIB_EVENT_PRINTER_ID_RET:
+            if(re_prt_flag == 0x00)
+            {
+
+            }
+        break;
+
 
     }
 }
@@ -130,7 +139,7 @@ extern void lib_event_callback(hprt_lib_event_t e, const void *arg, unsigned int
 void get_offline_code(void)
 {
     int32_t len;
-    load_data("/userdata/prt.bin", &pn_data.data[pn_data.len], &len);
+    load_data("/oem/prt.bin", &pn_data.data[pn_data.len], &len);
     pn_data.len += (len - 2);
 }
 

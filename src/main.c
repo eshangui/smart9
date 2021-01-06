@@ -20,6 +20,7 @@ int main(int argc, char **argv)
     pthread_t p_ble_read;
     pthread_t p_timer;
     char server_ip[32] = {0};
+    char version[] = "SECURE_PRT_V10.02\n";
 
     if(powerup() != 0)
     {
@@ -72,10 +73,12 @@ int main(int argc, char **argv)
                if(g_net_way == NET_WAY_WIFI)
                {
                     prt_handle.esc_2_prt("---WIFI READY---\n", 18);
+                    prt_handle.esc_2_prt(version, strlen(version));
                }
                if(g_net_way == NET_WAY_CELL)
                {
                     prt_handle.esc_2_prt("---4G READY---\n", 16);
+                    prt_handle.esc_2_prt(version, strlen(version));
                }
                print_time(server_ip);
                prt_handle.esc_2_prt(server_ip, 10);
@@ -85,6 +88,7 @@ int main(int argc, char **argv)
           {
                g_net_status_flag = 10;
                prt_handle.esc_2_prt("---OFFLINE---\n", 15);
+               prt_handle.esc_2_prt(version, strlen(version));
                prt_handle.printer_cut(198);
           }
           if(g_tcp_flag == 1)

@@ -11,6 +11,7 @@ typedef enum {
     HPRT_LIB_EVENT_CUT,
     HPRT_LIB_EVENT_DRAWER,
     HPRT_LIB_EVENT_ID_RET,
+    HPRT_LIB_EVENT_PRINTER_ID_RET,
 } hprt_lib_event_t;
 
 extern void lib_event_callback(hprt_lib_event_t e, const void *arg, unsigned int size);
@@ -38,6 +39,8 @@ typedef struct esc2bmp_handle{
     JCIAI void      (*printer_cut)(unsigned char len);       //切刀
     JCIAI void      (*printer_drawer)(unsigned char idx);    //钱箱操作，无需赋值，初始化后可用 idx 为序号 0或1
     JCIAI void      (*push_process_id)(unsigned int idx);    //process id 压栈
+    JCIAI void      (*push_printer_process_id)(unsigned int idx);    //printer process id 压栈 idx:0~9999
+    JCIAI void      (*get_printer_sn)(char *buf, unsigned int size);    //获取打印机SN
 
     unsigned int            (*usb_data_cb)(void *buff, unsigned int size);  //usb数据接收回调，buff为数据地址，size为数据长度，为null时，默认指向esc_2_lib
     JCIAI unsigned int      (*esc_2_prt)(const void *buff, unsigned int size);//发送esc数据。无需赋值，初始化后可用

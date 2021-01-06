@@ -25,5 +25,6 @@ uint32_t var_init(void);
 uint32_t config_init(void);
 unsigned char check_net_init(void);
 unsigned char check_celler(void);
+int SetStaticIP(const char *  ifname, const char * ip, const char * netmask, const char* gateway, const char* dns);
 
 #endif

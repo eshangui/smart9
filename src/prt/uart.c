@@ -334,7 +334,7 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
     char *content = NULL;
     char shell_str[128] = {0};
     
-    cJSON *json, *ssid_val, *pwd_val;
+    cJSON *json, *ssid_val, *pwd_val, *ip, *mask, *dns, *gate;
 
     content = (char*)malloc(len + 1);
     memset(content, 0, len + 1);
@@ -352,12 +352,28 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
     if((strcmp(ssid_val->valuestring, "") != 0) && (strcmp(pwd_val->valuestring, "") != 0) )
     {
         printf("set net ssid&pwd\n");    
-        sprintf(shell_str, "/userdata/test.sh \"%s\" \"%s\"", ssid_val->valuestring, pwd_val->valuestring);
+        sprintf(shell_str, "/oem/test.sh \"%s\" \"%s\"", ssid_val->valuestring, pwd_val->valuestring);
         printf("shell---->%s\n", shell_str);
         system(shell_str);    
     }
 
+    ssid_val = cJSON_GetObjectItem(json, "webConfig");
+    pwd_val = cJSON_GetObjectItem(ssid_val, "webDHCP");
+    printf(" webDHCP : %s\n", pwd_val->valuestring);
+    if(strcmp(pwd_val->valuestring, "0") == 0 )
+    {
+        ip = cJSON_GetObjectItem(ssid_val, "IP");
+        mask = cJSON_GetObjectItem(ssid_val, "webMask");
+        dns = cJSON_GetObjectItem(ssid_val, "webDNS");
+        gate = cJSON_GetObjectItem(ssid_val, "webGate"); 
+        printf("static data\n %s\n %s\n %s\n %s\n", ip->valuestring, mask->valuestring, dns->valuestring, gate->valuestring);   
+        SetStaticIP("wlan0", ip->valuestring, mask->valuestring, gate->valuestring, dns->valuestring);   
+    }
+
+
+
     printf("set net end!-------------------------------------\n");
+    popen("sync", "r");
     prt_handle.esc_2_prt("Please Reboot!\n", strlen("Please Reboot!\n"));
     prt_handle.printer_cut(196);
     // ssid_val = cJSON_GetObjectItem(json, "webTypePriority");
