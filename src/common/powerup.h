@@ -17,6 +17,7 @@
 #define NET_WAY_NULL    0x00
 #define NET_WAY_WIFI    0x01
 #define NET_WAY_CELL    0x02
+#define NET_WAY_ETH     0x03
 
 extern char server_ip[64];
 

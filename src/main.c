@@ -17,10 +17,11 @@ task:
 int main(int argc, char **argv)
 {
      int i = 0;
+     FILE *fp;
     pthread_t p_ble_read;
     pthread_t p_timer;
     char server_ip[32] = {0};
-    char version[] = "SECURE_PRT_V10.02\n";
+    char version[] = "SECURE_PRT_V10.03\n";
 
     if(powerup() != 0)
     {
@@ -70,6 +71,11 @@ int main(int argc, char **argv)
           if(g_net_status_flag == 1)
           {
                g_net_status_flag = 10;
+               if(g_net_way == NET_WAY_ETH)
+               {
+                    prt_handle.esc_2_prt("---ETH READY---\n", 17);
+                    prt_handle.esc_2_prt(version, strlen(version));
+               }
                if(g_net_way == NET_WAY_WIFI)
                {
                     prt_handle.esc_2_prt("---WIFI READY---\n", 18);
@@ -91,14 +97,20 @@ int main(int argc, char **argv)
                prt_handle.esc_2_prt(version, strlen(version));
                prt_handle.printer_cut(198);
           }
-          if(g_tcp_flag == 1)
+          if(g_tcp_flag == 1 || g_tcp_flag == 2)
           {
-               g_tcp_flag = 2;
                printf("start 9100 server!\n");
                tcp_init("9100");
                prt_handle.esc_2_prt("---9100 start---\n", 18);
 
-               FILE *fp = popen( "ifconfig wlan0 | grep Mask|cut -f 2 -d :", "r" );
+               if(g_tcp_flag == 1)
+               {
+                    fp = popen( "ifconfig eth0 | grep Mask|cut -f 2 -d :", "r" );
+               }
+               if(g_tcp_flag == 2)
+               {
+                    fp = popen( "ifconfig wlan0 | grep Mask|cut -f 2 -d :", "r" );
+               }
                memset( server_ip, 0, sizeof(server_ip) );
                while ( NULL != fgets(server_ip, sizeof(server_ip), fp ))
                {
@@ -115,7 +127,7 @@ int main(int argc, char **argv)
                printf("\n");
                server_ip[i] = '\n';
                prt_handle.esc_2_prt(server_ip, i + 1);
-
+               g_tcp_flag = 3;
           }
 
 
