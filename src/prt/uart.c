@@ -290,6 +290,11 @@ void *ble_read_thread(void *arg)
                 i = 0;
                 printf("end\n");
             }
+            else
+            {
+                i = 0;
+            }
+            
 
         }   
         if(tmp_data== 0xEF)
@@ -318,6 +323,11 @@ void *ble_read_thread(void *arg)
                 i = 0;
                 printf("end\n");
             }
+            else
+            {
+                i = 0;
+            }
+            
 
         }   
         //usleep(1000);     

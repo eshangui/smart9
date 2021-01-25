@@ -3,6 +3,7 @@
 #include "prt.h"
 #include "net.h"
 #include "uart.h"
+#include "var.h"
 #include <errno.h>
 
 
@@ -207,8 +208,8 @@ uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
             break;
     }
     
-    while(mqtt_state==0)
-        mqtt_poll(100);
+    // while(mqtt_state==0)
+    //     mqtt_poll(100);
     mqtt_state = 0;
     return D9_OK;
 }
@@ -238,4 +239,25 @@ int init_network (void)
     
     // prt_handle.printer_cut(128);
     return 0;
+}
+
+
+void *poll_thread(void *arg)
+{
+    printf("poll_pthread create success!\n");
+    while(1)
+    {
+        if(g_net_status_flag == 10)
+        {
+            //printf("mqtt poll start---");
+            mqtt_poll(100);  
+            //printf("---mqtt poll end\n");            
+        }   
+        if(g_upload_flag == 1)
+        {
+            g_upload_flag = 0;
+            mqtt_publish_sync(MQTT_TOPIC_UPLOAD,"bbb",NULL);
+            printf("mqtt_publish end!\n");
+        }  
+    }
 }

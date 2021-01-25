@@ -20,8 +20,9 @@ int main(int argc, char **argv)
      FILE *fp;
     pthread_t p_ble_read;
     pthread_t p_timer;
+    pthread_t p_poll;
     char server_ip[32] = {0};
-    char version[] = "SECURE_PRT_V10.03\n";
+    char version[] = "SECURE_PRT_V10.04\n";
 
     if(powerup() != 0)
     {
@@ -46,20 +47,13 @@ int main(int argc, char **argv)
     pthread_detach(p_ble_read);
     pthread_create(&p_timer, NULL, timer_thread, NULL);
     pthread_detach(p_timer);
-    
+    pthread_create(&p_poll, NULL, poll_thread, NULL);
+    pthread_detach(p_poll);    
     while (1)
     {
-          if(g_net_status_flag == 10)
+          if(g_tcp_flag == 3)
           {
                tcp_poll(100);
-               mqtt_poll(100);              
-          }
-
-          if(g_upload_flag == 1)
-          {
-               g_upload_flag = 0;
-               mqtt_publish_sync(MQTT_TOPIC_UPLOAD,"bbb",NULL);
-               printf("mqtt_publish end!\n");
           }
           if(g_net_change_flag == 1)
           {
@@ -101,7 +95,7 @@ int main(int argc, char **argv)
           {
                printf("start 9100 server!\n");
                tcp_init("9100");
-               prt_handle.esc_2_prt("---9100 start---\n", 18);
+               prt_handle.esc_2_prt("---NET-PRT_READY---\n", strlen("---NET-PRT_READY---\n") + 1);
 
                if(g_tcp_flag == 1)
                {

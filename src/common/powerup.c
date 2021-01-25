@@ -458,7 +458,7 @@ void check_net_thread(void)
     
     while(1) 
     {
-        printf("---------count = %d -----------\n", time_count);
+        //printf("---------count = %d -----------\n", time_count);
         if(time_count == 20)
         {
             time_count = 30;
