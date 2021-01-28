@@ -423,7 +423,7 @@ unsigned char check_celler(void)
     }
     //popen("udhcpc -i usb0", "r");
 
-    //close(fd);
+    close(fd);
     return 0;    
 }
 
@@ -501,7 +501,7 @@ void check_net_thread(void)
                 g_offline_flag = 0;
                 //sleep(1);
                 //mqtt_free(&m_mqtt);
-                sleep(2);
+                sleep(1);
                 g_net_change_flag = 1;
                 //mqtt_init("203.207.198.134:61613");
             }
@@ -545,7 +545,7 @@ void check_net_thread(void)
                     g_offline_flag = 0;
                     //sleep(1);
                     //mqtt_free(&m_mqtt);
-                    sleep(2);
+                    sleep(1);
                     g_net_change_flag = 1;
                     //mqtt_init("203.207.198.134:61613");
                 }
@@ -581,7 +581,7 @@ void check_net_thread(void)
                         g_offline_flag = 0;
                         //sleep(1);
                         //mqtt_free(&m_mqtt);
-                        sleep(2);
+                        sleep(1);
                         g_net_change_flag = 1;
                         //mqtt_init("203.207.198.134:61613");
                     }

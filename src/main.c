@@ -42,7 +42,7 @@ int main(int argc, char **argv)
 
      prt_init(); 
       
-    init_network();
+    //init_network();
     pthread_create(&p_ble_read, NULL, ble_read_thread, NULL);
     pthread_detach(p_ble_read);
     pthread_create(&p_timer, NULL, timer_thread, NULL);
@@ -58,6 +58,7 @@ int main(int argc, char **argv)
           if(g_net_change_flag == 1)
           {
                g_net_change_flag = 0;
+               mqtt_free(&m_mqtt);
                mqtt_init("203.207.198.134:61613");
                //if(g_net_status_flag == 0)
                     g_net_status_flag = 1;
