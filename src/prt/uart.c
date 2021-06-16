@@ -241,8 +241,10 @@ void *ble_read_thread(void *arg)
     int i = 0;
     int ret = 0;
     int bp, bp1, j;
+    FILE *fp;
     unsigned int rec_len = 0;
     unsigned char tmp_data = 0;
+    char ret_buff[128] = {0};
 
     printf("ble read pthread creat success!\n");
     while(1)
@@ -281,7 +283,19 @@ void *ble_read_thread(void *arg)
 
                 //uart_write (g_ble_data, i);
                 //system("rm ./escode/100000000018330045_100000000018330045_0017.bmp");
-                system("rm ./escode/code.bin");
+                fp = popen("rm ./escode/code.bin", "r");
+                if(fp != NULL)
+                {
+                    while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                    {
+                        if('\n' == ret_buff[strlen(ret_buff)-1])
+                        {
+                            ret_buff[strlen(ret_buff)-1] = '\0';
+                        }
+                        printf("rm ./escode/code.bin = %s\r\n", ret_buff);
+                    }
+                    pclose(fp);                   
+                }
                 dump_data("./escode/code.bin", g_ble_data, i);
                 prt_handle.esc_2_lib(g_ble_data, i);
                 // system("rm ./escode/upload.zip");
@@ -339,9 +353,11 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
 {
 
     FILE *h_file = NULL;
+    FILE *fp = NULL;
     long file_len = 0;
     cJSON *cfc_json, *json_ip;
     char *content = NULL;
+    char ret_buff[128] = {0};
     char shell_str[128] = {0};
     
     cJSON *json, *ssid_val, *pwd_val, *ip, *mask, *dns, *gate;
@@ -364,7 +380,20 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
         printf("set net ssid&pwd\n");    
         sprintf(shell_str, "/oem/test.sh \"%s\" \"%s\"", ssid_val->valuestring, pwd_val->valuestring);
         printf("shell---->%s\n", shell_str);
-        system(shell_str);    
+        fp = popen(shell_str, "r");  
+        if(fp != NULL)
+        {
+            while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+            {
+                if('\n' == ret_buff[strlen(ret_buff)-1])
+                {
+                    ret_buff[strlen(ret_buff)-1] = '\0';
+                }
+                printf("set net work = %s\r\n", ret_buff);
+            }
+            pclose(fp);
+        }
+
     }
 
     ssid_val = cJSON_GetObjectItem(json, "webConfig");
@@ -383,7 +412,19 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
 
 
     printf("set net end!-------------------------------------\n");
-    popen("sync", "r");
+    fp = popen("sync", "r");
+    if(fp != NULL)
+    {
+        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+        {
+            if('\n' == ret_buff[strlen(ret_buff)-1])
+            {
+                ret_buff[strlen(ret_buff)-1] = '\0';
+            }
+            printf("sync = %s\r\n", ret_buff);
+        }
+        pclose(fp);
+    }
     prt_handle.esc_2_prt("Please Reboot!\n", strlen("Please Reboot!\n"));
     prt_handle.printer_cut(196);
     // ssid_val = cJSON_GetObjectItem(json, "webTypePriority");

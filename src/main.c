@@ -22,7 +22,8 @@ int main(int argc, char **argv)
     pthread_t p_timer;
     pthread_t p_poll;
     char server_ip[32] = {0};
-    char version[] = "SECURE_PRT_V10.04\n";
+    char tmp_buff[128] = {0};
+    char version[] = "SECURE_PRT_V10.05\n";
 
     if(powerup() != 0)
     {
@@ -106,23 +107,33 @@ int main(int argc, char **argv)
                {
                     fp = popen( "ifconfig wlan0 | grep Mask|cut -f 2 -d :", "r" );
                }
-               memset( server_ip, 0, sizeof(server_ip) );
-               while ( NULL != fgets(server_ip, sizeof(server_ip), fp ))
+               if(fp != NULL)
                {
-                    printf("ip=%s\n",server_ip);
-                    break;
-               }              
-               printf("ip len = %d\n", strlen(server_ip));
-               for(i = 0; i < (strlen(server_ip)); i++)
-               {
-                    printf("%02X ", server_ip[i]);
-                    if(server_ip[i] == 0x20)
+                    memset( server_ip, 0, sizeof(server_ip) );
+                    while ( NULL != fgets(server_ip, sizeof(server_ip), fp ))
+                    {
+                         printf("ip=%s\n",server_ip);
                          break;
+                    }              
+                    printf("ip len = %d\n", strlen(server_ip));
+                    for(i = 0; i < (strlen(server_ip)); i++)
+                    {
+                         printf("%02X ", server_ip[i]);
+                         if(server_ip[i] == 0x20)
+                              break;
+                    }
+                    printf("\n");
+                    server_ip[i] = '\n';
+                    prt_handle.esc_2_prt(server_ip, i + 1);
+                    g_tcp_flag = 3; 
+                    pclose(fp);                   
                }
-               printf("\n");
-               server_ip[i] = '\n';
-               prt_handle.esc_2_prt(server_ip, i + 1);
-               g_tcp_flag = 3;
+               else
+               {
+                    printf("get 9100 ip faild!\n");
+               }
+               
+
           }
 
 

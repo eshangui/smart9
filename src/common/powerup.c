@@ -432,7 +432,7 @@ void check_net_thread(void)
     unsigned int time_count = 0;
     int ret=NET_FAILD, status = 0, count = 10, latency = 0;
     FILE* fp = NULL;
-    char get_way[32] = {0};
+    char get_way[128] = {0};
     char *set_route_head = "route add -host 203.207.198.134 gw ";
     char set_route[128] = {0};
     const char* ifList[] = {"wlan0", "usb0", "eth0"};
@@ -483,12 +483,15 @@ void check_net_thread(void)
                 g_net_way = NET_WAY_ETH;
                 fp = popen( "route -n|grep eth0|cut -f 10 -d ' '", "r" );
                 memset( get_way, 0, sizeof(get_way) );
-                while ( NULL != fgets(get_way, sizeof(get_way), fp ))
+                if(fp != NULL)
                 {
-                    printf("gateway=%s\n",get_way);
-                    break;
-                }
-
+                    while ( NULL != fgets(get_way, sizeof(get_way), fp ))
+                    {
+                        printf("gateway=%s\n",get_way);
+                        break;
+                    }                    
+                    pclose(fp);                   
+                }                
                 count = strlen(get_way);
                 get_way[count - 1] = ' ';
                 memset(set_route, 0, sizeof(set_route));
@@ -496,8 +499,28 @@ void check_net_thread(void)
                 strcat(set_route, get_way);
                 strcat(set_route, "dev eth0");
                 printf("set_route---->:%s\n", set_route);
+
                 fp = popen("route del -host 203.207.198.134", "r" );
+                if(fp != NULL)
+                {
+                    while ( NULL != fgets(get_way, sizeof(get_way), fp ))
+                    {
+                        printf("route del=%s\n",get_way);
+                        break;
+                    }                    
+                    pclose(fp);                   
+                }
                 fp = popen(set_route, "r" );
+                if(fp != NULL)
+                {
+                    while ( NULL != fgets(get_way, sizeof(get_way), fp ))
+                    {
+                        printf("set_route=%s\n",get_way);
+                        break;
+                    }   
+                    pclose(fp);                   
+                }
+
                 g_offline_flag = 0;
                 //sleep(1);
                 //mqtt_free(&m_mqtt);
@@ -527,11 +550,15 @@ void check_net_thread(void)
                     g_net_way = NET_WAY_WIFI;
                     fp = popen( "route -n|grep wlan0|cut -f 10 -d ' '", "r" );
                     memset( get_way, 0, sizeof(get_way) );
-                    while ( NULL != fgets(get_way, sizeof(get_way), fp ))
+                    if(fp != NULL)
                     {
-                        printf("gateway=%s\n",get_way);
-                        break;
-                    }
+                        while ( NULL != fgets(get_way, sizeof(get_way), fp ))
+                        {
+                            printf("gateway=%s\n",get_way);
+                            break;
+                        }                    
+                        pclose(fp);                   
+                    }   
 
                     count = strlen(get_way);
                     get_way[count - 1] = ' ';
@@ -540,8 +567,27 @@ void check_net_thread(void)
                     strcat(set_route, get_way);
                     strcat(set_route, "dev wlan0");
                     printf("set_route---->:%s\n", set_route);
+
                     fp = popen("route del -host 203.207.198.134", "r" );
+                    if(fp != NULL)
+                    {
+                        while ( NULL != fgets(get_way, sizeof(get_way), fp ))
+                        {
+                            printf("route del=%s\n",get_way);
+                            break;
+                        }      
+                        pclose(fp);                   
+                    }
                     fp = popen(set_route, "r" );
+                    if(fp != NULL)
+                    {
+                        while ( NULL != fgets(get_way, sizeof(get_way), fp ))
+                        {
+                            printf("set_route=%s\n",get_way);
+                            break;
+                        }      
+                        pclose(fp);                   
+                    }
                     g_offline_flag = 0;
                     //sleep(1);
                     //mqtt_free(&m_mqtt);
@@ -563,11 +609,15 @@ void check_net_thread(void)
                         g_net_way = NET_WAY_CELL;
                         fp = popen( "route -n|grep usb0|cut -f 10 -d ' '", "r" );
                         memset( get_way, 0, sizeof(get_way) );
-                        while ( NULL != fgets(get_way, sizeof(get_way), fp ))
+                        if(fp != NULL)
                         {
-                            printf("gateway=%s\n",get_way);
-                            break;
-                        }
+                            while ( NULL != fgets(get_way, sizeof(get_way), fp ))
+                            {
+                                printf("gateway=%s\n",get_way);
+                                break;
+                            }                    
+                            pclose(fp);                   
+                        }  
 
                         count = strlen(get_way);
                         get_way[count - 1] = ' ';
@@ -576,8 +626,27 @@ void check_net_thread(void)
                         strcat(set_route, get_way);
                         strcat(set_route, "dev usb0");
                         printf("set_route---->:%s\n", set_route);
+
                         fp = popen("route del -host 203.207.198.134", "r" );
+                        if(fp != NULL)
+                        {
+                            while ( NULL != fgets(get_way, sizeof(get_way), fp ))
+                            {
+                                printf("route del=%s\n",get_way);
+                                break;
+                            }  
+                            pclose(fp);                   
+                        }
                         fp = popen(set_route, "r" );
+                        if(fp != NULL)
+                        {
+                            while ( NULL != fgets(get_way, sizeof(get_way), fp ))
+                            {
+                                printf("set_route=%s\n",get_way);
+                                break;
+                            }  
+                            pclose(fp);                   
+                        }
                         g_offline_flag = 0;
                         //sleep(1);
                         //mqtt_free(&m_mqtt);

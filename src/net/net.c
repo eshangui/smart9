@@ -32,7 +32,9 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
 {
     struct mbuf *io = &nc->recv_mbuf;
     static int tcp_rec_len = 0;
+    FILE *fp;
     (void)p;
+    char ret_buff[512] = {0};
 
     switch (ev)
     {
@@ -45,13 +47,63 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
         mbuf_remove(io, io->len); // Discard message from recv buffer
         if(pn_data.data[tcp_rec_len - 1] == 0x69 && pn_data.data[tcp_rec_len - 2] == 0x1b)
         {
+            printf("start combine data!\n");
             pn_data.len = tcp_rec_len - 2;
             tcp_rec_len = 0;
-            system("rm ./escode/code.bin");
-            dump_data("./escode/code.bin", pn_data.data, pn_data.len);
-            system("rm ./escode/upload.zip");
-            system("zip -r ./escode/upload.zip ./escode/*");
             
+            fp = popen("rm ./escode/code.bin", "r");
+            if(fp != NULL)
+            {
+        	    while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                {
+                    if('\n' == ret_buff[strlen(ret_buff)-1])
+                    {
+                        ret_buff[strlen(ret_buff)-1] = '\0';
+                    }
+                    printf("rm ./escode/code.bin = %s\r\n", ret_buff);
+                }
+                pclose(fp);
+            }
+            else
+            {
+                printf("popen faild!!!!!!!!!!\n");
+            }
+            //system("rm ./escode/code.bin");
+            dump_data("./escode/code.bin", pn_data.data, pn_data.len);
+            fp = popen("rm ./escode/upload.zip", "r");
+            if(fp != NULL)
+            {
+        	    while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                {
+                    if('\n' == ret_buff[strlen(ret_buff)-1])
+                    {
+                        ret_buff[strlen(ret_buff)-1] = '\0';
+                    }
+                    printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
+                }
+                pclose(fp);
+            }
+            else
+            {
+                printf("popen faild!!!!!!!!!!\n");
+            }
+            fp = popen("zip -r ./escode/upload.zip ./escode/*", "r");
+            if(fp != NULL)
+            {
+        	    while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                {
+                    if('\n' == ret_buff[strlen(ret_buff)-1])
+                    {
+                        ret_buff[strlen(ret_buff)-1] = '\0';
+                    }
+                    printf("zip = %s\r\n", ret_buff);
+                }
+                pclose(fp);
+            }
+            else
+            {
+                printf("popen faild!!!!!!!!!!\n");
+            }            
             g_upload_flag = 1;            
         }
 
@@ -204,6 +256,7 @@ uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
             g_timer_flag = 1;
             g_timer_count = 20;
             g_overtime_flag = 0;
+            printf("m_mqtt.active_connections = %x\n", m_mqtt.active_connections);
             mg_mqtt_publish(m_mqtt.active_connections, sub_topic_d9, 65, MG_MQTT_QOS(0),sn,length);
             break;
     }

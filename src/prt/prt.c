@@ -19,6 +19,8 @@ unsigned int usb_data_cb(void *buff, unsigned int size)
 }
 void bmp_cb(const char *bmp_path)
 {
+    FILE *fp;
+    char ret_buff[128] = {0};
     printf("function %s was called\n", __FUNCTION__);
 	printf("bmp_path = %s\n", bmp_path);
 	// if (prt_handle.bmp_print) {
@@ -27,8 +29,32 @@ void bmp_cb(const char *bmp_path)
 	// 	prt_handle.printer_cut(8);
 	// }
 
-    system("rm ./escode/upload.zip");
-    system("zip -r ./escode/upload.zip ./escode/*");
+    fp = popen("rm ./escode/upload.zip", "r");
+    if(fp != NULL)
+    {
+        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+        {
+            if('\n' == ret_buff[strlen(ret_buff)-1])
+            {
+                ret_buff[strlen(ret_buff)-1] = '\0';
+            }
+            printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
+        }
+        pclose(fp);                   
+    }
+    fp = popen("zip -r ./escode/upload.zip ./escode/*", "r");
+    if(fp != NULL)
+    {
+        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+        {
+            if('\n' == ret_buff[strlen(ret_buff)-1])
+            {
+                ret_buff[strlen(ret_buff)-1] = '\0';
+            }
+            printf("zip = %s\r\n", ret_buff);
+        }
+        pclose(fp);                   
+    }
     g_upload_flag = 1;
 }
 
