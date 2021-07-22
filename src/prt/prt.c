@@ -4,6 +4,9 @@
 #include <string.h>
 #include "esc2bmp.h"
 #include "net.h"
+#include <dirent.h>
+#include "cJSON.h"
+#include <time.h>
 
 esc2bmp_handle_t prt_handle;
 
@@ -61,6 +64,7 @@ void bmp_cb(const char *bmp_path)
 void prt_init (void)
 {
 
+    char sn_buff[64] = {0};
     unsigned char test_feed[3] = {0x1b, 0x64, 0x06};
     unsigned char test_cut[4] = {0x1d, 0x56, 0x42, 0x40};
     char *prt_str = "INIT OK!\n";
@@ -81,6 +85,9 @@ void prt_init (void)
 	}
     printf("init success!\n");
 
+    prt_handle.get_printer_sn(sn_buff, 64);
+
+    printf(" sn is %s\n", sn_buff);
     //prt_handle.esc_2_prt(prt_str, 10);
     //prt_handle.printer_cut(96);
     // while(1)
@@ -162,11 +169,142 @@ extern void lib_event_callback(hprt_lib_event_t e, const void *arg, unsigned int
     }
 }
 
-void get_offline_code(void)
+unsigned char get_offline_code(void)
 {
+    DIR * dp;
+    struct dirent *filename;    
     int32_t len;
-    load_data("/oem/prt.bin", &pn_data.data[pn_data.len], &len);
+    int file_name_index;
+    unsigned int min_num = 5000;
+    char tmp_str[32] = {0};
+    char code_dir[64] = {0};
+    char dir[64] = "/oem/offline_code/";
+    char code_name_str[] = "/codedata.bin";
+    char mkdir_str[64] = "mkdir /oem/offline_data/";
+    char cp_info[64] = "cp /oem/config/info.json /oem/offline_data/";
+    char cp_zip[64] = "cp /oem/escode/upload.zip /oem/offline_data/";
+    char info_json[64] = "/oem/offline_data/";
+    char info_name_str[64] = {0};
+    char rm_str[64] = "rm ";
+    unsigned char info_text[64] = {0};
+    unsigned int file_count = 0;
+
+    dp = opendir("/oem/offline_code");
+    if(dp != NULL)
+    {
+        while (filename = readdir(dp))
+        {
+            file_count++;
+            //printf("filename:%-10s\t\n",filename->d_name);
+            file_name_index = atoi(filename->d_name);
+            //printf("name index = %d\n", file_name_index);
+            if(file_name_index < min_num && file_name_index != 0x00)
+            {
+                min_num = file_name_index;
+                strcpy(code_dir, filename->d_name);
+            }
+        }   
+        printf("file count = %d\n", file_count); 
+        if(file_count == 0x02)
+            return 1;
+    }
+    closedir(dp);
+    printf("code dir is: %s\n", code_dir);
+    strcpy(&dir[strlen(dir)], code_dir);
+    strcpy(&rm_str[strlen(rm_str)], dir);
+    strcpy(&rm_str[strlen(rm_str)], " -r");
+    printf("rm_str = %s\n", rm_str);
+    strcpy(info_name_str, dir);
+    strcpy(&info_name_str[strlen(info_name_str)], "/info.txt");
+    printf("info_name_str = %s\n", info_name_str);
+    load_data(info_name_str, info_text, &len);
+    printf("info_text = %s\n", info_text);
+    strcpy(&dir[strlen(dir)], code_name_str);
+    printf("dir is: %s\n", dir);
+
+    load_data(dir, &pn_data.data[pn_data.len], &len);
+    printf("len = %d\n", len);
     pn_data.len += (len - 2);
+
+    min_num = 0;
+    memset(code_dir, 0, sizeof(code_dir));
+    dp = opendir("./offline_data");
+    if(dp != NULL)
+    {
+        while (filename = readdir(dp))
+        {
+            //printf("filename:%-10s\t\n",filename->d_name);
+            file_name_index = atoi(filename->d_name);
+            //printf("name index = %d\n", file_name_index);
+            if(file_name_index > min_num)
+            {
+                min_num = file_name_index;
+            }
+        }    
+        min_num++;
+        sprintf(tmp_str, "%d", min_num);
+        strcpy(&info_json[strlen(info_json)], tmp_str);
+        strcpy(&info_json[strlen(info_json)], "/info.json");
+        strcpy(&mkdir_str[strlen(mkdir_str)], tmp_str);
+        strcpy(&cp_info[strlen(cp_info)], tmp_str);
+        strcpy(&cp_zip[strlen(cp_zip)], tmp_str);
+        printf("mkdir str is: %s\n", mkdir_str);
+        printf("cpinfo str is: %s\n", cp_info);
+        printf("cpzip str is: %s\n", cp_zip);
+    }
+    system_op(mkdir_str);
+    system_op(cp_info);
+    system_op(cp_zip);
+
+    printf("info json dir is: %s\n", info_json);
+    updata_offine_json(info_json, info_text);
+
+
+    system_op(rm_str);
+
+    return 0;
+}
+
+void updata_offine_json(char *json_str, char *code_id)
+{
+    cJSON *json = NULL;
+    cJSON *data_time = NULL;
+    unsigned int len = 0;
+    unsigned char json_buf[2048] = {0};    
+    struct timeval tv;
+    char tmp_buf[64] = {0};
+
+
+    load_data(json_str, json_buf, &len);
+    printf("info_json is: %s\n", json_buf);
+    json = cJSON_Parse(json_buf);
+    if(!json)
+    {
+        printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
+    }
+
+    gettimeofday (&tv, NULL);
+    printf("tv_sec; %d\n", tv.tv_sec);
+    sprintf(tmp_buf, "%d", tv.tv_sec);
+
+    cJSON_ReplaceItemInObject(json, "offline_id", cJSON_CreateString(code_id));
+    cJSON_ReplaceItemInObject(json, "date_time", cJSON_CreateString(tmp_buf));
+
+    cJSON_PrintPreallocated(json, json_buf, sizeof(json_buf), 1);
+
+    dump_data(json_str, json_buf, strlen(json_buf));
+    if(json != NULL)
+        cJSON_free(json);
+    if(data_time != NULL)
+        cJSON_free(data_time);
+
+
+}
+
+
+void read_sn (void)
+{
+
 }
 
 

@@ -7,7 +7,8 @@
 #include <unistd.h>
 #include "type.h"
 #include "define.h"
-#include "var.h"
+//#include "var.h"
+#include "common_var.h"
 #include "dbg.h"
 #include "powerup.h"
 #include "selfcheck.h"

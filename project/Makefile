@@ -8,6 +8,8 @@ CFLAGS += -I./../src/common -I./../src/net -I./../src/prt -I./../src/tools
 
 LDFLAGS = -I. -L. -L./../src/prt -lesc2bmp -lpthread -ldl
 
+LDFLAGS += -L./../src/net/ -lcurl -lssl -lcrypto -lnghttp2 -lz
+
 #DEPS = ./../src/esc2bmp.h
 
 SRCS = ./../src/main.c

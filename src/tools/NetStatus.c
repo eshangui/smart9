@@ -319,7 +319,7 @@ int PXAT_NS_GetNetStatus(const char* ifName, int* netStatus, int* latency) {
 //     printf("!!!!!!!!--------------!!!!!!!!!!!!!\n");
 //     while(i)
 //     {
-//         i = PXAT_NS_Initialize(ifList, 2, "www.baidu.com", TYPE_DOMAIN_NAME, 80, "203.207.198.134", TYPE_IP_ADDRESS, 61613, 5000, 1000);
+//         i = PXAT_NS_Initialize(ifList, 2, "www.baidu.com", TYPE_DOMAIN_NAME, 80, "106.75.115.116", TYPE_IP_ADDRESS, 61613, 5000, 1000);
 //         printf("while------Initialize return %X\n", i);
 //         usleep(1000 * 1000);
 //     }

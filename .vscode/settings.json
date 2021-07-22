@@ -8,6 +8,7 @@
     "powerup.h": "c",
     "cjson.h": "c",
     "netstatus.h": "c",
-    "prt.h": "c"
+    "prt.h": "c",
+    "common_var.h": "c"
   }
 }

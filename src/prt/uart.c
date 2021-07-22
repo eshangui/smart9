@@ -5,7 +5,7 @@
 #include <errno.h>   /* ERROR Number Definitions           */
 #include "uart.h"
 #include "net.h"
-#include "var.h"
+#include "common_var.h"
 #include "dbg.h"
 #include "cJSON.h"
 
@@ -355,12 +355,15 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
     FILE *h_file = NULL;
     FILE *fp = NULL;
     long file_len = 0;
-    cJSON *cfc_json, *json_ip;
+    cJSON *cfc_json = NULL;
+    cJSON *json_ip = NULL;
     char *content = NULL;
     char ret_buff[128] = {0};
     char shell_str[128] = {0};
     
-    cJSON *json, *ssid_val, *pwd_val, *ip, *mask, *dns, *gate;
+    cJSON *json = NULL;
+    cJSON *ssid_val = NULL;
+    cJSON *pwd_val = NULL;
 
     content = (char*)malloc(len + 1);
     memset(content, 0, len + 1);
@@ -370,6 +373,7 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
     if(!json)
     {
         printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
+        return;
     }
     char *str = cJSON_Print(json); 
 
@@ -396,18 +400,18 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
 
     }
 
-    ssid_val = cJSON_GetObjectItem(json, "webConfig");
-    pwd_val = cJSON_GetObjectItem(ssid_val, "webDHCP");
-    printf(" webDHCP : %s\n", pwd_val->valuestring);
-    if(strcmp(pwd_val->valuestring, "0") == 0 )
-    {
-        ip = cJSON_GetObjectItem(ssid_val, "IP");
-        mask = cJSON_GetObjectItem(ssid_val, "webMask");
-        dns = cJSON_GetObjectItem(ssid_val, "webDNS");
-        gate = cJSON_GetObjectItem(ssid_val, "webGate"); 
-        printf("static data\n %s\n %s\n %s\n %s\n", ip->valuestring, mask->valuestring, dns->valuestring, gate->valuestring);   
-        SetStaticIP("wlan0", ip->valuestring, mask->valuestring, gate->valuestring, dns->valuestring);   
-    }
+    // ssid_val = cJSON_GetObjectItem(json, "webConfig");
+    // pwd_val = cJSON_GetObjectItem(ssid_val, "webDHCP");
+    // printf(" webDHCP : %s\n", pwd_val->valuestring);
+    // if(strcmp(pwd_val->valuestring, "0") == 0 )
+    // {
+    //     ip = cJSON_GetObjectItem(ssid_val, "IP");
+    //     mask = cJSON_GetObjectItem(ssid_val, "webMask");
+    //     dns = cJSON_GetObjectItem(ssid_val, "webDNS");
+    //     gate = cJSON_GetObjectItem(ssid_val, "webGate"); 
+    //     printf("static data\n %s\n %s\n %s\n %s\n", ip->valuestring, mask->valuestring, dns->valuestring, gate->valuestring);   
+    //     SetStaticIP("wlan0", ip->valuestring, mask->valuestring, gate->valuestring, dns->valuestring);   
+    // }
 
 
 
@@ -427,6 +431,15 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
     }
     prt_handle.esc_2_prt("Please Reboot!\n", strlen("Please Reboot!\n"));
     prt_handle.printer_cut(196);
+
+    free(content);
+    if(json != NULL)
+        cJSON_free(json);
+    if(ssid_val != NULL)
+     cJSON_free(ssid_val);
+    if(pwd_val != NULL)
+        cJSON_free(pwd_val);
+
     // ssid_val = cJSON_GetObjectItem(json, "webTypePriority");
     // if(strcmp(ssid_val->valuestring, "4g") == 0)
     // {
@@ -481,6 +494,8 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
 
 void *timer_thread(void *arg)
 {
+    unsigned char heart_beat_count = 0;
+    unsigned char http_download_count = 0;
     while(1)
     {
         if(g_wait_net_flag == 1)
@@ -505,7 +520,37 @@ void *timer_thread(void *arg)
                 g_wait_net_flag = 1;
             }
         }
-        sleep(1); 
+
+        if(heart_beat_count == 30)
+        {
+            heart_beat_count = 0;
+            g_heart_beat_flag = 1;
+
+        }
+
+        if(g_downloading_flag == 1)
+        {
+            http_download_count++;
+            if(http_download_count == 60)
+            {
+                http_download_count = 0;
+                g_download_overtime_flag = 1;
+            }       
+        }
+
+        if(g_upload_flag == 1)
+        {
+            http_download_count++;
+            if(http_download_count == 60)
+            {
+                http_download_count = 0;
+                g_upload_overtime_flag = 1;
+            }       
+        }
+
+
+        sleep(1);
+        heart_beat_count++;
     }
 }
 

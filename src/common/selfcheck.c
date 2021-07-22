@@ -50,44 +50,44 @@ uint32_t ble_check(void)
         // }
         // tcflush(g_ble_uart_dev, 2);
 
-        rv = ble_write(test_data3, sizeof(test_data3));
-        if(rv == -1)
-        {
-            printf("ble uart write error!\n");
-        }
-        else
-        {
-            usleep(100000);
-            rv = ble_at_read(rec_buff,&read_len);
-            printf("ble read len = %d, data is:%s\n", read_len, rec_buff);
-        }
-        tcflush(g_ble_uart_dev, 2);
+        // rv = ble_write(test_data3, sizeof(test_data3));
+        // if(rv == -1)
+        // {
+        //     printf("ble uart write error!\n");
+        // }
+        // else
+        // {
+        //     usleep(100000);
+        //     rv = ble_at_read(rec_buff,&read_len);
+        //     printf("ble read len = %d, data is:%s\n", read_len, rec_buff);
+        // }
+        // tcflush(g_ble_uart_dev, 2);
 
-        rv = ble_write(test_data1, sizeof(test_data1));
-        if(rv == -1)
-        {
-            printf("ble uart write error!\n");
-        }
-        else
-        {
-            usleep(100000);
-            rv = ble_at_read(rec_buff,&read_len);
-            printf("ble read len = %d, data is:%s\n", read_len, rec_buff);
-        }
-        tcflush(g_ble_uart_dev, 2);
+        // rv = ble_write(test_data1, sizeof(test_data1));
+        // if(rv == -1)
+        // {
+        //     printf("ble uart write error!\n");
+        // }
+        // else
+        // {
+        //     usleep(100000);
+        //     rv = ble_at_read(rec_buff,&read_len);
+        //     printf("ble read len = %d, data is:%s\n", read_len, rec_buff);
+        // }
+        // tcflush(g_ble_uart_dev, 2);
 
-        rv = ble_write(test_data2, sizeof(test_data2));
-        if(rv == -1)
-        {
-            printf("ble uart write error!\n");
-        }
-        else
-        {
-            usleep(100000);
-            rv = ble_at_read(rec_buff,&read_len);
-            printf("ble read len = %d, data is:%s\n", read_len, rec_buff);
-        }
-        tcflush(g_ble_uart_dev, 2);
+        // rv = ble_write(test_data2, sizeof(test_data2));
+        // if(rv == -1)
+        // {
+        //     printf("ble uart write error!\n");
+        // }
+        // else
+        // {
+        //     usleep(100000);
+        //     rv = ble_at_read(rec_buff,&read_len);
+        //     printf("ble read len = %d, data is:%s\n", read_len, rec_buff);
+        // }
+        // tcflush(g_ble_uart_dev, 2);
 
         // rv = ble_write(getv_data, sizeof(getv_data));
         // if(rv == -1)

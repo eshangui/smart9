@@ -92,7 +92,8 @@ int escpos_printer_image(escpos_printer *printer,
                          const int width,
                          const int height);
 
-void get_offline_code(void);
+void updata_offine_json(char *json_str, char *code_id);
+unsigned char get_offline_code(void);
 
 
 

@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 #include "type.h"
-#include "var.h"
+#include "common_var.h"
 //#include "bmp.h"
 #include "dbg.h"
 #if _WIN32
@@ -92,21 +92,27 @@ void dump_data(char *path, uint8_t *data, int32_t len)
 
 void load_data(char *path, uint8_t *data, int32_t *len)
 {
-        FILE *pf;
-        int data_size = 0;
-        pf = fopen(path, "r");
-        if (!pf)
-        {
-                mprintf(0, "open image file error \n");
-                return;
-        }
-        fseek(pf, 0, SEEK_END);
-        data_size = ftell(pf);
-        fseek(pf, 0, SEEK_SET);
-        fread(data, data_size, 1, pf);
+    FILE *pf;
+    int data_size = 0;
+    pf = fopen(path, "r");
+    if (!pf)
+    {
+            mprintf(0, "open image file error \n");
+            return;
+    }
+    fseek(pf, 0, SEEK_END);
+    data_size = ftell(pf);
+    if(data == NULL)
+    {
         *len = data_size;
         fclose(pf);
-        return;
+        return;        
+    }
+    fseek(pf, 0, SEEK_SET);
+    fread(data, data_size, 1, pf);
+    *len = data_size;
+    fclose(pf);
+    return;
 }
 
 int seq = 1;
@@ -242,4 +248,25 @@ unsigned char print_time(char *buff)
     i = sprintf(buff, "%02d:", t->tm_hour);   
     i += sprintf(buff + i, "%02d:", t->tm_min);   
     i += sprintf(buff + i, "%02d\n", t->tm_sec);   
+}
+
+
+void system_op(char * cmd_str)
+{
+    FILE *fp;
+    unsigned char ret_buff[2048];
+    fp = popen(cmd_str, "r");
+    if(fp != NULL)
+    {
+        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+        {
+            if('\n' == ret_buff[strlen(ret_buff)-1])
+            {
+                ret_buff[strlen(ret_buff)-1] = '\0';
+            }
+            printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
+        }
+        pclose(fp);                   
+    }
+    
 }
