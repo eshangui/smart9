@@ -168,6 +168,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
         memset(&opts, 0, sizeof(opts));
         opts.user_name = s_user_name;
         opts.password = s_password;
+        opts.keep_alive = 10;
 
         mg_set_protocol_mqtt(nc);
         memset(prt_sn, 0, sizeof(prt_sn));
@@ -207,7 +208,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
         mg_mqtt_subscribe(nc, &s_topic_expr, 1, 42);
     
         g_unprint_flag = 0;
-        //pthread_mutex_unlock(&net_lock);
+        g_offline_flag = 0;
         break;
     case MG_EV_MQTT_PUBACK:
         printf("Message publishing acknowledged (msg_id: %d)\n", msg->message_id);
@@ -294,7 +295,10 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
     case MG_EV_CLOSE:
         printf("Connection closed\n");
         printf("errno = %d\n", errno);
-        //exit(1);
+        g_reconnect_flag = 1;
+        g_unprint_flag = 1;
+        g_offline_flag = 1;
+        printf("m_mqtt = %d\n", m_mqtt.active_connections);
     }
 }
 
@@ -410,8 +414,14 @@ void send_heart_beat(void)
     cJSON_PrintPreallocated(json, sn, sizeof(sn), 1);
 
     printf("heart_beat data is:%s\n", sn);
+    printf("m_mqtt = %d\n", m_mqtt.active_connections);
     if(m_mqtt.active_connections != NULL)
         mg_mqtt_publish(m_mqtt.active_connections, pub_topic_heartbeat, 65, MG_MQTT_QOS(0),sn,strlen(sn));
+    else
+    {
+        printf("con == 0000 can`t heartbeat!\n");
+    }
+    
     if(json != NULL)
         cJSON_free(json);
    
@@ -420,7 +430,7 @@ void send_heart_beat(void)
 uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
 {
     int32_t length = 0;
-    char sn[1024 * 2] = { 0 };
+    char sn[1024 * 5] = { 0 };
 
     if(g_heart_http_lock == 1)
     {
@@ -629,9 +639,19 @@ unsigned char parse_http_data(char *http_rsp, int len)
             else
             {
                 printf("popen faild!!!!!!!!!!\n");
-            }  
+            } 
+            fp = popen("sync" , "r");
+            if(fp != NULL)
+            {
+                pclose(fp);
+            }
+            else
+            {
+                printf("popen faild!!!!!!!!!!\n");
+            }   
             if(g_offline_prt_flag == 1)
             {
+                sleep(2);
                 g_offline_prt_flag = 0;
                 prt_handle.esc_2_prt("synchronized!!!\n", strlen("synchronized!!!\n"));
                 prt_handle.printer_cut(198);                

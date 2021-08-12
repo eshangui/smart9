@@ -9,6 +9,7 @@
     "cjson.h": "c",
     "netstatus.h": "c",
     "prt.h": "c",
-    "common_var.h": "c"
+    "common_var.h": "c",
+    "mongoose.h": "c"
   }
 }

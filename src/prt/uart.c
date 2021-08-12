@@ -496,6 +496,7 @@ void *timer_thread(void *arg)
 {
     unsigned char heart_beat_count = 0;
     unsigned char http_download_count = 0;
+    unsigned char reconnect_count = 0;
     while(1)
     {
         if(g_wait_net_flag == 1)
@@ -521,7 +522,7 @@ void *timer_thread(void *arg)
             }
         }
 
-        if(heart_beat_count == 30)
+        if(heart_beat_count == 60)
         {
             heart_beat_count = 0;
             g_heart_beat_flag = 1;
@@ -546,6 +547,17 @@ void *timer_thread(void *arg)
                 http_download_count = 0;
                 g_upload_overtime_flag = 1;
             }       
+        }
+
+        if(g_reconnect_flag == 1)
+        {
+            reconnect_count++;
+            if(reconnect_count == 10)
+            {
+                reconnect_count = 0;
+                g_reconnect_flag = 2;
+            }
+
         }
 
 

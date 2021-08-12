@@ -1,7 +1,7 @@
 #include "common_var.h"
 #include "mongoose.h"
 
-char version[] = "SECURE_PRT_V10.14\n";
+char version[] = "SECURE_PRT_V10.17\n";
 
 struct mg_mgr m_tcp;
 struct mg_mgr m_mqtt;
@@ -32,6 +32,7 @@ volatile unsigned char g_uploading_flag = 0;
 volatile unsigned char g_upload_overtime_flag = 0;
 volatile unsigned char g_status_print_flag = 0;
 volatile unsigned char g_unprint_flag = 0;
+volatile unsigned char g_reconnect_flag = 0;
 
 
 

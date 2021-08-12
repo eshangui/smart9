@@ -451,7 +451,7 @@ void check_net_thread(void)
 
     while(ret)
     {
-        ret = PXAT_NS_Initialize(ifList, 3, "106.75.115.116", TYPE_IP_ADDRESS, 61613, "106.75.115.116", TYPE_IP_ADDRESS, 61613, 6000, 5000);
+        ret = PXAT_NS_Initialize(ifList, 3, "106.75.115.116", TYPE_IP_ADDRESS, 61613, "106.75.115.116", TYPE_IP_ADDRESS, 61613, 6000, 30000);
         printf("while------Initialize return %X\n", ret);
         usleep(1000 * 1000);
     }
@@ -531,7 +531,7 @@ void check_net_thread(void)
                     }   
                     pclose(fp);                   
                 }
-                g_offline_flag = 0;
+                //g_offline_flag = 0;
                 //sleep(1);
                 //mqtt_free(&m_mqtt);
                 sleep(1);
@@ -598,7 +598,7 @@ void check_net_thread(void)
                         }      
                         pclose(fp);                   
                     }
-                    g_offline_flag = 0;
+                    //g_offline_flag = 0;
                     //sleep(1);
                     //mqtt_free(&m_mqtt);
                     sleep(1);
@@ -656,7 +656,7 @@ void check_net_thread(void)
                             }  
                             pclose(fp);                   
                         }
-                        g_offline_flag = 0;
+                        //g_offline_flag = 0;
                         //sleep(1);
                         //mqtt_free(&m_mqtt);
                         sleep(1);

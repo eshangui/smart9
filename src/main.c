@@ -78,7 +78,8 @@ int main(int argc, char **argv)
     pthread_create(&p_heart_beat, NULL, heart_beat_thread, NULL);
     pthread_detach(p_heart_beat);
     pthread_create(&p_offline_op, NULL, offline_op_thread, NULL);
-    pthread_detach(p_offline_op);       
+    pthread_detach(p_offline_op); 
+
 
     while (1)
     {
@@ -90,12 +91,21 @@ int main(int argc, char **argv)
           {
                g_unprint_flag = 1;
                g_net_change_flag = 0;
-               mqtt_free(&m_mqtt);
+               if(m_mqtt.active_connections != 0)
+                    mqtt_free(&m_mqtt);
+               //sleep(10);
                //mqtt_init("121.36.3.243:61613");
                mqtt_init("106.75.115.116:61613");
                //if(g_net_status_flag == 0)
                     g_net_status_flag = 1;
           }
+
+          if(g_reconnect_flag == 2)
+          {
+               g_reconnect_flag = 0;
+               mqtt_init("106.75.115.116:61613");
+          }
+
           if(g_net_status_flag == 1)
           {
                g_net_status_flag = 10;
@@ -187,7 +197,6 @@ int main(int argc, char **argv)
                {
                     printf("get 9100 ip faild!\n");
                }
-               
 
           }
 
