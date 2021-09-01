@@ -15,6 +15,52 @@ task:
 3. TBD
 */
 
+void print_init_info(void)
+{
+     FILE *fp = NULL;
+     char mac_buff[64] = {0};
+     char prt_mac_buff[64] = {0};
+     prt_handle.esc_2_prt(version, strlen(version));
+     prt_handle.esc_2_prt(g_prt_sn, strlen(g_prt_sn));   
+
+
+     fp = popen( "ifconfig wlan0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'", "r" );
+     if(fp != NULL)
+     {
+          memset( mac_buff, 0, sizeof(mac_buff) );
+          while ( NULL != fgets(mac_buff, sizeof(mac_buff), fp ))
+          {
+               printf("wlan mac=%s\n",mac_buff);
+               break;
+          }  
+          memset(prt_mac_buff, 0 , sizeof(prt_mac_buff));
+          strcat(prt_mac_buff, "WIFI: ");
+          strcat(prt_mac_buff, mac_buff);
+          prt_handle.esc_2_prt(prt_mac_buff, strlen(prt_mac_buff));
+          pclose(fp); 
+     }
+
+     fp = popen( "ifconfig eth0 | grep -o -E '([[:xdigit:]]{1,2}:){5}[[:xdigit:]]{1,2}'", "r" );
+     if(fp != NULL)
+     {
+          memset( mac_buff, 0, sizeof(mac_buff) );
+          while ( NULL != fgets(mac_buff, sizeof(mac_buff), fp ))
+          {
+               printf("wlan mac=%s\n",mac_buff);
+               break;
+          }  
+          memset(prt_mac_buff, 0 , sizeof(prt_mac_buff));
+          strcat(prt_mac_buff, "ETH: ");
+          strcat(prt_mac_buff, mac_buff);
+          prt_handle.esc_2_prt(prt_mac_buff, strlen(prt_mac_buff));
+          pclose(fp); 
+     }
+
+     prt_handle.printer_cut(198);         
+
+}
+
+
 int main(int argc, char **argv)
 {
      int i = 0;
@@ -89,35 +135,52 @@ int main(int argc, char **argv)
           }
           if(g_net_change_flag == 1)
           {
+               g_net_status_flag = 1;               
                g_unprint_flag = 1;
                g_net_change_flag = 0;
+               if(g_init_flag == 0)
+               {
+                    g_init_flag = 1;
+               }
+               else
+               {
+                    sleep(20);                    
+               }
+               
+
+
                if(m_mqtt.active_connections != 0)
                     mqtt_free(&m_mqtt);
                //sleep(10);
                //mqtt_init("121.36.3.243:61613");
                mqtt_init("106.75.115.116:61613");
+               g_reconnect_flag = 0;
                //if(g_net_status_flag == 0)
-                    g_net_status_flag = 1;
+                    
           }
 
           if(g_reconnect_flag == 2)
           {
+               printf("start reconnect!\n");
                g_reconnect_flag = 0;
+               g_unprint_flag = 1;
+               g_offline_flag = 1;
+               if(m_mqtt.active_connections != 0)
+                    mqtt_free(&m_mqtt);
                mqtt_init("106.75.115.116:61613");
           }
 
           if(g_net_status_flag == 1)
           {
                g_net_status_flag = 10;
+
                if(g_net_way == NET_WAY_ETH)
                {
                     if(g_status_print_flag == 0)
                     {
                          g_status_print_flag = 1;
                          prt_handle.esc_2_prt("---ETH READY---\n", 17);
-                         prt_handle.esc_2_prt(version, strlen(version));
-                         prt_handle.esc_2_prt(g_prt_sn, strlen(g_prt_sn));   
-                         prt_handle.printer_cut(198);                   
+                         print_init_info();                 
                       
                     }
 
@@ -128,9 +191,7 @@ int main(int argc, char **argv)
                     {
                          g_status_print_flag = 1;
                          prt_handle.esc_2_prt("---WIFI READY---\n", 18);
-                         prt_handle.esc_2_prt(version, strlen(version));
-                         prt_handle.esc_2_prt(g_prt_sn, strlen(g_prt_sn));   
-                         prt_handle.printer_cut(198);                   
+                         print_init_info();                   
                       
                     }
 
@@ -141,9 +202,7 @@ int main(int argc, char **argv)
                     {
                          g_status_print_flag = 1;
                          prt_handle.esc_2_prt("---4G READY---\n", 16);
-                         prt_handle.esc_2_prt(version, strlen(version));
-                         prt_handle.esc_2_prt(g_prt_sn, strlen(g_prt_sn)); 
-                         prt_handle.printer_cut(198);                   
+                         print_init_info();                  
                         
                     }
 
@@ -153,10 +212,8 @@ int main(int argc, char **argv)
           {
                printf("offline!!!\n");
                g_net_status_flag = 10;
-               prt_handle.esc_2_prt("---OFFLINE---\n", 15);
-               prt_handle.esc_2_prt(version, strlen(version));
-               prt_handle.esc_2_prt(g_prt_sn, strlen(g_prt_sn));
-               prt_handle.printer_cut(198);
+               prt_handle.esc_2_prt("---READY---\n", strlen("---READY---"));
+               print_init_info();  
           }
           if(g_tcp_flag == 1 || g_tcp_flag == 2)
           {

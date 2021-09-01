@@ -20,12 +20,14 @@ static const char *s_password = "password";
 //static const char *sub_topic_heartbeat = "/smart9/down/heartbeat/1122334455667788";
 static const char *pub_topic_upload = "/smart9/up/upload/1122334455667788";
 static const char *sub_topic_upload = "/smart9/down/upload/1122334455667788";
-static const char *sub_topic_d9 = "UPLOAD";
+static const char *sub_topic_d9 = "UPLOADEX";
 static const char *pub_topic_heartbeat = "/smart9_status_up";
 char sub_topic_heartbeat[64] = {0};
 char sub_topic_prt[64] = {0};
 char sub_topic_op[64] = {0};
 static struct mg_mqtt_topic_expression s_topic_expr = {NULL, 0};
+
+extern char* GF_GetGUID(char * buf);
 
 uint32_t tcp_init(const char *port)
 {
@@ -157,6 +159,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
     cJSON *json = NULL;
     cJSON *code = NULL;
     char prt_sn[32] = {0};
+    int de_data_len = 0;
     struct mg_mqtt_message *msg = (struct mg_mqtt_message *)p;
     (void)nc;
 
@@ -229,20 +232,50 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
             //escpos_printer_feed(3);
             if(g_overtime_flag == 0)
             {
+                    json = cJSON_Parse(msg->payload.p);
+                    if(!json)
+                    {
+                        printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
+                    }     
+                    code = cJSON_GetObjectItem(json, "id");
+                    if(code != NULL)
+                    {
+                        if(strcmp(code->valuestring, g_uuid_buff) != 0)
+                        {
+                            printf("err id is: %s\n", code->valuestring);
+                            cJSON_free(json);
+                            cJSON_free(code);
+                            return;
+                        }                   
+                    }
+                    else
+                    {
+                        printf("parse id error!\n");
+                        return;
+                    }
                     g_timer_flag = 0;
                     g_add_count = 0;
-                    memcpy(&pn_data.data[pn_data.len], (unsigned char*)msg->payload.p, (int)msg->payload.len);
-                    pn_data.len += (int)msg->payload.len;
-                    prt_handle.esc_2_prt(pn_data.data, pn_data.len);
-                    usleep(10000);
-                    //prt_handle.esc_2_prt((unsigned char*)msg->payload.p,(int)msg->payload.len);
-                    usleep(10000);
-                    //    prt_handle.esc_2_prt(test_feed, 3);
-                    prt_handle.printer_cut(96);
-                    //prt_handle.push_printer_process_id(0x01);
-                    //prt_handle.printer_cut();
-                    //escpos_printer_feed(3);
-                    //escpos_printer_cut(1);               
+
+                    code = cJSON_GetObjectItem(json, "data");
+                    if(code != NULL)
+                    {
+                        de_data_len = base64_decode(code->valuestring, &pn_data.data[pn_data.len]);
+                        pn_data.len += de_data_len;
+                        prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+                        usleep(10000);
+                        //prt_handle.esc_2_prt((unsigned char*)msg->payload.p,(int)msg->payload.len);
+                        usleep(10000);
+                        //    prt_handle.esc_2_prt(test_feed, 3);
+                        prt_handle.printer_cut(96);
+                        //prt_handle.push_printer_process_id(0x01);
+                        //prt_handle.printer_cut();
+                        //escpos_printer_feed(3);
+                        //escpos_printer_cut(1);   
+                        cJSON_free(json);
+                        cJSON_free(code);             
+                    }                    
+
+              
             }
 
             }
@@ -429,23 +462,51 @@ void send_heart_beat(void)
 
 uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
 {
+    cJSON *json = NULL;
+    cJSON *tmp_json = NULL;
+    char * content = NULL;
+    char * b64_data = NULL;
     int32_t length = 0;
-    char sn[1024 * 5] = { 0 };
+    int32_t tmp = 0;
+    char uuid_buf[64] = {0};
 
     if(g_heart_http_lock == 1)
     {
         prt_handle.esc_2_prt("DEVICE BUSY\n", strlen("DEVICE BUSY\n"));;
         return 0;
+    }  
+
+    load_data("./escode/upload.zip", NULL, &length);  
+    tmp = length;
+    printf("need len is:%d\n", length);
+    content = (char*)malloc(length * 2);
+    b64_data = (char*)malloc(length * 2);
+    load_data("./escode/upload.zip", content, &length);
+    base64_encode(content,  length, b64_data);
+
+    memset(content, 0, tmp * 2);
+    load_data("/oem/upload.json", content, &length);
+    json = cJSON_Parse(content);
+    if(!json)
+    {
+        printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
     }
-   
-    load_data("./escode/upload.zip", sn, &length);
-    printf("length = %d\n", length);
-    printf("g_offline_flag = %d\n", g_offline_flag);
+    memset(g_uuid_buff, 0, sizeof(g_uuid_buff));
+    strcpy(g_uuid_buff, GF_GetGUID(uuid_buf));
+    cJSON_ReplaceItemInObject(json, "id", cJSON_CreateString(g_uuid_buff));
+    strncpy(g_uuid_buff, "00000000", 8);
+    cJSON_ReplaceItemInObject(json, "data", cJSON_CreateString(b64_data));
+
+
+    memset(content, 0, tmp * 2);
+    cJSON_PrintPreallocated(json, content, tmp * 2, 1);   
+    printf("upload data is:%s\n", content);
+
+    printf("333\n");
+
+
     switch(topic)
     {
-        case MQTT_TOPIC_HEARTBEAT:
-            mg_mqtt_publish(m_mqtt.active_connections, pub_topic_heartbeat, 65, MG_MQTT_QOS(0),sn,strlen(sn));
-            break;
         case MQTT_TOPIC_UPLOAD:
             if(g_offline_flag == 1 || g_unprint_flag == 1)
             {
@@ -457,13 +518,15 @@ uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
             g_overtime_flag = 0;
             printf("m_mqtt.active_connections = %x\n", m_mqtt.active_connections);
             if(m_mqtt.active_connections != 0)
-                mg_mqtt_publish(m_mqtt.active_connections, sub_topic_d9, 65, MG_MQTT_QOS(0),sn,length);
+                mg_mqtt_publish(m_mqtt.active_connections, sub_topic_d9, 65, MG_MQTT_QOS(0),content,strlen(content));
             break;
     }
     
     // while(mqtt_state==0)
     //     mqtt_poll(100);
     mqtt_state = 0;
+    free(content);
+    free(b64_data);
     return D9_OK;
 }
 
@@ -922,8 +985,15 @@ void updata_offline_data(void)
             connection = mg_connect_http(&http_mgr, event_handler, "http://106.75.115.116:8994/offline_upload", "Content-type: application/json\r\n", json_data);
             mg_set_protocol_http_websocket(connection);
             g_http_cmd_flag = 1;
-            while (s_exit_flag == 0)
+	        while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
                 mg_mgr_poll(&http_mgr, 500); 
+            if(g_upload_overtime_flag == 1)
+            {
+                g_upload_overtime_flag = 0;
+                free(content);
+                free(b64_data);
+                return;
+            }
             printf("updata index %d success\n", updata_index);
             updata_index++;
             updata_offset += (32 * 1024);
@@ -994,8 +1064,15 @@ void updata_offline_data(void)
         connection = mg_connect_http(&http_mgr, event_handler, "http://106.75.115.116:8994/offline_upload", "Content-type: application/json\r\n", json_data);
         mg_set_protocol_http_websocket(connection);
         g_http_cmd_flag = 1;
-        while (s_exit_flag == 0)
-            mg_mgr_poll(&http_mgr, 500);      
+        while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
+            mg_mgr_poll(&http_mgr, 500); 
+        if(g_upload_overtime_flag == 1)
+        {
+            g_upload_overtime_flag = 0;
+            free(content);
+            free(b64_data);
+            return;
+        }
     }
 
 
@@ -1028,11 +1105,19 @@ void updata_offline_data(void)
     connection = mg_connect_http(&http_mgr, event_handler, "http://106.75.115.116:8994/offline_upload", "Content-type: application/json\r\n", json_data);
     mg_set_protocol_http_websocket(connection);
     g_http_cmd_flag = 1;
-    while (s_exit_flag == 0)
-        mg_mgr_poll(&http_mgr, 500);
+    while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
+        mg_mgr_poll(&http_mgr, 500); 
+    if(g_upload_overtime_flag == 1)
+    {
+        g_upload_overtime_flag = 0;
+        free(content);
+        free(b64_data);
+        return;
+    }
 
     printf("final success!\n");
 
+    g_uploading_flag = 0;
     mg_mgr_free(&http_mgr);
     free(content);
     free(b64_data);

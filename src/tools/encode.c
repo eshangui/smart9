@@ -1,3 +1,6 @@
+#include <stdio.h>
+#include <stdlib.h>
+
 static const char *codes = 
 "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
  
@@ -83,4 +86,52 @@ int base64_decode(const unsigned char *in, unsigned char *out)
 //		return -1;
 //	}
 	return z;
+}
+
+unsigned int getstimeval()
+{
+    unsigned int us;
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    us = (int)(tv.tv_usec);
+    return us;
+}
+
+
+char* GF_GetGUID(char * buf)
+{
+    srand(getstimeval());
+    const char *c = "89ab";
+    //char buf[37];
+    char *p = buf;
+    int n;
+    for( n = 0; n < 16; ++n )
+    {
+        int b = rand()%255;
+        switch( n )
+        {
+        case 6:
+            sprintf(p, "4%x", b%15 );
+            break;
+        case 8:
+            sprintf(p, "%c%x", c[rand()%strlen(c)], b%15 );
+            break;
+        default:
+            sprintf(p, "%02x", b);
+            break;
+        }
+
+        p += 2;
+        switch( n )
+        {
+        case 3:
+        case 5:
+        case 7:
+        case 9:
+            *p++ = '-';
+            break;
+        }
+    }
+    *p = 0;
+    return buf;
 }

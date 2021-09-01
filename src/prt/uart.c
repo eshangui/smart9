@@ -539,7 +539,7 @@ void *timer_thread(void *arg)
             }       
         }
 
-        if(g_upload_flag == 1)
+        if(g_uploading_flag == 1)
         {
             http_download_count++;
             if(http_download_count == 60)

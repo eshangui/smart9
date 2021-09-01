@@ -451,7 +451,7 @@ void check_net_thread(void)
 
     while(ret)
     {
-        ret = PXAT_NS_Initialize(ifList, 3, "106.75.115.116", TYPE_IP_ADDRESS, 61613, "106.75.115.116", TYPE_IP_ADDRESS, 61613, 6000, 30000);
+        ret = PXAT_NS_Initialize(ifList, 3, "106.75.115.116", TYPE_IP_ADDRESS, 61613, "106.75.115.116", TYPE_IP_ADDRESS, 61613, 6000, 60000);
         printf("while------Initialize return %X\n", ret);
         usleep(1000 * 1000);
     }
@@ -471,10 +471,8 @@ void check_net_thread(void)
                 if(g_status_print_flag == 0)
                 {
                     g_status_print_flag = 1;
-                    prt_handle.esc_2_prt("---OFFLINE---\n", 15);
-                    prt_handle.esc_2_prt(version, strlen(version));
-                    prt_handle.esc_2_prt(g_prt_sn, strlen(g_prt_sn));
-                    prt_handle.printer_cut(198);    
+                    prt_handle.esc_2_prt("---READY---\n", strlen("---READY---") + 1);
+                    print_init_info();  
                 }            
             }
         }

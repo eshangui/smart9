@@ -1,7 +1,7 @@
 #include "common_var.h"
 #include "mongoose.h"
 
-char version[] = "SECURE_PRT_V10.17\n";
+char version[] = "SECURE_PRT_V10.20\n";
 
 struct mg_mgr m_tcp;
 struct mg_mgr m_mqtt;
@@ -10,6 +10,8 @@ prt_net_data pn_data;
 
 unsigned char g_net_status;
 
+
+volatile unsigned char g_init_flag = 0;
 volatile unsigned char g_timer_flag = 0;
 volatile unsigned char g_timer_count = 0;
 volatile unsigned char g_add_count = 0;
@@ -36,6 +38,7 @@ volatile unsigned char g_reconnect_flag = 0;
 
 
 
+char g_uuid_buff[64] = {0};
 unsigned char g_download_url[64] = {0};
 char g_prt_sn[64] = {0};
 

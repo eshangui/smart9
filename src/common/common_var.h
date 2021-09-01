@@ -14,6 +14,8 @@ extern prt_net_data pn_data;
 
 extern unsigned char g_net_status;
 
+
+extern volatile unsigned char g_init_flag;
 extern volatile unsigned char g_timer_flag;
 extern volatile unsigned char g_timer_count;
 extern volatile unsigned char g_add_count;
@@ -39,6 +41,7 @@ extern volatile unsigned char g_unprint_flag;
 extern volatile unsigned char g_reconnect_flag;
 
 
+extern char g_uuid_buff[64];
 extern unsigned char g_download_url[64];
 extern char g_prt_sn[64];
 
