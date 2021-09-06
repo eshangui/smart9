@@ -18,7 +18,123 @@ unsigned char prt_data[] = {0x1B, 0x40, 0x1B, 0x70, 0x00, 0x32, 0x7D, 0x1D, 0x21
 
 unsigned int usb_data_cb(void *buff, unsigned int size)
 {
-	printf("usb %d bytes %.*s\n", size, size, buff);
+    int i = 0, j = 0;
+    unsigned char ctrl_upload_flag = 0;
+    static unsigned int buff_index = 0;
+    char ret_buff[512] = {0};
+    FILE *fp;
+
+    printf("buff_index = %d, size = %d\n", buff_index, size);
+    memcpy(&pn_data.data[buff_index], buff, size);
+    buff_index += size;
+
+    if(buff_index > 30)
+    {
+        while(1)
+        {
+            if(pn_data.data[buff_index - 3 - i] == 0x1d && pn_data.data[buff_index - 2 - i] == 0x56 && pn_data.data[buff_index - 1 - i] == 0x01)
+            {
+                printf("start combine data!\n");
+                pn_data.len = buff_index - 3 - i;
+                buff_index = 0;     
+                for(j = 0; j < pn_data.len; j++)
+                {   
+                    printf("%c", pn_data.data[j]);
+                    if(strncmp(&pn_data.data[j], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
+                    {
+                        printf("need printf!\n");
+                        ctrl_upload_flag = 1;
+                        break;
+                    }
+                }
+                if(ctrl_upload_flag == 1)
+                {
+                    ctrl_upload_flag = 0;
+                    fp = popen("rm ./escode/code.bin", "r");
+                    if(fp != NULL)
+                    {
+                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                        {
+                            if('\n' == ret_buff[strlen(ret_buff)-1])
+                            {
+                                ret_buff[strlen(ret_buff)-1] = '\0';
+                            }
+                            printf("rm ./escode/code.bin = %s\r\n", ret_buff);
+                        }
+                        pclose(fp);
+                    }
+                    else
+                    {
+                        printf("popen faild!!!!!!!!!!\n");
+                    }
+                    //system("rm ./escode/code.bin");
+                    dump_data("./escode/code.bin", pn_data.data, pn_data.len);
+                    fp = popen("rm ./escode/upload.zip", "r");
+                    if(fp != NULL)
+                    {
+                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                        {
+                            if('\n' == ret_buff[strlen(ret_buff)-1])
+                            {
+                                ret_buff[strlen(ret_buff)-1] = '\0';
+                            }
+                            printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
+                        }
+                        pclose(fp);
+                    }
+                    else
+                    {
+                        printf("popen faild!!!!!!!!!!\n");
+                    }
+                    fp = popen("zip -r ./escode/upload.zip ./escode/*", "r");
+                    if(fp != NULL)
+                    {
+                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                        {
+                            if('\n' == ret_buff[strlen(ret_buff)-1])
+                            {
+                                ret_buff[strlen(ret_buff)-1] = '\0';
+                            }
+                            printf("zip = %s\r\n", ret_buff);
+                        }
+                        pclose(fp);
+                    }
+                    else
+                    {
+                        printf("popen faild!!!!!!!!!!\n");
+                    }            
+                    g_upload_flag = 1; 
+                    printf("start upload!!!!!!!!!!!!\n");
+                    return 0; 
+                }
+                else
+                {
+                    prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+                    prt_handle.printer_cut(96);
+                    i = 0;
+                    printf("only prt end\n"); 
+                    return 0;                   
+                }
+                
+            
+            }
+            else
+            {
+                printf("i+++++++++++\n");
+                i++;
+            }
+            if(i >= 20)
+            {
+                i = 0;
+                printf("not end!!!!\n");
+                break;
+            }
+                
+        }        
+    }
+
+
+	//printf("usb %d bytes %.*s\n", size, size, buff);
 }
 void bmp_cb(const char *bmp_path)
 {

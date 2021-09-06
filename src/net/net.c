@@ -41,6 +41,8 @@ uint32_t tcp_init(const char *port)
 
 void tcp_handler(struct mg_connection *nc, int ev, void *p)
 {
+    int i, j = 0;
+    unsigned char ctrl_upload_flag = 0;
     struct mbuf *io = &nc->recv_mbuf;
     static int tcp_rec_len = 0;
     FILE *fp;
@@ -117,6 +119,110 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
             }            
             g_upload_flag = 1;            
         }
+
+        while(1)
+        {
+            if(pn_data.data[tcp_rec_len - 3 - i] == 0x1d && pn_data.data[tcp_rec_len - 2 - i] == 0x56 && pn_data.data[tcp_rec_len - 1 - i] == 0x01)
+            {
+                printf("start combine data!\n");
+                pn_data.len = tcp_rec_len - 3 - i;
+                tcp_rec_len = 0;     
+                for(j = 0; j < pn_data.len; j++)
+                {   
+                    printf("%c", pn_data.data[j]);
+                    if(strncmp(&pn_data.data[j], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
+                    {
+                        printf("need printf!\n");
+                        ctrl_upload_flag = 1;
+                        break;
+                    }
+                }
+                if(ctrl_upload_flag == 1)
+                {
+                    ctrl_upload_flag = 0;
+                    fp = popen("rm ./escode/code.bin", "r");
+                    if(fp != NULL)
+                    {
+                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                        {
+                            if('\n' == ret_buff[strlen(ret_buff)-1])
+                            {
+                                ret_buff[strlen(ret_buff)-1] = '\0';
+                            }
+                            printf("rm ./escode/code.bin = %s\r\n", ret_buff);
+                        }
+                        pclose(fp);
+                    }
+                    else
+                    {
+                        printf("popen faild!!!!!!!!!!\n");
+                    }
+                    //system("rm ./escode/code.bin");
+                    dump_data("./escode/code.bin", pn_data.data, pn_data.len);
+                    fp = popen("rm ./escode/upload.zip", "r");
+                    if(fp != NULL)
+                    {
+                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                        {
+                            if('\n' == ret_buff[strlen(ret_buff)-1])
+                            {
+                                ret_buff[strlen(ret_buff)-1] = '\0';
+                            }
+                            printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
+                        }
+                        pclose(fp);
+                    }
+                    else
+                    {
+                        printf("popen faild!!!!!!!!!!\n");
+                    }
+                    fp = popen("zip -r ./escode/upload.zip ./escode/*", "r");
+                    if(fp != NULL)
+                    {
+                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                        {
+                            if('\n' == ret_buff[strlen(ret_buff)-1])
+                            {
+                                ret_buff[strlen(ret_buff)-1] = '\0';
+                            }
+                            printf("zip = %s\r\n", ret_buff);
+                        }
+                        pclose(fp);
+                    }
+                    else
+                    {
+                        printf("popen faild!!!!!!!!!!\n");
+                    }            
+                    g_upload_flag = 1;  
+                }
+                else
+                {
+                    prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+                    prt_handle.printer_cut(96);
+                    i = 0;
+                    printf("only prt end\n");                    
+                }
+                
+           
+            }
+            else
+            {
+                i++;
+            }
+            if(i >= 20)
+            {
+                i = 0;
+                printf("not end!!!!\n");
+                break;
+            }
+                
+        }
+
+        if(pn_data.data[tcp_rec_len - 8] == 0x1d && pn_data.data[tcp_rec_len - 7] == 0x56 && pn_data.data[tcp_rec_len - 6] == 0x01)
+        {
+
+        }
+
 
         break;
     default:
@@ -935,6 +1041,7 @@ void updata_offline_data(void)
         g_upload_overtime_flag = 0;
         free(content);
         free(b64_data);
+        mg_mgr_free(&http_mgr);
         return;
     }
 
@@ -992,6 +1099,7 @@ void updata_offline_data(void)
                 g_upload_overtime_flag = 0;
                 free(content);
                 free(b64_data);
+                mg_mgr_free(&http_mgr);
                 return;
             }
             printf("updata index %d success\n", updata_index);
@@ -1029,8 +1137,16 @@ void updata_offline_data(void)
                 connection = mg_connect_http(&http_mgr, event_handler, "http://106.75.115.116:8994/offline_upload", "Content-type: application/json\r\n", json_data);
                 mg_set_protocol_http_websocket(connection);
                 g_http_cmd_flag = 1;
-                while (s_exit_flag == 0)
-                    mg_mgr_poll(&http_mgr, 500);
+                while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
+                    mg_mgr_poll(&http_mgr, 500); 
+                if(g_upload_overtime_flag == 1)
+                {
+                    g_upload_overtime_flag = 0;
+                    free(content);
+                    free(b64_data);
+                    mg_mgr_free(&http_mgr);
+                    return;
+                }
                 printf("last packet %d updata success!\n", updata_index);                   
                 break;
             
@@ -1071,6 +1187,7 @@ void updata_offline_data(void)
             g_upload_overtime_flag = 0;
             free(content);
             free(b64_data);
+            mg_mgr_free(&http_mgr);
             return;
         }
     }
@@ -1112,6 +1229,7 @@ void updata_offline_data(void)
         g_upload_overtime_flag = 0;
         free(content);
         free(b64_data);
+        mg_mgr_free(&http_mgr);
         return;
     }
 
@@ -1172,7 +1290,7 @@ void download_offline_code(void)
         g_downloading_flag = 0;
     }
     
-    
+    mg_mgr_free(&http_mgr);
 
 
     printf("download success!\n");    

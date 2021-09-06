@@ -102,10 +102,10 @@ uint32_t ble_check(void)
         // }
         // tcflush(g_ble_uart_dev, 2);
 
-        // rv = ble_write(test_data, sizeof(test_data));
-        // sleep(1);
-        // rv = ble_read(rec_buff,10); 
-        // printf("rec data: %s\n", rec_buff);              
+        // // rv = ble_write(test_data, sizeof(test_data));
+        // // sleep(1);
+        // // rv = ble_read(rec_buff,10); 
+        // // printf("rec data: %s\n", rec_buff);              
     }
     
 

@@ -245,6 +245,7 @@ void *ble_read_thread(void *arg)
     unsigned int rec_len = 0;
     unsigned char tmp_data = 0;
     char ret_buff[128] = {0};
+    unsigned char ctrl_upload_flag = 0;
 
     printf("ble read pthread creat success!\n");
     while(1)
@@ -256,13 +257,15 @@ void *ble_read_thread(void *arg)
             g_ble_data[i] = tmp_data;
             i++;
             ble_read(&tmp_data, 1);
-            if(tmp_data = 0x40)
+            printf("b-0x%02X ", tmp_data);
+            if(tmp_data == 0x40)
             {
                 g_ble_data[i] = tmp_data;
                 i++;
                 while(1)
                 {
                     ble_read(&g_ble_data[i], 1);
+                    printf("b-0x%02X ", g_ble_data[i]);
                     i++;
                     if(g_ble_data[i - 1] == 0x69 && g_ble_data[i - 2] == 0x1b)
                     {
@@ -273,16 +276,10 @@ void *ble_read_thread(void *arg)
                 print_array(g_ble_data, i);   
 
 
-                //prt_handle.esc_2_prt(prt_cmd, sizeof(prt_cmd));
-                //prt_handle.esc_2_prt(g_ble_data, i);
-                //prt_handle.esc_2_lib(g_ble_data, i);   
-
-
+                printf("memcpy addr->pn_data.data = %d g_ble_data = %d, i - 2 = %d\n", pn_data.data, g_ble_data, i - 2);
                 memcpy(pn_data.data, g_ble_data, i - 2);
                 pn_data.len = i - 2;
 
-                //uart_write (g_ble_data, i);
-                //system("rm ./escode/100000000018330045_100000000018330045_0017.bmp");
                 fp = popen("rm ./escode/code.bin", "r");
                 if(fp != NULL)
                 {
@@ -310,13 +307,124 @@ void *ble_read_thread(void *arg)
             }
             
 
-        }   
+        }  
+
+        if(tmp_data== 0x1d)
+        {
+            g_ble_data[i] = tmp_data;
+            i++;
+            ble_read(&tmp_data, 1);
+            printf("d-0x%02X ", tmp_data);
+            if(tmp_data == 0x21)
+            {
+                g_ble_data[i] = tmp_data;
+                i++;
+                while(1)
+                {
+                    ble_read(&g_ble_data[i], 1);
+                    //printf("d-0x%02X ", g_ble_data[i]);
+                    i++;
+                    if(strncmp(&g_ble_data[i - strlen("Scan Kode Sid9    ")], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
+                    {
+                        printf("need printf!\n");
+                        ctrl_upload_flag = 1;
+                    }
+                    
+                    if(g_ble_data[i - 1] == 0x01 && g_ble_data[i - 2] == 0x56 && g_ble_data[i - 3] == 0x1d)
+                    {
+                        printf("\nrec END!!!!\n");
+                        break;                        
+                    }
+                }
+
+                printf("data is : \n"); 
+                for(j = 0; j < i; j++)
+                {
+                    printf("%c", g_ble_data[j]);
+                }
+
+                if(ctrl_upload_flag == 1)
+                {
+                    ctrl_upload_flag = 0;
+                    memcpy(pn_data.data, g_ble_data, i - 3);
+                    pn_data.len = i - 3;     
+
+                    fp = popen("rm ./escode/code.bin", "r");
+                    if(fp != NULL)
+                    {
+                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                        {
+                            if('\n' == ret_buff[strlen(ret_buff)-1])
+                            {
+                                ret_buff[strlen(ret_buff)-1] = '\0';
+                            }
+                            printf("rm ./escode/code.bin = %s\r\n", ret_buff);
+                        }
+                        pclose(fp);                   
+                    }
+                    dump_data("./escode/code.bin", g_ble_data, i);
+                    prt_handle.esc_2_lib(g_ble_data, i);
+                    // system("rm ./escode/upload.zip");
+                    // system("zip -r ./escode/upload.zip ./escode/*");
+                    // g_upload_flag = 1;
+                    i = 0;
+                    printf("end\n");             
+                }
+                else
+                {
+                    prt_handle.esc_2_prt(g_ble_data, i - 3);
+                    prt_handle.printer_cut(96);
+                    i = 0;
+                    printf("only prt end\n");
+                }
+                
+
+
+                //prt_handle.esc_2_prt(prt_cmd, sizeof(prt_cmd));
+                //prt_handle.esc_2_prt(g_ble_data, i);
+                //prt_handle.esc_2_lib(g_ble_data, i);   
+
+
+                // memcpy(pn_data.data, g_ble_data, i - 2);
+                // pn_data.len = i - 2;
+
+                // //uart_write (g_ble_data, i);
+                // //system("rm ./escode/100000000018330045_100000000018330045_0017.bmp");
+                // fp = popen("rm ./escode/code.bin", "r");
+                // if(fp != NULL)
+                // {
+                //     while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                //     {
+                //         if('\n' == ret_buff[strlen(ret_buff)-1])
+                //         {
+                //             ret_buff[strlen(ret_buff)-1] = '\0';
+                //         }
+                //         printf("rm ./escode/code.bin = %s\r\n", ret_buff);
+                //     }
+                //     pclose(fp);                   
+                // }
+                // dump_data("./escode/code.bin", g_ble_data, i);
+                // prt_handle.esc_2_lib(g_ble_data, i);
+                // // system("rm ./escode/upload.zip");
+                // // system("zip -r ./escode/upload.zip ./escode/*");
+                // // g_upload_flag = 1;
+                // i = 0;
+                // printf("end\n");
+            }
+            else
+            {
+                i = 0;
+            }
+            
+
+        }  
+ 
         if(tmp_data== 0xEF)
         {
             g_ble_data[i] = tmp_data;
             i++;
             ble_read(&tmp_data, 1);
-            if(tmp_data = 0x01)
+            if(tmp_data == 0x01)
             {
                 g_ble_data[i] = tmp_data;
                 i++;
@@ -344,6 +452,7 @@ void *ble_read_thread(void *arg)
             
 
         }   
+        memset(g_ble_data, 0, sizeof(g_ble_data));
         //usleep(1000);     
     }
 
@@ -504,6 +613,7 @@ void *timer_thread(void *arg)
             //g_overtime_flag = 0;
             g_wait_net_flag = 0;
             get_offline_code();
+            printf("==================start offline prt=================\n");
             prt_handle.esc_2_prt(pn_data.data, pn_data.len);
             prt_handle.esc_2_prt("---------DATA COLLECTED--------\n", 33);
             prt_handle.printer_cut(128);            

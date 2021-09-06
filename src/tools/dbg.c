@@ -82,12 +82,31 @@ char *f = "%d";
 int i = 1;
 void dump_data(char *path, uint8_t *data, int32_t len)
 {
-        FILE *pf;
+        FILE *pf = NULL;
         char dest[1024 * 40] = {0};
         char fi[12] = {0};
         pf = fopen(path, "w+");
-        fwrite(data, len, 1, pf);
-        fclose(pf);
+        if(pf != NULL)
+        {
+            fwrite(data, len, 1, pf);
+            fclose(pf);            
+        }
+        else
+        {
+            printf("dump open file ERROR!\n");
+            pf = fopen(path, "w+");
+            if(pf != NULL)
+            {
+                fwrite(data, len, 1, pf);
+                fclose(pf);            
+            }
+            else
+            {
+                printf("dump open file ERROR again!!!!!\n");
+            }
+        }
+        
+
 }
 
 void load_data(char *path, uint8_t *data, int32_t *len)
