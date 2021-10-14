@@ -12,10 +12,10 @@
 
 unsigned char g_upload_flag = 0;
 unsigned char s_exit_flag = 0;
-static const char *s_user_name = "admin";
-static const char *s_password = "password";
-// static const char *s_user_name = "TaxPrinter";
-// static const char *s_password = "F34500C275E5A4AA";
+// static const char *s_user_name = "admin";
+// static const char *s_password = "password";
+static const char *s_user_name = "TaxPrinter";
+static const char *s_password = "F34500C275E5A4AA";
 //static const char *pub_topic_heartbeat = "/smart9/up/heartbeat/";
 //static const char *sub_topic_heartbeat = "/smart9/down/heartbeat/1122334455667788";
 static const char *pub_topic_upload = "/smart9/up/upload/1122334455667788";
@@ -549,6 +549,9 @@ void send_heart_beat(void)
     sprintf(tmp_buff, "%d", file_count);
     cJSON_ReplaceItemInObject(json, "data-stored", cJSON_CreateString(tmp_buff));
 
+    cJSON_ReplaceItemInObject(json, "message", cJSON_CreateString(version));
+
+
     memset(sn, 0, sizeof(sn));
     cJSON_PrintPreallocated(json, sn, sizeof(sn), 1);
 
@@ -640,7 +643,7 @@ int init_network (void)
 {
 
     printf("start init mqtt!\n");
-    mqtt_init("106.75.115.116:61613");
+    mqtt_init("203.207.198.134:61613");
     // printf("g_net_status == %d\n", g_net_status);
     // if(g_net_status < 5)
     // {
@@ -651,7 +654,7 @@ int init_network (void)
     // if(g_net_status < 4)
     // {
     //     printf("start mqtt connect!\n");
-    //     mqtt_init("106.75.115.116:61613");
+    //     mqtt_init("203.207.198.134:61613");
     //     prt_handle.esc_2_prt("MQTT SERVER CON!\n", 18);
     // }
     // else
@@ -1030,8 +1033,9 @@ void updata_offline_data(void)
     cJSON_PrintPreallocated(json, json_data, sizeof(json_data), 1);
     printf("post data is:%s\n", json_data);
     g_uploading_flag = 1;
+    s_exit_flag = 0;
 	 mg_mgr_init(&http_mgr, NULL);
-	 connection = mg_connect_http(&http_mgr, event_handler, "http://106.75.115.116:8994/offline_upload", "Content-type: application/json\r\n", json_data);
+	 connection = mg_connect_http(&http_mgr, event_handler, "http://203.207.198.134:50101/offline_upload", "Content-type: application/json\r\n", json_data);
 	 mg_set_protocol_http_websocket(connection);
      g_http_cmd_flag = 1;
 	 while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
@@ -1089,7 +1093,9 @@ void updata_offline_data(void)
             cJSON_PrintPreallocated(json, json_data, sizeof(json_data), 1);
             printf("post data is:%s\n", json_data);
             s_exit_flag = 0;
-            connection = mg_connect_http(&http_mgr, event_handler, "http://106.75.115.116:8994/offline_upload", "Content-type: application/json\r\n", json_data);
+            mg_mgr_free(&http_mgr);
+            mg_mgr_init(&http_mgr, NULL);
+            connection = mg_connect_http(&http_mgr, event_handler, "http://203.207.198.134:50101/offline_upload", "Content-type: application/json\r\n", json_data);
             mg_set_protocol_http_websocket(connection);
             g_http_cmd_flag = 1;
 	        while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
@@ -1134,7 +1140,9 @@ void updata_offline_data(void)
                 cJSON_PrintPreallocated(json, json_data, sizeof(json_data), 1);   
                 printf("post data is:%s\n", json_data);
                 s_exit_flag = 0;
-                connection = mg_connect_http(&http_mgr, event_handler, "http://106.75.115.116:8994/offline_upload", "Content-type: application/json\r\n", json_data);
+                mg_mgr_free(&http_mgr);
+                mg_mgr_init(&http_mgr, NULL);
+                connection = mg_connect_http(&http_mgr, event_handler, "http://203.207.198.134:50101/offline_upload", "Content-type: application/json\r\n", json_data);
                 mg_set_protocol_http_websocket(connection);
                 g_http_cmd_flag = 1;
                 while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
@@ -1177,7 +1185,9 @@ void updata_offline_data(void)
         printf("post data is:%s\n", json_data);
 
         s_exit_flag = 0;
-        connection = mg_connect_http(&http_mgr, event_handler, "http://106.75.115.116:8994/offline_upload", "Content-type: application/json\r\n", json_data);
+        mg_mgr_free(&http_mgr);
+        mg_mgr_init(&http_mgr, NULL);
+        connection = mg_connect_http(&http_mgr, event_handler, "http://203.207.198.134:50101/offline_upload", "Content-type: application/json\r\n", json_data);
         mg_set_protocol_http_websocket(connection);
         g_http_cmd_flag = 1;
         while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
@@ -1219,7 +1229,9 @@ void updata_offline_data(void)
 
     printf("post data is:%s\n", json_data);
     s_exit_flag = 0;
-    connection = mg_connect_http(&http_mgr, event_handler, "http://106.75.115.116:8994/offline_upload", "Content-type: application/json\r\n", json_data);
+    mg_mgr_free(&http_mgr);
+    mg_mgr_init(&http_mgr, NULL);
+    connection = mg_connect_http(&http_mgr, event_handler, "http://203.207.198.134:50101/offline_upload", "Content-type: application/json\r\n", json_data);
     mg_set_protocol_http_websocket(connection);
     g_http_cmd_flag = 1;
     while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
@@ -1245,6 +1257,7 @@ void updata_offline_data(void)
     
     if(s_exit_flag == 1)
     {
+        s_exit_flag = 0;
         fp = popen("rm /oem/offline_data/* -r" , "r");
         if(fp != NULL)
         {

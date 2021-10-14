@@ -642,7 +642,7 @@ void *timer_thread(void *arg)
         if(g_downloading_flag == 1)
         {
             http_download_count++;
-            if(http_download_count == 60)
+            if(http_download_count == 600)
             {
                 http_download_count = 0;
                 g_download_overtime_flag = 1;
@@ -652,7 +652,7 @@ void *timer_thread(void *arg)
         if(g_uploading_flag == 1)
         {
             http_download_count++;
-            if(http_download_count == 60)
+            if(http_download_count == 600)
             {
                 http_download_count = 0;
                 g_upload_overtime_flag = 1;

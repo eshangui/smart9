@@ -445,13 +445,13 @@ void check_net_thread(void)
     int ret=NET_FAILD, status = 0, count = 10, latency = 0;
     FILE* fp = NULL;
     char get_way[128] = {0};
-    char *set_route_head = "route add -host 106.75.115.116 gw ";
+    char *set_route_head = "route add -host 203.207.198.134 gw ";
     char set_route[128] = {0};
     const char* ifList[] = {"wlan0", "usb0", "eth0"};
 
     while(ret)
     {
-        ret = PXAT_NS_Initialize(ifList, 3, "106.75.115.116", TYPE_IP_ADDRESS, 61613, "106.75.115.116", TYPE_IP_ADDRESS, 61613, 6000, 60000);
+        ret = PXAT_NS_Initialize(ifList, 3, "203.207.198.134", TYPE_IP_ADDRESS, 61613, "203.207.198.134", TYPE_IP_ADDRESS, 61613, 6000, 60000);
         printf("while------Initialize return %X\n", ret);
         usleep(1000 * 1000);
     }
@@ -509,7 +509,7 @@ void check_net_thread(void)
                 strcat(set_route, get_way);
                 strcat(set_route, "dev eth0");
                 printf("set_route---->:%s\n", set_route);
-                fp = popen("route del -host 106.75.115.116", "r" );
+                fp = popen("route del -host 203.207.198.134", "r" );
                 if(fp != NULL)
                 {
                     while ( NULL != fgets(get_way, sizeof(get_way), fp ))
@@ -534,7 +534,7 @@ void check_net_thread(void)
                 //mqtt_free(&m_mqtt);
                 sleep(1);
                 g_net_change_flag = 1;
-                //mqtt_init("106.75.115.116:61613");
+                //mqtt_init("203.207.198.134:61613");
             }
 
         }
@@ -576,7 +576,7 @@ void check_net_thread(void)
                     strcat(set_route, "dev wlan0");
                     printf("set_route---->:%s\n", set_route);
 
-                    fp = popen("route del -host 106.75.115.116", "r" );
+                    fp = popen("route del -host 203.207.198.134", "r" );
                     if(fp != NULL)
                     {
                         while ( NULL != fgets(get_way, sizeof(get_way), fp ))
@@ -601,7 +601,7 @@ void check_net_thread(void)
                     //mqtt_free(&m_mqtt);
                     sleep(1);
                     g_net_change_flag = 1;
-                    //mqtt_init("106.75.115.116:61613");
+                    //mqtt_init("203.207.198.134:61613");
                 }
 
             }
@@ -634,7 +634,7 @@ void check_net_thread(void)
                         strcat(set_route, get_way);
                         strcat(set_route, "dev usb0");
                         printf("set_route---->:%s\n", set_route);
-                        fp = popen("route del -host 106.75.115.116", "r" );
+                        fp = popen("route del -host 203.207.198.134", "r" );
                         if(fp != NULL)
                         {
                             while ( NULL != fgets(get_way, sizeof(get_way), fp ))
@@ -659,7 +659,7 @@ void check_net_thread(void)
                         //mqtt_free(&m_mqtt);
                         sleep(1);
                         g_net_change_flag = 1;
-                        //mqtt_init("106.75.115.116:61613");
+                        //mqtt_init("203.207.198.134:61613");
                     }
                 }    
                 else

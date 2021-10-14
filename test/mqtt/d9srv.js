@@ -9,7 +9,7 @@ var options = {
 }
 
 console.log('server start');
-var client = mqtt.connect('mqtt://106.75.115.116:61613', options);
+var client = mqtt.connect('mqtt://203.207.198.134:61613', options);
 
 console.log('connected');
 

@@ -1,7 +1,7 @@
 #include "common_var.h"
 #include "mongoose.h"
 
-char version[] = "SECURE_PRT_V10.22\n";
+char version[] = "SECURE_PRT_V10.24\n";
 
 struct mg_mgr m_tcp;
 struct mg_mgr m_mqtt;
