@@ -32,9 +32,11 @@ unsigned int usb_data_cb(void *buff, unsigned int size)
     {
         while(1)
         {
-            if(pn_data.data[buff_index - 3 - i] == 0x1d && pn_data.data[buff_index - 2 - i] == 0x56 && pn_data.data[buff_index - 1 - i] == 0x01)
+            //if(pn_data.data[buff_index - 3 - i] == 0x1d && pn_data.data[buff_index - 2 - i] == 0x56 && pn_data.data[buff_index - 1 - i] == 0x01)
+            if(pn_data.data[buff_index - 4 - i] == 0x70 && pn_data.data[buff_index - 5 - i] == 0x1b)
             {
                 printf("start combine data!\n");
+                memcpy(&pn_data.data[buff_index - 8 - i], &pn_data.data[buff_index - 5 - i], 5);
                 pn_data.len = buff_index - 3 - i;
                 buff_index = 0;     
                 for(j = 0; j < pn_data.len; j++)
@@ -183,6 +185,8 @@ void prt_init (void)
     char sn_buff[64] = {0};
     unsigned char test_feed[3] = {0x1b, 0x64, 0x06};
     unsigned char test_cut[4] = {0x1d, 0x56, 0x42, 0x40};
+    unsigned char drawer_cmd[5] = {0x1b, 0x70, 0x30, 0x37, 0x79};
+    unsigned char drawer_cmd1[5] = {0x10, 0x14, 0x00, 0x00, 0x00};
     char *prt_str = "INIT OK!\n";
     printf ("prt_init \n");
     char bmp_path[] = "/smart9/escode/100000000018330045_100000000018330045_0017.bmp";
@@ -204,6 +208,12 @@ void prt_init (void)
     prt_handle.get_printer_sn(sn_buff, 64);
 
     printf(" sn is %s\n", sn_buff);
+
+    // prt_handle.esc_2_prt(drawer_cmd, 5);
+
+    // while(1);
+
+
     //prt_handle.esc_2_prt(prt_str, 10);
     //prt_handle.printer_cut(96);
     // while(1)
@@ -288,6 +298,7 @@ extern void lib_event_callback(hprt_lib_event_t e, const void *arg, unsigned int
 unsigned char get_offline_code(void)
 {
     DIR * dp;
+    int i = 0;
     struct dirent *filename;    
     int32_t len;
     int file_name_index;
@@ -338,8 +349,11 @@ unsigned char get_offline_code(void)
     strcpy(&dir[strlen(dir)], code_name_str);
     printf("dir is: %s\n", dir);
 
+    printf("pos data len = %d\n", pn_data.len);
+    print_array(&pn_data.data[0], pn_data.len);
     load_data(dir, &pn_data.data[pn_data.len], &len);
-    printf("len = %d\n", len);
+    printf("offline data len = %d\n", len);
+    print_array(&pn_data.data[pn_data.len], len);
     pn_data.len += (len - 2);
 
     min_num = 0;

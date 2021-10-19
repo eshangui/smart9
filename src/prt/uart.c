@@ -322,7 +322,7 @@ void *ble_read_thread(void *arg)
                 while(1)
                 {
                     ble_read(&g_ble_data[i], 1);
-                    //printf("d-0x%02X ", g_ble_data[i]);
+                    printf("d-0x%02X ", g_ble_data[i]);
                     i++;
                     if(strncmp(&g_ble_data[i - strlen("Scan Kode Sid9    ")], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
                     {
@@ -330,8 +330,10 @@ void *ble_read_thread(void *arg)
                         ctrl_upload_flag = 1;
                     }
                     
-                    if(g_ble_data[i - 1] == 0x01 && g_ble_data[i - 2] == 0x56 && g_ble_data[i - 3] == 0x1d)
+                    //if(g_ble_data[i - 1] == 0x01 && g_ble_data[i - 2] == 0x56 && g_ble_data[i - 3] == 0x1d)
+                    if(g_ble_data[i - 4] == 0x70 && g_ble_data[i - 5] == 0x1b)
                     {
+                        memcpy(&g_ble_data[i - 8], &g_ble_data[i - 5], 5);
                         printf("\nrec END!!!!\n");
                         break;                        
                     }
@@ -613,7 +615,7 @@ void *timer_thread(void *arg)
             //g_overtime_flag = 0;
             g_wait_net_flag = 0;
             get_offline_code();
-            printf("==================start offline prt=================\n");
+            printf("==================start offline prt=================%d\n", pn_data.len);
             prt_handle.esc_2_prt(pn_data.data, pn_data.len);
             prt_handle.esc_2_prt("---------DATA COLLECTED--------\n", 33);
             prt_handle.printer_cut(128);            

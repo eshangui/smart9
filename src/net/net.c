@@ -12,10 +12,10 @@
 
 unsigned char g_upload_flag = 0;
 unsigned char s_exit_flag = 0;
-// static const char *s_user_name = "admin";
-// static const char *s_password = "password";
-static const char *s_user_name = "TaxPrinter";
-static const char *s_password = "F34500C275E5A4AA";
+static const char *s_user_name = "admin";
+static const char *s_password = "password";
+// static const char *s_user_name = "TaxPrinter";
+// static const char *s_password = "F34500C275E5A4AA";
 //static const char *pub_topic_heartbeat = "/smart9/up/heartbeat/";
 //static const char *sub_topic_heartbeat = "/smart9/down/heartbeat/1122334455667788";
 static const char *pub_topic_upload = "/smart9/up/upload/1122334455667788";
@@ -122,9 +122,11 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
 
         while(1)
         {
-            if(pn_data.data[tcp_rec_len - 3 - i] == 0x1d && pn_data.data[tcp_rec_len - 2 - i] == 0x56 && pn_data.data[tcp_rec_len - 1 - i] == 0x01)
+            //if(pn_data.data[tcp_rec_len - 3 - i] == 0x1d && pn_data.data[tcp_rec_len - 2 - i] == 0x56 && pn_data.data[tcp_rec_len - 1 - i] == 0x01)
+            if(pn_data.data[tcp_rec_len - 4 - i] == 0x70 && pn_data.data[tcp_rec_len - 5 - i] == 0x1b)
             {
                 printf("start combine data!\n");
+                memcpy(&pn_data.data[tcp_rec_len - 8 - i], &pn_data.data[tcp_rec_len - 5 - i], 5);
                 pn_data.len = tcp_rec_len - 3 - i;
                 tcp_rec_len = 0;     
                 for(j = 0; j < pn_data.len; j++)
@@ -1035,6 +1037,7 @@ void updata_offline_data(void)
     g_uploading_flag = 1;
     s_exit_flag = 0;
 	 mg_mgr_init(&http_mgr, NULL);
+     //8-9-9-4  5-0-1-0-1
 	 connection = mg_connect_http(&http_mgr, event_handler, "http://203.207.198.134:50101/offline_upload", "Content-type: application/json\r\n", json_data);
 	 mg_set_protocol_http_websocket(connection);
      g_http_cmd_flag = 1;
