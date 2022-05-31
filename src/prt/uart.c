@@ -330,13 +330,31 @@ void *ble_read_thread(void *arg)
                         ctrl_upload_flag = 1;
                     }
                     
-                    //if(g_ble_data[i - 1] == 0x01 && g_ble_data[i - 2] == 0x56 && g_ble_data[i - 3] == 0x1d)
+                    if(g_ble_data[i - 1] == 0x01 && g_ble_data[i - 2] == 0x56 && g_ble_data[i - 3] == 0x1d)
+                    {
+                        if(ctrl_upload_flag == 1)
+                        {
+                            // if(g_ble_data[i - 4] == 0x70 && g_ble_data[i - 5] == 0x1b)
+                            // {
+                            //     memcpy(&g_ble_data[i - 8], &g_ble_data[i - 5], 5);
+                            //     printf("\nrec END!!!!\n");
+                            //     break;                        
+                            // }
+                        }
+                        else
+                        {
+                            printf("only prt rec end!\n");
+                            break;
+                        }
+                        
+                    }
                     if(g_ble_data[i - 4] == 0x70 && g_ble_data[i - 5] == 0x1b)
                     {
                         memcpy(&g_ble_data[i - 8], &g_ble_data[i - 5], 5);
                         printf("\nrec END!!!!\n");
                         break;                        
                     }
+
                 }
 
                 printf("data is : \n"); 
@@ -377,7 +395,7 @@ void *ble_read_thread(void *arg)
                     prt_handle.esc_2_prt(g_ble_data, i - 3);
                     prt_handle.printer_cut(96);
                     i = 0;
-                    printf("only prt end\n");
+                    printf("only prt end3\n");
                 }
                 
 
@@ -617,7 +635,7 @@ void *timer_thread(void *arg)
             get_offline_code();
             printf("==================start offline prt=================%d\n", pn_data.len);
             prt_handle.esc_2_prt(pn_data.data, pn_data.len);
-            prt_handle.esc_2_prt("---------DATA COLLECTED--------\n", 33);
+            prt_handle.esc_2_prt("---------CHECKED OUT--------\n", 33);
             prt_handle.printer_cut(128);            
         }
                

@@ -12,10 +12,10 @@
 
 unsigned char g_upload_flag = 0;
 unsigned char s_exit_flag = 0;
-static const char *s_user_name = "admin";
-static const char *s_password = "password";
-// static const char *s_user_name = "TaxPrinter";
-// static const char *s_password = "F34500C275E5A4AA";
+//static const char *s_user_name = "admin";
+//static const char *s_password = "password";
+static const char *s_user_name = "TaxPrinter";
+static const char *s_password = "F34500C275E5A4AA";
 //static const char *pub_topic_heartbeat = "/smart9/up/heartbeat/";
 //static const char *sub_topic_heartbeat = "/smart9/down/heartbeat/1122334455667788";
 static const char *pub_topic_upload = "/smart9/up/upload/1122334455667788";
@@ -37,6 +37,92 @@ uint32_t tcp_init(const char *port)
     mg_bind(&m_tcp, port, tcp_handler);
     printf("Starting tcp mgr on port %s\n", port);
     return D9_OK;
+}
+
+void process_data() 
+{
+    int j = 0;
+    unsigned char ctrl_upload_flag = 0;
+    struct mbuf *io = &nc->recv_mbuf;
+    static int tcp_rec_len = 0;
+    FILE *fp;
+    (void)p;
+    char ret_buff[512] = {0};
+    for(j = 0; j < pn_data.len; j++)
+                {   
+                    printf("%c", pn_data.data[j]);
+                    if(strncmp(&pn_data.data[j], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
+                    {
+                        printf("need printf!\n");
+                        ctrl_upload_flag = 1;
+                        break;
+                    }
+                }
+                if(ctrl_upload_flag == 1)
+                {
+                    ctrl_upload_flag = 0;
+                    fp = popen("rm ./escode/code.bin", "r");
+                    if(fp != NULL)
+                    {
+                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                        {
+                            if('\n' == ret_buff[strlen(ret_buff)-1])
+                            {
+                                ret_buff[strlen(ret_buff)-1] = '\0';
+                            }
+                            printf("rm ./escode/code.bin = %s\r\n", ret_buff);
+                        }
+                        pclose(fp);
+                    }
+                    else
+                    {
+                        printf("popen faild!!!!!!!!!!\n");
+                    }
+                    //system("rm ./escode/code.bin");
+                    dump_data("./escode/code.bin", pn_data.data, pn_data.len);
+                    fp = popen("rm ./escode/upload.zip", "r");
+                    if(fp != NULL)
+                    {
+                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                        {
+                            if('\n' == ret_buff[strlen(ret_buff)-1])
+                            {
+                                ret_buff[strlen(ret_buff)-1] = '\0';
+                            }
+                            printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
+                        }
+                        pclose(fp);
+                    }
+                    else
+                    {
+                        printf("popen faild!!!!!!!!!!\n");
+                    }
+                    fp = popen("zip -r ./escode/upload.zip ./escode/*", "r");
+                    if(fp != NULL)
+                    {
+                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                        {
+                            if('\n' == ret_buff[strlen(ret_buff)-1])
+                            {
+                                ret_buff[strlen(ret_buff)-1] = '\0';
+                            }
+                            printf("zip = %s\r\n", ret_buff);
+                        }
+                        pclose(fp);
+                    }
+                    else
+                    {
+                        printf("popen faild!!!!!!!!!!\n");
+                    }            
+                    g_upload_flag = 1;  
+                }
+                else
+                {
+                    prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+                    prt_handle.printer_cut(96);
+                    i = 0;
+                    printf("only prt2 end\n");                    
+                }  
 }
 
 void tcp_handler(struct mg_connection *nc, int ev, void *p)
@@ -120,14 +206,20 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
             g_upload_flag = 1;            
         }
 
-        while(1)
+        if(pn_data.data[tcp_rec_len - 3] == 0x1d && pn_data.data[tcp_rec_len - 2] == 0x56 && pn_data.data[tcp_rec_len - 1] == 0x01)
         {
-            //if(pn_data.data[tcp_rec_len - 3 - i] == 0x1d && pn_data.data[tcp_rec_len - 2 - i] == 0x56 && pn_data.data[tcp_rec_len - 1 - i] == 0x01)
-            if(pn_data.data[tcp_rec_len - 4 - i] == 0x70 && pn_data.data[tcp_rec_len - 5 - i] == 0x1b)
+            prt_handle.esc_2_prt(pn_data.data, (tcp_rec_len - 3));
+            prt_handle.printer_cut(96);
+            tcp_rec_len = 0;
+            printf("only prt end2\n");               
+        }
+        else
+        {
+            if(pn_data.data[tcp_rec_len - 4] == 0x70 && pn_data.data[tcp_rec_len - 5] == 0x1b)
             {
                 printf("start combine data!\n");
-                memcpy(&pn_data.data[tcp_rec_len - 8 - i], &pn_data.data[tcp_rec_len - 5 - i], 5);
-                pn_data.len = tcp_rec_len - 3 - i;
+                memcpy(&pn_data.data[tcp_rec_len - 8], &pn_data.data[tcp_rec_len - 5], 5);
+                pn_data.len = tcp_rec_len - 3;
                 tcp_rec_len = 0;     
                 for(j = 0; j < pn_data.len; j++)
                 {   
@@ -202,29 +294,10 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
                     prt_handle.esc_2_prt(pn_data.data, pn_data.len);
                     prt_handle.printer_cut(96);
                     i = 0;
-                    printf("only prt end\n");                    
-                }
-                
-           
+                    printf("only prt2 end\n");                    
+                }                
             }
-            else
-            {
-                i++;
-            }
-            if(i >= 20)
-            {
-                i = 0;
-                printf("not end!!!!\n");
-                break;
-            }
-                
         }
-
-        if(pn_data.data[tcp_rec_len - 8] == 0x1d && pn_data.data[tcp_rec_len - 7] == 0x56 && pn_data.data[tcp_rec_len - 6] == 0x01)
-        {
-
-        }
-
 
         break;
     default:
@@ -284,6 +357,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
         mg_set_protocol_mqtt(nc);
         memset(prt_sn, 0, sizeof(prt_sn));
         prt_handle.get_printer_sn(prt_sn, 32);
+        printf("mqtt get_printer_sn %s\n", prt_sn);
         mg_send_mqtt_handshake_opt(nc, prt_sn, opts);
         break;
     }
@@ -645,7 +719,8 @@ int init_network (void)
 {
 
     printf("start init mqtt!\n");
-    mqtt_init("203.207.198.134:61613");
+    //mqtt_init("203.207.198.134.134:61613");
+    mqtt_init("121.36.3.243:61613");
     // printf("g_net_status == %d\n", g_net_status);
     // if(g_net_status < 5)
     // {
@@ -656,7 +731,7 @@ int init_network (void)
     // if(g_net_status < 4)
     // {
     //     printf("start mqtt connect!\n");
-    //     mqtt_init("203.207.198.134:61613");
+    //     mqtt_init("121.36.3.243:61613");
     //     prt_handle.esc_2_prt("MQTT SERVER CON!\n", 18);
     // }
     // else
@@ -1038,7 +1113,7 @@ void updata_offline_data(void)
     s_exit_flag = 0;
 	 mg_mgr_init(&http_mgr, NULL);
      //8-9-9-4  5-0-1-0-1
-	 connection = mg_connect_http(&http_mgr, event_handler, "http://203.207.198.134:50101/offline_upload", "Content-type: application/json\r\n", json_data);
+	 connection = mg_connect_http(&http_mgr, event_handler, "http://printer-pro.d9inggroup.cn/offline_upload", "Content-type: application/json\r\n", json_data);
 	 mg_set_protocol_http_websocket(connection);
      g_http_cmd_flag = 1;
 	 while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
@@ -1098,7 +1173,7 @@ void updata_offline_data(void)
             s_exit_flag = 0;
             mg_mgr_free(&http_mgr);
             mg_mgr_init(&http_mgr, NULL);
-            connection = mg_connect_http(&http_mgr, event_handler, "http://203.207.198.134:50101/offline_upload", "Content-type: application/json\r\n", json_data);
+            connection = mg_connect_http(&http_mgr, event_handler, "http://printer-pro.d9inggroup.cn/offline_upload", "Content-type: application/json\r\n", json_data);
             mg_set_protocol_http_websocket(connection);
             g_http_cmd_flag = 1;
 	        while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
@@ -1145,7 +1220,7 @@ void updata_offline_data(void)
                 s_exit_flag = 0;
                 mg_mgr_free(&http_mgr);
                 mg_mgr_init(&http_mgr, NULL);
-                connection = mg_connect_http(&http_mgr, event_handler, "http://203.207.198.134:50101/offline_upload", "Content-type: application/json\r\n", json_data);
+                connection = mg_connect_http(&http_mgr, event_handler, "http://printer-pro.d9inggroup.cn/offline_upload", "Content-type: application/json\r\n", json_data);
                 mg_set_protocol_http_websocket(connection);
                 g_http_cmd_flag = 1;
                 while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
@@ -1190,7 +1265,7 @@ void updata_offline_data(void)
         s_exit_flag = 0;
         mg_mgr_free(&http_mgr);
         mg_mgr_init(&http_mgr, NULL);
-        connection = mg_connect_http(&http_mgr, event_handler, "http://203.207.198.134:50101/offline_upload", "Content-type: application/json\r\n", json_data);
+        connection = mg_connect_http(&http_mgr, event_handler, "http://printer-pro.d9inggroup.cn/offline_upload", "Content-type: application/json\r\n", json_data);
         mg_set_protocol_http_websocket(connection);
         g_http_cmd_flag = 1;
         while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
@@ -1234,7 +1309,7 @@ void updata_offline_data(void)
     s_exit_flag = 0;
     mg_mgr_free(&http_mgr);
     mg_mgr_init(&http_mgr, NULL);
-    connection = mg_connect_http(&http_mgr, event_handler, "http://203.207.198.134:50101/offline_upload", "Content-type: application/json\r\n", json_data);
+    connection = mg_connect_http(&http_mgr, event_handler, "http://printer-pro.d9inggroup.cn/offline_upload", "Content-type: application/json\r\n", json_data);
     mg_set_protocol_http_websocket(connection);
     g_http_cmd_flag = 1;
     while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
@@ -1354,8 +1429,8 @@ bool curl_post(char* url,char* content, char* result)
     curl = curl_easy_init();
     if (curl)
     {
-        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, content);    // Ö¸¶¨postÄÚÈÝ
-        curl_easy_setopt(curl, CURLOPT_URL, url);   // Ö¸¶¨url
+        curl_easy_setopt(curl, CURLOPT_POSTFIELDS, content);    // Ö¸ï¿½ï¿½postï¿½ï¿½ï¿½ï¿½
+        curl_easy_setopt(curl, CURLOPT_URL, url);   // Ö¸ï¿½ï¿½url
         //curl_easy_setopt(curl, CURLOPT_WRITEDATA,fp);
 	    curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_data);
         res = curl_easy_perform(curl);
@@ -1390,10 +1465,10 @@ bool curl_download(char* url, char *filename)
     CURLcode res;
     FILE *fp;
     char *progress_data = "* ";
-    if ((fp = fopen(filename, "w")) == NULL)  // ·µ»Ø½á¹ûÓÃÎÄ¼þ´æ´¢
+    if ((fp = fopen(filename, "w")) == NULL)  // ï¿½ï¿½ï¿½Ø½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½æ´¢
         return false;
 
-    curl = curl_easy_init();    // ³õÊ¼»¯
+    curl = curl_easy_init();    // ï¿½ï¿½Ê¼ï¿½ï¿½
     if (curl)
     {
        
@@ -1405,7 +1480,7 @@ bool curl_download(char* url, char *filename)
         curl_easy_setopt(curl, CURLOPT_PROGRESSFUNCTION, download_progress_func);
         curl_easy_setopt(curl, CURLOPT_PROGRESSDATA, progress_data);
 
-        res = curl_easy_perform(curl);   // Ö´ÐÐ
+        res = curl_easy_perform(curl);   // Ö´ï¿½ï¿½
         if (res != 0) {
              printf("res !=0 %d\n", res);
             curl_easy_cleanup(curl);

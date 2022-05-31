@@ -24,20 +24,30 @@ unsigned int usb_data_cb(void *buff, unsigned int size)
     char ret_buff[512] = {0};
     FILE *fp;
 
+
+    print_array(buff, size);
+
     printf("buff_index = %d, size = %d\n", buff_index, size);
     memcpy(&pn_data.data[buff_index], buff, size);
     buff_index += size;
 
-    if(buff_index > 30)
+    if(buff_index > 20)
     {
-        while(1)
+        if(pn_data.data[buff_index - 3] == 0x1d && pn_data.data[buff_index - 2] == 0x56 && pn_data.data[buff_index - 1] == 0x01)
         {
-            //if(pn_data.data[buff_index - 3 - i] == 0x1d && pn_data.data[buff_index - 2 - i] == 0x56 && pn_data.data[buff_index - 1 - i] == 0x01)
-            if(pn_data.data[buff_index - 4 - i] == 0x70 && pn_data.data[buff_index - 5 - i] == 0x1b)
-            {
+            printf("only 1d5601\n");
+            prt_handle.esc_2_prt(pn_data.data, (buff_index - 3));
+            prt_handle.printer_cut(96);
+            buff_index = 0;
+            printf("only prt end1\n");               
+        }
+        else
+        {
+            //if(pn_data.data[buff_index - 4] == 0x70 && pn_data.data[buff_index - 5] == 0x1b)
+           // {
                 printf("start combine data!\n");
-                memcpy(&pn_data.data[buff_index - 8 - i], &pn_data.data[buff_index - 5 - i], 5);
-                pn_data.len = buff_index - 3 - i;
+                memcpy(&pn_data.data[buff_index - 8], &pn_data.data[buff_index - 5], 5);
+                pn_data.len = buff_index - 3;
                 buff_index = 0;     
                 for(j = 0; j < pn_data.len; j++)
                 {   
@@ -105,34 +115,18 @@ unsigned int usb_data_cb(void *buff, unsigned int size)
                     {
                         printf("popen faild!!!!!!!!!!\n");
                     }            
-                    g_upload_flag = 1; 
-                    printf("start upload!!!!!!!!!!!!\n");
-                    return 0; 
+                    g_upload_flag = 1;  
                 }
                 else
                 {
                     prt_handle.esc_2_prt(pn_data.data, pn_data.len);
                     prt_handle.printer_cut(96);
                     i = 0;
-                    printf("only prt end\n"); 
-                    return 0;                   
-                }
-                
-            
-            }
-            else
-            {
-                printf("i+++++++++++\n");
-                i++;
-            }
-            if(i >= 20)
-            {
-                i = 0;
-                printf("not end!!!!\n");
-                break;
-            }
-                
-        }        
+                    printf("only prt2 end\n");                    
+                }                
+            //}
+        }
+
     }
 
 
