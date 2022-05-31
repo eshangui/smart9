@@ -43,86 +43,83 @@ void process_data()
 {
     int j = 0;
     unsigned char ctrl_upload_flag = 0;
-    struct mbuf *io = &nc->recv_mbuf;
     static int tcp_rec_len = 0;
     FILE *fp;
-    (void)p;
     char ret_buff[512] = {0};
     for(j = 0; j < pn_data.len; j++)
-                {   
-                    printf("%c", pn_data.data[j]);
-                    if(strncmp(&pn_data.data[j], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
-                    {
-                        printf("need printf!\n");
-                        ctrl_upload_flag = 1;
-                        break;
-                    }
-                }
-                if(ctrl_upload_flag == 1)
+    {   
+        printf("%c", pn_data.data[j]);
+        if(strncmp(&pn_data.data[j], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
+        {
+            printf("need printf!\n");
+            ctrl_upload_flag = 1;
+            break;
+        }
+    }
+    if(ctrl_upload_flag == 1)
+    {
+        ctrl_upload_flag = 0;
+        fp = popen("rm ./escode/code.bin", "r");
+        if(fp != NULL)
+        {
+            while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+            {
+                if('\n' == ret_buff[strlen(ret_buff)-1])
                 {
-                    ctrl_upload_flag = 0;
-                    fp = popen("rm ./escode/code.bin", "r");
-                    if(fp != NULL)
-                    {
-                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
-                        {
-                            if('\n' == ret_buff[strlen(ret_buff)-1])
-                            {
-                                ret_buff[strlen(ret_buff)-1] = '\0';
-                            }
-                            printf("rm ./escode/code.bin = %s\r\n", ret_buff);
-                        }
-                        pclose(fp);
-                    }
-                    else
-                    {
-                        printf("popen faild!!!!!!!!!!\n");
-                    }
-                    //system("rm ./escode/code.bin");
-                    dump_data("./escode/code.bin", pn_data.data, pn_data.len);
-                    fp = popen("rm ./escode/upload.zip", "r");
-                    if(fp != NULL)
-                    {
-                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
-                        {
-                            if('\n' == ret_buff[strlen(ret_buff)-1])
-                            {
-                                ret_buff[strlen(ret_buff)-1] = '\0';
-                            }
-                            printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
-                        }
-                        pclose(fp);
-                    }
-                    else
-                    {
-                        printf("popen faild!!!!!!!!!!\n");
-                    }
-                    fp = popen("zip -r ./escode/upload.zip ./escode/*", "r");
-                    if(fp != NULL)
-                    {
-                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
-                        {
-                            if('\n' == ret_buff[strlen(ret_buff)-1])
-                            {
-                                ret_buff[strlen(ret_buff)-1] = '\0';
-                            }
-                            printf("zip = %s\r\n", ret_buff);
-                        }
-                        pclose(fp);
-                    }
-                    else
-                    {
-                        printf("popen faild!!!!!!!!!!\n");
-                    }            
-                    g_upload_flag = 1;  
+                    ret_buff[strlen(ret_buff)-1] = '\0';
                 }
-                else
+                printf("rm ./escode/code.bin = %s\r\n", ret_buff);
+            }
+            pclose(fp);
+        }
+        else
+        {
+            printf("popen faild!!!!!!!!!!\n");
+        }
+        //system("rm ./escode/code.bin");
+        dump_data("./escode/code.bin", pn_data.data, pn_data.len);
+        fp = popen("rm ./escode/upload.zip", "r");
+        if(fp != NULL)
+        {
+            while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+            {
+                if('\n' == ret_buff[strlen(ret_buff)-1])
                 {
-                    prt_handle.esc_2_prt(pn_data.data, pn_data.len);
-                    prt_handle.printer_cut(96);
-                    i = 0;
-                    printf("only prt2 end\n");                    
-                }  
+                    ret_buff[strlen(ret_buff)-1] = '\0';
+                }
+                printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
+            }
+            pclose(fp);
+        }
+        else
+        {
+            printf("popen faild!!!!!!!!!!\n");
+        }
+        fp = popen("zip -r ./escode/upload.zip ./escode/*", "r");
+        if(fp != NULL)
+        {
+            while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+            {
+                if('\n' == ret_buff[strlen(ret_buff)-1])
+                {
+                    ret_buff[strlen(ret_buff)-1] = '\0';
+                }
+                printf("zip = %s\r\n", ret_buff);
+            }
+            pclose(fp);
+        }
+        else
+        {
+            printf("popen faild!!!!!!!!!!\n");
+        }            
+        g_upload_flag = 1;  
+    }
+    else
+    {
+        prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+        prt_handle.printer_cut(96);
+        printf("only prt2 end\n");                    
+    }  
 }
 
 void tcp_handler(struct mg_connection *nc, int ev, void *p)
