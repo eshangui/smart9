@@ -324,29 +324,34 @@ void *ble_read_thread(void *arg)
                     ble_read(&g_ble_data[i], 1);
                     printf("d-0x%02X ", g_ble_data[i]);
                     i++;
-                    if(strncmp(&g_ble_data[i - strlen("Scan Kode Sid9    ")], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
-                    {
-                        printf("need printf!\n");
-                        ctrl_upload_flag = 1;
-                    }
+                    // if(strncmp(&g_ble_data[i - strlen("Scan Kode Sid9    ")], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
+                    // {
+                    //     printf("need printf4!\n");
+                    //     ctrl_upload_flag = 1;
+                    // }
                     
                     if(g_ble_data[i - 1] == 0x01 && g_ble_data[i - 2] == 0x56 && g_ble_data[i - 3] == 0x1d)
                     {
-                        if(ctrl_upload_flag == 1)
-                        {
-                            // if(g_ble_data[i - 4] == 0x70 && g_ble_data[i - 5] == 0x1b)
-                            // {
-                            //     memcpy(&g_ble_data[i - 8], &g_ble_data[i - 5], 5);
-                            //     printf("\nrec END!!!!\n");
-                            //     break;                        
-                            // }
-                        }
-                        else
+                        // if(ctrl_upload_flag == 1)
+                        // {
+                        //     // if(g_ble_data[i - 4] == 0x70 && g_ble_data[i - 5] == 0x1b)
+                        //     // {
+                        //     //     memcpy(&g_ble_data[i - 8], &g_ble_data[i - 5], 5);
+                        //     //     printf("\nrec END!!!!\n");
+                        //     //     break;                        
+                        //     // }
+                        // }
+                        // else
                         {
                             printf("only prt rec end!\n");
                             break;
                         }
                         
+                    }
+                    if(strncmp(&g_ble_data[i - strlen("Scan Kode Sid9    ")], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
+                    {
+                        printf("need printf4!\n");
+                        ctrl_upload_flag = 1;
                     }
                     if(g_ble_data[i - 4] == 0x70 && g_ble_data[i - 5] == 0x1b)
                     {
@@ -395,7 +400,7 @@ void *ble_read_thread(void *arg)
                     prt_handle.esc_2_prt(g_ble_data, i - 3);
                     prt_handle.printer_cut(96);
                     i = 0;
-                    printf("only prt end3\n");
+                    printf("only prt end 6\n");
                 }
                 
 
@@ -475,6 +480,7 @@ void *ble_read_thread(void *arg)
         memset(g_ble_data, 0, sizeof(g_ble_data));
         //usleep(1000);     
     }
+    printf("ble thread exits\n");
 
 }
 
@@ -636,7 +642,8 @@ void *timer_thread(void *arg)
             printf("==================start offline prt=================%d\n", pn_data.len);
             prt_handle.esc_2_prt(pn_data.data, pn_data.len);
             prt_handle.esc_2_prt("---------CHECKED OUT--------\n", 33);
-            prt_handle.printer_cut(128);            
+            prt_handle.printer_cut(128);      
+            printf("prt data 5\n");      
         }
                
         if(g_timer_flag == 1)

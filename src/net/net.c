@@ -43,15 +43,15 @@ void process_data()
 {
     int j = 0;
     unsigned char ctrl_upload_flag = 0;
-    static int tcp_rec_len = 0;
     FILE *fp;
     char ret_buff[512] = {0};
+    printf("process_data1!\n");
     for(j = 0; j < pn_data.len; j++)
     {   
         printf("%c", pn_data.data[j]);
         if(strncmp(&pn_data.data[j], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
         {
-            printf("need printf!\n");
+            printf("need printf1!\n");
             ctrl_upload_flag = 1;
             break;
         }
@@ -118,18 +118,18 @@ void process_data()
     {
         prt_handle.esc_2_prt(pn_data.data, pn_data.len);
         prt_handle.printer_cut(96);
-        printf("only prt2 end\n");                    
+        printf("only prt end 1, prt data 0\n");                    
     }  
 }
 
 void tcp_handler(struct mg_connection *nc, int ev, void *p)
 {
-    int i, j = 0;
-    unsigned char ctrl_upload_flag = 0;
+    //int i, j = 0;
+    //unsigned char ctrl_upload_flag = 0;
     struct mbuf *io = &nc->recv_mbuf;
     static int tcp_rec_len = 0;
     FILE *fp;
-    (void)p;
+    // (void)p;
     char ret_buff[512] = {0};
 
     switch (ev)
@@ -143,7 +143,7 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
         mbuf_remove(io, io->len); // Discard message from recv buffer
         if(pn_data.data[tcp_rec_len - 1] == 0x69 && pn_data.data[tcp_rec_len - 2] == 0x1b)
         {
-            printf("start combine data!\n");
+            printf("start combine data2!\n");
             pn_data.len = tcp_rec_len - 2;
             tcp_rec_len = 0;
             
@@ -205,10 +205,13 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
 
         if(pn_data.data[tcp_rec_len - 3] == 0x1d && pn_data.data[tcp_rec_len - 2] == 0x56 && pn_data.data[tcp_rec_len - 1] == 0x01)
         {
-            prt_handle.esc_2_prt(pn_data.data, (tcp_rec_len - 3));
-            prt_handle.printer_cut(96);
+            // prt_handle.esc_2_prt(pn_data.data, (tcp_rec_len - 3));
+            // prt_handle.printer_cut(96);
+            // tcp_rec_len = 0;
+            pn_data.len = tcp_rec_len - 3;
             tcp_rec_len = 0;
-            printf("only prt end2\n");               
+            process_data();
+            printf("only prt end 2\n");               
         }
         else
         {
@@ -217,82 +220,83 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
                 printf("start combine data!\n");
                 memcpy(&pn_data.data[tcp_rec_len - 8], &pn_data.data[tcp_rec_len - 5], 5);
                 pn_data.len = tcp_rec_len - 3;
-                tcp_rec_len = 0;     
-                for(j = 0; j < pn_data.len; j++)
-                {   
-                    printf("%c", pn_data.data[j]);
-                    if(strncmp(&pn_data.data[j], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
-                    {
-                        printf("need printf!\n");
-                        ctrl_upload_flag = 1;
-                        break;
-                    }
-                }
-                if(ctrl_upload_flag == 1)
-                {
-                    ctrl_upload_flag = 0;
-                    fp = popen("rm ./escode/code.bin", "r");
-                    if(fp != NULL)
-                    {
-                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
-                        {
-                            if('\n' == ret_buff[strlen(ret_buff)-1])
-                            {
-                                ret_buff[strlen(ret_buff)-1] = '\0';
-                            }
-                            printf("rm ./escode/code.bin = %s\r\n", ret_buff);
-                        }
-                        pclose(fp);
-                    }
-                    else
-                    {
-                        printf("popen faild!!!!!!!!!!\n");
-                    }
-                    //system("rm ./escode/code.bin");
-                    dump_data("./escode/code.bin", pn_data.data, pn_data.len);
-                    fp = popen("rm ./escode/upload.zip", "r");
-                    if(fp != NULL)
-                    {
-                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
-                        {
-                            if('\n' == ret_buff[strlen(ret_buff)-1])
-                            {
-                                ret_buff[strlen(ret_buff)-1] = '\0';
-                            }
-                            printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
-                        }
-                        pclose(fp);
-                    }
-                    else
-                    {
-                        printf("popen faild!!!!!!!!!!\n");
-                    }
-                    fp = popen("zip -r ./escode/upload.zip ./escode/*", "r");
-                    if(fp != NULL)
-                    {
-                        while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
-                        {
-                            if('\n' == ret_buff[strlen(ret_buff)-1])
-                            {
-                                ret_buff[strlen(ret_buff)-1] = '\0';
-                            }
-                            printf("zip = %s\r\n", ret_buff);
-                        }
-                        pclose(fp);
-                    }
-                    else
-                    {
-                        printf("popen faild!!!!!!!!!!\n");
-                    }            
-                    g_upload_flag = 1;  
-                }
-                else
-                {
-                    prt_handle.esc_2_prt(pn_data.data, pn_data.len);
-                    prt_handle.printer_cut(96);
-                    i = 0;
-                    printf("only prt2 end\n");                    
-                }                
+                tcp_rec_len = 0;    
+                process_data(); 
+                // for(j = 0; j < pn_data.len; j++)
+                // {   
+                //     printf("%c", pn_data.data[j]);
+                //     if(strncmp(&pn_data.data[j], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
+                //     {
+                //         printf("need printf2!\n");
+                //         ctrl_upload_flag = 1;
+                //         break;
+                //     }
+                // }
+                // if(ctrl_upload_flag == 1)
+                // {
+                //     ctrl_upload_flag = 0;
+                //     fp = popen("rm ./escode/code.bin", "r");
+                //     if(fp != NULL)
+                //     {
+                //         while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                //         {
+                //             if('\n' == ret_buff[strlen(ret_buff)-1])
+                //             {
+                //                 ret_buff[strlen(ret_buff)-1] = '\0';
+                //             }
+                //             printf("rm ./escode/code.bin = %s\r\n", ret_buff);
+                //         }
+                //         pclose(fp);
+                //     }
+                //     else
+                //     {
+                //         printf("popen faild!!!!!!!!!!\n");
+                //     }
+                //     //system("rm ./escode/code.bin");
+                //     dump_data("./escode/code.bin", pn_data.data, pn_data.len);
+                //     fp = popen("rm ./escode/upload.zip", "r");
+                //     if(fp != NULL)
+                //     {
+                //         while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                //         {
+                //             if('\n' == ret_buff[strlen(ret_buff)-1])
+                //             {
+                //                 ret_buff[strlen(ret_buff)-1] = '\0';
+                //             }
+                //             printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
+                //         }
+                //         pclose(fp);
+                //     }
+                //     else
+                //     {
+                //         printf("popen faild!!!!!!!!!!\n");
+                //     }
+                //     fp = popen("zip -r ./escode/upload.zip ./escode/*", "r");
+                //     if(fp != NULL)
+                //     {
+                //         while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                //         {
+                //             if('\n' == ret_buff[strlen(ret_buff)-1])
+                //             {
+                //                 ret_buff[strlen(ret_buff)-1] = '\0';
+                //             }
+                //             printf("zip = %s\r\n", ret_buff);
+                //         }
+                //         pclose(fp);
+                //     }
+                //     else
+                //     {
+                //         printf("popen faild!!!!!!!!!!\n");
+                //     }            
+                //     g_upload_flag = 1;  
+                // }
+                // else
+                // {
+                //     prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+                //     prt_handle.printer_cut(96);
+                //     i = 0;
+                //     printf("only prt end 3\n");                    
+                // }                
             }
         }
 
@@ -441,6 +445,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                         de_data_len = base64_decode(code->valuestring, &pn_data.data[pn_data.len]);
                         pn_data.len += de_data_len;
                         prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+                        printf("prt data 1\n");
                         usleep(10000);
                         //prt_handle.esc_2_prt((unsigned char*)msg->payload.p,(int)msg->payload.len);
                         usleep(10000);

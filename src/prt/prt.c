@@ -39,13 +39,13 @@ unsigned int usb_data_cb(void *buff, unsigned int size)
             prt_handle.esc_2_prt(pn_data.data, (buff_index - 3));
             prt_handle.printer_cut(96);
             buff_index = 0;
-            printf("only prt end1\n");               
+            printf("only prt end 4, prt data 2\n");               
         }
         else
         {
             //if(pn_data.data[buff_index - 4] == 0x70 && pn_data.data[buff_index - 5] == 0x1b)
            // {
-                printf("start combine data!\n");
+                printf("start combine data3!\n");
                 memcpy(&pn_data.data[buff_index - 8], &pn_data.data[buff_index - 5], 5);
                 pn_data.len = buff_index - 3;
                 buff_index = 0;     
@@ -54,7 +54,7 @@ unsigned int usb_data_cb(void *buff, unsigned int size)
                     printf("%c", pn_data.data[j]);
                     if(strncmp(&pn_data.data[j], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
                     {
-                        printf("need printf!\n");
+                        printf("need printf3!\n");
                         ctrl_upload_flag = 1;
                         break;
                     }
@@ -122,7 +122,7 @@ unsigned int usb_data_cb(void *buff, unsigned int size)
                     prt_handle.esc_2_prt(pn_data.data, pn_data.len);
                     prt_handle.printer_cut(96);
                     i = 0;
-                    printf("only prt2 end\n");                    
+                    printf("only prt end 5, prt data 3\n");                    
                 }                
             //}
         }
@@ -266,6 +266,7 @@ extern void lib_event_callback(hprt_lib_event_t e, const void *arg, unsigned int
                 printf("prt close!\n");
                 prt_handle.esc_2_prt(pn_data.data, pn_data.len);
                 prt_handle.printer_cut(84);
+                printf("prt data 4\n");
                 //prt_handle.push_printer_process_id(0x01);
                 memset(pn_data.data, 0x00, pn_data.len);
                 pn_data.len = 0;
