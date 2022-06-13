@@ -37,6 +37,7 @@ unsigned int usb_data_cb(void *buff, unsigned int size)
         {
             printf("only 1d5601\n");
             prt_handle.esc_2_prt(pn_data.data, (buff_index - 3));
+            pn_data.len = 0;
             prt_handle.printer_cut(96);
             buff_index = 0;
             printf("only prt end 4, prt data 2\n");               
@@ -120,6 +121,7 @@ unsigned int usb_data_cb(void *buff, unsigned int size)
                 else
                 {
                     prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+                    pn_data.len = 0;
                     prt_handle.printer_cut(96);
                     i = 0;
                     printf("only prt end 5, prt data 3\n");                    

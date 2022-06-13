@@ -39,7 +39,7 @@ extern volatile unsigned char g_upload_overtime_flag;
 extern volatile unsigned char g_status_print_flag;
 extern volatile unsigned char g_unprint_flag;
 extern volatile unsigned char g_reconnect_flag;
-
+extern volatile unsigned char g_waiting_online_code_flag;
 
 extern char g_uuid_buff[64];
 extern unsigned char g_download_url[64];

@@ -153,7 +153,7 @@ int main(int argc, char **argv)
                     mqtt_free(&m_mqtt);
                //sleep(10);
                //mqtt_init("203.207.198.134:61613");
-               //mqtt_init("121.36.3.243:61613");
+               mqtt_init("121.36.3.243:61613");
                g_reconnect_flag = 0;
                //if(g_net_status_flag == 0)
                     

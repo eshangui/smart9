@@ -641,6 +641,9 @@ void *timer_thread(void *arg)
             get_offline_code();
             printf("==================start offline prt=================%d\n", pn_data.len);
             prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+            g_waiting_online_code_flag = 0;
+            printf("offline prt, clear g_waiting_online_code_flag\n");
+            pn_data.len = 0;
             prt_handle.esc_2_prt("---------CHECKED OUT--------\n", 33);
             prt_handle.printer_cut(128);      
             printf("prt data 5\n");      
@@ -653,6 +656,7 @@ void *timer_thread(void *arg)
             {
                 g_add_count = 0;
                 g_overtime_flag = 1;
+                printf("g_overtime_flag = 1\n"); 
                 g_timer_flag = 0;
                 g_timer_count = 0;
                 g_wait_net_flag = 1;

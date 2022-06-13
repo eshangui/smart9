@@ -45,7 +45,7 @@ void process_data()
     unsigned char ctrl_upload_flag = 0;
     FILE *fp;
     char ret_buff[512] = {0};
-    printf("process_data1!\n");
+    printf("process_data1! pn_data.len is %d\n", pn_data.len);
     for(j = 0; j < pn_data.len; j++)
     {   
         printf("%c", pn_data.data[j]);
@@ -118,9 +118,13 @@ void process_data()
     {
         prt_handle.esc_2_prt(pn_data.data, pn_data.len);
         prt_handle.printer_cut(96);
+        pn_data.len = 0;
         printf("only prt end 1, prt data 0\n");                    
     }  
 }
+
+unsigned char tag1d5601[] = {0x1d, 0x56, 0x01};
+unsigned char tag1b70[] = {0x1b, 0x70};
 
 void tcp_handler(struct mg_connection *nc, int ev, void *p)
 {
@@ -136,15 +140,16 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
     {
     case MG_EV_RECV:
         //mg_send(nc, io->buf, io->len); // Echo message back
-        printf("get through socket len = %d\n",(int)io->len);
+        printf("get through socket len = %zd, current tcp_rec_len is %d, current pn_data.len is %d\n", io->len, tcp_rec_len, pn_data.len);
         print_array(io->buf,io->len);
-        memcpy(&pn_data.data[tcp_rec_len], io->buf, io->len);
+        memcpy(&pn_data.data[pn_data.len + tcp_rec_len], io->buf, io->len);
         tcp_rec_len += io->len;
         mbuf_remove(io, io->len); // Discard message from recv buffer
+        printf("debug 101\n");
         if(pn_data.data[tcp_rec_len - 1] == 0x69 && pn_data.data[tcp_rec_len - 2] == 0x1b)
         {
             printf("start combine data2!\n");
-            pn_data.len = tcp_rec_len - 2;
+            pn_data.len += tcp_rec_len - 2;
             tcp_rec_len = 0;
             
             fp = popen("rm ./escode/code.bin", "r");
@@ -202,24 +207,33 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
             }            
             g_upload_flag = 1;            
         }
+        printf("debug 102, pn_data.len + tcp_rec_len - 3 = %d\n", pn_data.len + tcp_rec_len - 3);
 
-        if(pn_data.data[tcp_rec_len - 3] == 0x1d && pn_data.data[tcp_rec_len - 2] == 0x56 && pn_data.data[tcp_rec_len - 1] == 0x01)
+        //if(pn_data.data[tcp_rec_len - 3] == 0x1d && pn_data.data[tcp_rec_len - 2] == 0x56 && pn_data.data[tcp_rec_len - 1] == 0x01)
+        if(memcmp(&pn_data.data[pn_data.len + tcp_rec_len - 3], tag1d5601, 3) == 0)
         {
+            printf("debug 103\n");
             // prt_handle.esc_2_prt(pn_data.data, (tcp_rec_len - 3));
             // prt_handle.printer_cut(96);
             // tcp_rec_len = 0;
-            pn_data.len = tcp_rec_len - 3;
+            pn_data.len += tcp_rec_len - 3;
             tcp_rec_len = 0;
             process_data();
             printf("only prt end 2\n");               
         }
         else
         {
-            if(pn_data.data[tcp_rec_len - 4] == 0x70 && pn_data.data[tcp_rec_len - 5] == 0x1b)
+            //if(pn_data.data[tcp_rec_len - 4] == 0x70 && pn_data.data[tcp_rec_len - 5] == 0x1b)
+            printf("debug 111\n");
+            if ((pn_data.len + tcp_rec_len) < 8) {
+                break;
+            }
+            
+            if(memcmp(&pn_data.data[pn_data.len + tcp_rec_len - 5], tag1b70, 2) == 0)
             {
                 printf("start combine data!\n");
-                memcpy(&pn_data.data[tcp_rec_len - 8], &pn_data.data[tcp_rec_len - 5], 5);
-                pn_data.len = tcp_rec_len - 3;
+                memcpy(&pn_data.data[pn_data.len + tcp_rec_len - 8], &pn_data.data[pn_data.len + tcp_rec_len - 5], 5);
+                pn_data.len += tcp_rec_len - 3;
                 tcp_rec_len = 0;    
                 process_data(); 
                 // for(j = 0; j < pn_data.len; j++)
@@ -403,18 +417,25 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
         printf("Subscription acknowledged\n");
         break;
     case MG_EV_MQTT_PUBLISH: {
-        printf("Got incoming message %.*s: %d\n", (int)msg->topic.len,
+        //printf("Got incoming message %.*s: %d\n", (int)msg->topic.len,
+        printf("Got incoming message %d - %s: %d\n", (int)msg->topic.len,
             msg->topic.p, (int)msg->payload.len);
         //print_array((unsigned char*)msg->payload.p,(int)msg->payload.len);
         if(strlen(sub_topic_prt) == msg->topic.len)
         {
+            printf("publish 1\n");
             if(memcmp(msg->topic.p, sub_topic_prt, strlen(sub_topic_prt)) == 0)
             {
+                printf("publish 2\n");
             //dump_data("./prt.bin", msg->payload.p,(int)msg->payload.len);
             //prt_print(pn_data.data, pn_data.len);
             //escpos_printer_feed(3);
             if(g_overtime_flag == 0)
             {
+                struct timeval tv;
+                gettimeofday (&tv, NULL);
+                printf("got online code time = %ld.%ld\n", tv.tv_sec, tv.tv_usec);
+                printf("publish 3\n");
                     json = cJSON_Parse(msg->payload.p);
                     if(!json)
                     {
@@ -445,7 +466,9 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                         de_data_len = base64_decode(code->valuestring, &pn_data.data[pn_data.len]);
                         pn_data.len += de_data_len;
                         prt_handle.esc_2_prt(pn_data.data, pn_data.len);
-                        printf("prt data 1\n");
+                        pn_data.len = 0;
+                        g_waiting_online_code_flag = 0;
+                        printf("prt data 1, clear g_waiting_online_code_flag\n");
                         usleep(10000);
                         //prt_handle.esc_2_prt((unsigned char*)msg->payload.p,(int)msg->payload.len);
                         usleep(10000);
@@ -465,6 +488,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
             }
          
         }
+        printf("publish 100\n");
         if(strlen(sub_topic_op) == msg->topic.len)
         {
             if(memcmp(msg->topic.p, sub_topic_op, strlen(sub_topic_op)) == 0)
@@ -697,15 +721,22 @@ uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
         case MQTT_TOPIC_UPLOAD:
             if(g_offline_flag == 1 || g_unprint_flag == 1)
             {
+                printf("g_offline_flag == 1 || g_unprint_flag == 1\n");
                 g_wait_net_flag = 1;
                 return D9_OK;
             }
             g_timer_flag = 1;
-            g_timer_count = 5;
+            g_timer_count = 20;
             g_overtime_flag = 0;
             printf("m_mqtt.active_connections = %x\n", m_mqtt.active_connections);
-            if(m_mqtt.active_connections != 0)
+            if(m_mqtt.active_connections != 0) {
                 mg_mqtt_publish(m_mqtt.active_connections, sub_topic_d9, 65, MG_MQTT_QOS(0),content,strlen(content));
+                g_waiting_online_code_flag = 1;
+                printf("set g_waiting_online_code_flag\n");
+                struct timeval tv;
+                gettimeofday (&tv, NULL);
+                printf("mg_mqtt_publish time = %ld.%ld\n", tv.tv_sec, tv.tv_usec);
+            }
             break;
     }
     
@@ -768,7 +799,7 @@ void *poll_thread(void *arg)
 
 void *heart_beat_thread(void *arg)
 {
-    printf("poll_pthread create success!\n");
+    printf("heart_beat_thread create success!\n");
     while(1)
     {
         if(g_heart_beat_flag == 0x01 && g_heart_http_lock == 0)
