@@ -126,31 +126,17 @@ void process_data()
 unsigned char tag1d5601[] = {0x1d, 0x56, 0x01};
 unsigned char tag1b70[] = {0x1b, 0x70};
 
-void tcp_handler(struct mg_connection *nc, int ev, void *p)
+void process_tcp_data(prt_net_data *prt_data, int len)
 {
-    //int i, j = 0;
-    //unsigned char ctrl_upload_flag = 0;
-    struct mbuf *io = &nc->recv_mbuf;
-    static int tcp_rec_len = 0;
     FILE *fp;
     // (void)p;
     char ret_buff[512] = {0};
 
-    switch (ev)
-    {
-    case MG_EV_RECV:
-        //mg_send(nc, io->buf, io->len); // Echo message back
-        printf("get through socket len = %zd, current tcp_rec_len is %d, current pn_data.len is %d\n", io->len, tcp_rec_len, pn_data.len);
-        print_array(io->buf,io->len);
-        memcpy(&pn_data.data[pn_data.len + tcp_rec_len], io->buf, io->len);
-        tcp_rec_len += io->len;
-        mbuf_remove(io, io->len); // Discard message from recv buffer
-        printf("debug 101\n");
-        if(pn_data.data[tcp_rec_len - 1] == 0x69 && pn_data.data[tcp_rec_len - 2] == 0x1b)
+    if(prt_data->data[prt_data->len - 1] == 0x69 && prt_data->data[prt_data->len - 2] == 0x1b)
         {
             printf("start combine data2!\n");
-            pn_data.len += tcp_rec_len - 2;
-            tcp_rec_len = 0;
+            prt_data->len -= 2;
+            len = 0;
             
             fp = popen("rm ./escode/code.bin", "r");
             if(fp != NULL)
@@ -170,7 +156,7 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
                 printf("popen faild!!!!!!!!!!\n");
             }
             //system("rm ./escode/code.bin");
-            dump_data("./escode/code.bin", pn_data.data, pn_data.len);
+            dump_data("./escode/code.bin", prt_data->data, prt_data->len);
             fp = popen("rm ./escode/upload.zip", "r");
             if(fp != NULL)
             {
@@ -207,39 +193,38 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
             }            
             g_upload_flag = 1;            
         }
-        printf("debug 102, pn_data.len + tcp_rec_len - 3 = %d\n", pn_data.len + tcp_rec_len - 3);
+        printf("debug 102, prt_data.len - 3 = %d\n", prt_data->len - 3);
 
-        //if(pn_data.data[tcp_rec_len - 3] == 0x1d && pn_data.data[tcp_rec_len - 2] == 0x56 && pn_data.data[tcp_rec_len - 1] == 0x01)
-        if(memcmp(&pn_data.data[pn_data.len + tcp_rec_len - 3], tag1d5601, 3) == 0)
+        //if(prt_data.data[len - 3] == 0x1d && prt_data.data[len - 2] == 0x56 && prt_data.data[len - 1] == 0x01)
+        if(memcmp(&prt_data->data[prt_data->len - 3], tag1d5601, 3) == 0)
         {
             printf("debug 103\n");
-            // prt_handle.esc_2_prt(pn_data.data, (tcp_rec_len - 3));
+            // prt_handle.esc_2_prt(prt_data.data, (len - 3));
             // prt_handle.printer_cut(96);
-            // tcp_rec_len = 0;
-            pn_data.len += tcp_rec_len - 3;
-            tcp_rec_len = 0;
+            // len = 0;
+            prt_data->len -= 3;
+            len = 0;
             process_data();
             printf("only prt end 2\n");               
         }
         else
         {
-            //if(pn_data.data[tcp_rec_len - 4] == 0x70 && pn_data.data[tcp_rec_len - 5] == 0x1b)
+            //if(prt_data.data[len - 4] == 0x70 && prt_data.data[len - 5] == 0x1b)
             printf("debug 111\n");
-            if ((pn_data.len + tcp_rec_len) < 8) {
-                break;
+            if ((prt_data->len) < 8) {
+                return;
             }
             
-            if(memcmp(&pn_data.data[pn_data.len + tcp_rec_len - 5], tag1b70, 2) == 0)
+            if(memcmp(&prt_data->data[prt_data->len - 5], tag1b70, 2) == 0)
             {
                 printf("start combine data!\n");
-                memcpy(&pn_data.data[pn_data.len + tcp_rec_len - 8], &pn_data.data[pn_data.len + tcp_rec_len - 5], 5);
-                pn_data.len += tcp_rec_len - 3;
-                tcp_rec_len = 0;    
+                memcpy(&prt_data->data[prt_data->len- 8], &prt_data->data[prt_data->len - 5], 5);
+                prt_data->len -= 3;
                 process_data(); 
-                // for(j = 0; j < pn_data.len; j++)
+                // for(j = 0; j < prt_data->len; j++)
                 // {   
-                //     printf("%c", pn_data.data[j]);
-                //     if(strncmp(&pn_data.data[j], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
+                //     printf("%c", prt_data->data[j]);
+                //     if(strncmp(&prt_data->data[j], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
                 //     {
                 //         printf("need printf2!\n");
                 //         ctrl_upload_flag = 1;
@@ -267,7 +252,7 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
                 //         printf("popen faild!!!!!!!!!!\n");
                 //     }
                 //     //system("rm ./escode/code.bin");
-                //     dump_data("./escode/code.bin", pn_data.data, pn_data.len);
+                //     dump_data("./escode/code.bin", prt_data->data, prt_data->len);
                 //     fp = popen("rm ./escode/upload.zip", "r");
                 //     if(fp != NULL)
                 //     {
@@ -306,14 +291,52 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
                 // }
                 // else
                 // {
-                //     prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+                //     prt_handle.esc_2_prt(prt_data->data, prt_data->len);
                 //     prt_handle.printer_cut(96);
                 //     i = 0;
                 //     printf("only prt end 3\n");                    
                 // }                
             }
         }
+}
 
+void tcp_handler(struct mg_connection *nc, int ev, void *p)
+{
+    //int i, j = 0;
+    //unsigned char ctrl_upload_flag = 0;
+    struct mbuf *io = &nc->recv_mbuf;
+    static int tcp_rec_len = 0;
+    prt_net_data *prt;
+
+    switch (ev)
+    {
+    case MG_EV_RECV:
+        //mg_send(nc, io->buf, io->len); // Echo message back
+        if (g_waiting_online_code_flag)
+        {
+            prt = &pn_data_buf;
+        }
+        else 
+        {
+            prt = &pn_data;
+        }
+        printf("get through socket len = %zd, current tcp_rec_len is %d, current prt->len is %d, waiting code flag is %d\n", io->len, tcp_rec_len, prt->len, g_waiting_online_code_flag);
+        print_array(io->buf,io->len);
+        memcpy(prt->data + (prt->len), io->buf, io->len);
+        
+        //tcp_rec_len = io->len;
+        prt->len += io->len;
+        mbuf_remove(io, io->len); // Discard message from recv buffer
+        printf("debug 101\n");
+        if (g_waiting_online_code_flag) 
+        {
+            break;
+        }
+        else
+        {
+            process_tcp_data(prt, io->len);
+        }
+        tcp_rec_len = 0;
         break;
     default:
         break;
@@ -467,6 +490,9 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                         pn_data.len += de_data_len;
                         prt_handle.esc_2_prt(pn_data.data, pn_data.len);
                         pn_data.len = 0;
+                        memcpy(pn_data.data, pn_data_buf.data, pn_data_buf.len);
+                        pn_data.len = pn_data_buf.len;
+                        pn_data_buf.len = 0;
                         g_waiting_online_code_flag = 0;
                         printf("prt data 1, clear g_waiting_online_code_flag\n");
                         usleep(10000);
@@ -474,12 +500,18 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                         usleep(10000);
                         //    prt_handle.esc_2_prt(test_feed, 3);
                         prt_handle.printer_cut(96);
+                        prt_handle.esc_2_prt("\x1B\x40", 2); //reset printer before next task to avoid gibberish
                         //prt_handle.push_printer_process_id(0x01);
                         //prt_handle.printer_cut();
                         //escpos_printer_feed(3);
                         //escpos_printer_cut(1);   
                         cJSON_free(json);
-                        cJSON_free(code);             
+                        cJSON_free(code);
+                        if (pn_data.len > 0)
+                        {
+                            process_tcp_data(&pn_data, pn_data.len);
+                        }
+                                     
                     }                    
 
               

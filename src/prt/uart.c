@@ -641,12 +641,21 @@ void *timer_thread(void *arg)
             get_offline_code();
             printf("==================start offline prt=================%d\n", pn_data.len);
             prt_handle.esc_2_prt(pn_data.data, pn_data.len);
-            g_waiting_online_code_flag = 0;
             printf("offline prt, clear g_waiting_online_code_flag\n");
             pn_data.len = 0;
             prt_handle.esc_2_prt("---------CHECKED OUT--------\n", 33);
             prt_handle.printer_cut(128);      
-            printf("prt data 5\n");      
+            prt_handle.esc_2_prt("\x1B\x40", 2); //reset printer before next task to avoid gibberish
+            printf("prt data 5\n");
+            if (g_waiting_online_code_flag)
+            {
+                memcpy(pn_data.data, pn_data_buf.data, pn_data_buf.len);
+                pn_data.len = pn_data_buf.len;
+                pn_data_buf.len = 0;
+                g_waiting_online_code_flag = 0;
+                process_tcp_data(&pn_data, pn_data.len);
+            }
+                  
         }
                
         if(g_timer_flag == 1)
