@@ -49,10 +49,10 @@ typedef struct
  
 typedef struct 
 {
-	uint8_t rgbBlue; //该�?�色的蓝色分�?
-	uint8_t rgbGreen; //该�?�色的绿色分�?
-	uint8_t rgbRed; //该�?�色的红色分�?
-	uint8_t rgbReserved; //保留�?
+	uint8_t rgbBlue; //该�?�色的蓝色分�?
+	uint8_t rgbGreen; //该�?�色的绿色分�?
+	uint8_t rgbRed; //该�?�色的红色分�?
+	uint8_t rgbReserved; //保留�?
 } ClRgbQuad;
  
 typedef struct
@@ -66,10 +66,14 @@ typedef struct
 ClImage* clLoadImage(char* path);
 bool clSaveImage(char* path, ClImage* bmpImg);
 
-//static const char *ESCPOS_CMD_INIT = "\x1b\x40";
+static const char *ESCPOS_CMD_INIT = "\x1b\x40";
 //static const char *ESCPOS_CMD_PRINT_RASTER_BIT_IMAGE = "\x1d\x76\x30\x00";
-static const char *ESCPOS_CMD_CUT = "\x1d\x56\x42";
+static const char *ESCPOS_CMD_CUT0 = "\x1d\x56\x0";
+static const char *ESCPOS_CMD_CUT1 = "\x1d\x56\x1";
+static const char *ESCPOS_CMD_CUT2 = "\x1d\x56\x42";
 static const char *ESCPOS_CMD_FEED = "\x1b\x64";
+static const char *ESCPOS_CMD_CASHBOX = "\x1b\x70";
+static const char *ESCPOS_CMD_CUT_0 = "\x1b\x69";
 
 // The maximum width of image the printer can accept
 static const int ESCPOS_MAX_DOT_WIDTH = 576;

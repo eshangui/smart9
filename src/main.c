@@ -69,6 +69,7 @@ int main(int argc, char **argv)
     pthread_t p_timer;
     pthread_t p_poll;
     pthread_t p_heart_beat;
+    pthread_t p_prt_task;
     pthread_t p_offline_op;
     char server_ip[32] = {0};
     char tmp_buff[128] = {0};
@@ -123,9 +124,12 @@ int main(int argc, char **argv)
     pthread_detach(p_poll);    
     pthread_create(&p_heart_beat, NULL, heart_beat_thread, NULL);
     pthread_detach(p_heart_beat);
+    pthread_create(&p_prt_task, NULL, prt_task_thread, NULL);
+    pthread_detach(p_prt_task);
     pthread_create(&p_offline_op, NULL, offline_op_thread, NULL);
     pthread_detach(p_offline_op); 
 
+    prt_handle.esc_2_prt(ESCPOS_CMD_INIT, strlen(ESCPOS_CMD_INIT));
 
     while (1)
     {

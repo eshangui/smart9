@@ -28,7 +28,8 @@ uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len);
 int init_network (void);
 void *poll_thread(void *arg);
 void *heart_beat_thread(void *arg);
-void *offline_op_thread(void);
+void *prt_task_thread(void *arg);
+void *offline_op_thread(void *arg);
 unsigned char parse_op(char *op_json, int len);
 
 bool curl_download(char* url, char *filename);
