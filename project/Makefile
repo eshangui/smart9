@@ -1,4 +1,4 @@
-CC = /home/chester/wujf/code/test/Firefly-RK3308_Linux_SDK_git_20190924/prebuilts/gcc/linux-x86/aarch64/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-gcc
+CC = /home/shangui/src/d9main/code/test/gcc/linux-x86/aarch64/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu/bin/aarch64-linux-gnu-gcc
 #CC = aarch64-linux-gnu-gcc
 #CC = gcc
 
