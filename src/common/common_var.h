@@ -10,6 +10,7 @@ typedef struct _data_node {
   unsigned char *data;
   int len;
   int is_receipt;
+  char id[40];
   struct _data_node *next;
 } data_node, *pdata_node;
 

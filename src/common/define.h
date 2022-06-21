@@ -10,6 +10,8 @@
 #define MQTT_TOPIC_HEARTBEAT        1
 #define MQTT_TOPIC_UPLOAD           2
 
+#define ONLINE_CODE_TIMEOUT         20   // seconds for waiting online code timeout
+
 typedef struct _prt_net_data{
     uint8_t data[PRT_NET_MAX_BUFF];
     uint32_t len;

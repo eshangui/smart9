@@ -1,7 +1,7 @@
 #include "common_var.h"
 #include "mongoose.h"
 
-char version[] = "SECURE_PRT_V10.31_DELAY_20S\n";
+char version[] = "SECURE_PRT_V10.40_DELAY_20S\n";
 
 struct mg_mgr m_tcp;
 struct mg_mgr m_mqtt;
@@ -52,6 +52,7 @@ pdata_node malloc_node(unsigned char *buf, int len)
   pdata_node node = (pdata_node)malloc(sizeof(data_node));
   node->data = (unsigned char *)malloc(len);
   memcpy(node->data, buf, len);
+  memset(node->id, 0, sizeof(node->id));
   node->len = len;
   node->is_receipt = false;
   node->next = NULL;

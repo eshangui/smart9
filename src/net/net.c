@@ -137,96 +137,96 @@ void process_tcp_data(pdata_node prt_data)
     char ret_buff[512] = {0};
 
     if(prt_data->data[prt_data->len - 1] == 0x69 && prt_data->data[prt_data->len - 2] == 0x1b)
+    {
+        printf("start combine data2!\n");
+        prt_data->len -= 2;
+        
+        fp = popen("rm ./escode/code.bin", "r");
+        if(fp != NULL)
         {
-            printf("start combine data2!\n");
-            prt_data->len -= 2;
-            
-            fp = popen("rm ./escode/code.bin", "r");
-            if(fp != NULL)
+            while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
             {
-        	    while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+                if('\n' == ret_buff[strlen(ret_buff)-1])
                 {
-                    if('\n' == ret_buff[strlen(ret_buff)-1])
-                    {
-                        ret_buff[strlen(ret_buff)-1] = '\0';
-                    }
-                    printf("rm ./escode/code.bin = %s\r\n", ret_buff);
+                    ret_buff[strlen(ret_buff)-1] = '\0';
                 }
-                pclose(fp);
+                printf("rm ./escode/code.bin = %s\r\n", ret_buff);
             }
-            else
-            {
-                printf("popen faild!!!!!!!!!!\n");
-            }
-            //system("rm ./escode/code.bin");
-            dump_data("./escode/code.bin", prt_data->data, prt_data->len);
-            fp = popen("rm ./escode/upload.zip", "r");
-            if(fp != NULL)
-            {
-        	    while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
-                {
-                    if('\n' == ret_buff[strlen(ret_buff)-1])
-                    {
-                        ret_buff[strlen(ret_buff)-1] = '\0';
-                    }
-                    printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
-                }
-                pclose(fp);
-            }
-            else
-            {
-                printf("popen faild!!!!!!!!!!\n");
-            }
-            fp = popen("zip -r ./escode/upload.zip ./escode/*", "r");
-            if(fp != NULL)
-            {
-        	    while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
-                {
-                    if('\n' == ret_buff[strlen(ret_buff)-1])
-                    {
-                        ret_buff[strlen(ret_buff)-1] = '\0';
-                    }
-                    printf("zip = %s\r\n", ret_buff);
-                }
-                pclose(fp);
-            }
-            else
-            {
-                printf("popen faild!!!!!!!!!!\n");
-            }            
-            g_upload_flag = 1;            
-        }
-        printf("debug 102, prt_data.len - 3 = %d\n", prt_data->len - 3);
-
-        //if(prt_data.data[len - 3] == 0x1d && prt_data.data[len - 2] == 0x56 && prt_data.data[len - 1] == 0x01)
-        if((memcmp(&prt_data->data[prt_data->len - 3], ESCPOS_CMD_CUT0, strlen(ESCPOS_CMD_CUT0)) == 0) 
-        || (memcmp(&prt_data->data[prt_data->len - 3], ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0) 
-        || (memcmp(&prt_data->data[prt_data->len - 3], ESCPOS_CMD_CUT2, strlen(ESCPOS_CMD_CUT2)) == 0))
-        {
-            printf("debug 103\n");
-            // prt_handle.esc_2_prt(prt_data.data, (len - 3));
-            // prt_handle.printer_cut(96);
-            // len = 0;
-            //prt_data->len -= strlen(ESCPOS_CMD_CUT0);
-            process_data(prt_data);
-            printf("only prt end 2\n");               
+            pclose(fp);
         }
         else
         {
-            //if(prt_data.data[len - 4] == 0x70 && prt_data.data[len - 5] == 0x1b)
-            printf("debug 111\n");
-            if ((prt_data->len) < 8) {
-                return;
-            }
-            printf("debug 1111 0x%02X 0x%02X\n", prt_data->data[prt_data->len - 5], prt_data->data[prt_data->len - 4]);
-            if(memcmp(&prt_data->data[prt_data->len - 5], ESCPOS_CMD_CASHBOX, strlen(ESCPOS_CMD_CASHBOX)) == 0)
-            {
-                printf("start combine data!\n");
-                memcpy(&prt_data->data[prt_data->len- 8], &prt_data->data[prt_data->len - 5], 5);
-                prt_data->len -= 3;
-                process_data(prt_data);               
-            }
+            printf("popen faild!!!!!!!!!!\n");
         }
+        //system("rm ./escode/code.bin");
+        dump_data("./escode/code.bin", prt_data->data, prt_data->len);
+        fp = popen("rm ./escode/upload.zip", "r");
+        if(fp != NULL)
+        {
+            while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+            {
+                if('\n' == ret_buff[strlen(ret_buff)-1])
+                {
+                    ret_buff[strlen(ret_buff)-1] = '\0';
+                }
+                printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
+            }
+            pclose(fp);
+        }
+        else
+        {
+            printf("popen faild!!!!!!!!!!\n");
+        }
+        fp = popen("zip -r ./escode/upload.zip ./escode/*", "r");
+        if(fp != NULL)
+        {
+            while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+            {
+                if('\n' == ret_buff[strlen(ret_buff)-1])
+                {
+                    ret_buff[strlen(ret_buff)-1] = '\0';
+                }
+                printf("zip = %s\r\n", ret_buff);
+            }
+            pclose(fp);
+        }
+        else
+        {
+            printf("popen faild!!!!!!!!!!\n");
+        }            
+        g_upload_flag = 1;            
+    }
+    printf("debug 102, prt_data.len - 3 = %d\n", prt_data->len - 3);
+
+    //if(prt_data.data[len - 3] == 0x1d && prt_data.data[len - 2] == 0x56 && prt_data.data[len - 1] == 0x01)
+    if((memcmp(&prt_data->data[prt_data->len - 3], ESCPOS_CMD_CUT0, strlen(ESCPOS_CMD_CUT0)) == 0) 
+    || (memcmp(&prt_data->data[prt_data->len - 3], ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0) 
+    || (memcmp(&prt_data->data[prt_data->len - 3], ESCPOS_CMD_CUT2, strlen(ESCPOS_CMD_CUT2)) == 0))
+    {
+        printf("debug 103\n");
+        // prt_handle.esc_2_prt(prt_data.data, (len - 3));
+        // prt_handle.printer_cut(96);
+        // len = 0;
+        //prt_data->len -= strlen(ESCPOS_CMD_CUT0);
+        process_data(prt_data);
+        printf("only prt end 2\n");               
+    }
+    else
+    {
+        //if(prt_data.data[len - 4] == 0x70 && prt_data.data[len - 5] == 0x1b)
+        printf("debug 111\n");
+        if ((prt_data->len) < 8) {
+            return;
+        }
+        printf("debug 1111 0x%02X 0x%02X\n", prt_data->data[prt_data->len - 5], prt_data->data[prt_data->len - 4]);
+        if(memcmp(&prt_data->data[prt_data->len - 5], ESCPOS_CMD_CASHBOX, strlen(ESCPOS_CMD_CASHBOX)) == 0)
+        {
+            printf("start combine data!\n");
+            memcpy(&prt_data->data[prt_data->len- 8], &prt_data->data[prt_data->len - 5], 5);
+            prt_data->len -= 3;
+            process_data(prt_data);               
+        }
+    }
 }
 
 void tcp_handler(struct mg_connection *nc, int ev, void *p)
@@ -417,62 +417,62 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                 gettimeofday (&tv, NULL);
                 printf("got online code time = %ld.%ld\n", tv.tv_sec, tv.tv_usec);
                 printf("publish 3\n");
-                    json = cJSON_Parse(msg->payload.p);
-                    if(!json)
+                json = cJSON_Parse(msg->payload.p);
+                if(!json)
+                {
+                    printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
+                }     
+                code = cJSON_GetObjectItem(json, "id");
+                if(code != NULL)
+                {
+                    if(strcmp(code->valuestring, prt_list->id) != 0)
                     {
-                        printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
-                    }     
-                    code = cJSON_GetObjectItem(json, "id");
-                    if(code != NULL)
-                    {
-                        if(strcmp(code->valuestring, g_uuid_buff) != 0)
-                        {
-                            printf("err id is: %s\n", code->valuestring);
-                            cJSON_free(json);
-                            cJSON_free(code);
-                            return;
-                        }                   
-                    }
-                    else
-                    {
-                        printf("parse id error!\n");
-                        return;
-                    }
-                    g_timer_flag = 0;
-                    g_add_count = 0;
-
-                    code = cJSON_GetObjectItem(json, "data");
-                    if(code != NULL)
-                    {
-                        de_data_len = base64_decode(code->valuestring, &pn_data.data[pn_data.len]);
-                        pn_data.len += de_data_len;
-                        g_printing_flag = true;
-                        prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); 
-                        prt_handle.esc_2_prt(prt_list->data, memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len);
-                        prt_handle.esc_2_prt(pn_data.data, pn_data.len);
-                        pn_data.len = 0;
-                        destroy_node(prt_list);
-                        g_waiting_online_code_flag = 0;
-                        printf("prt data 1, clear g_waiting_online_code_flag\n");
-                        usleep(10000);
-                        //prt_handle.esc_2_prt((unsigned char*)msg->payload.p,(int)msg->payload.len);
-                        usleep(10000);
-                        //    prt_handle.esc_2_prt(test_feed, 3);
-                        prt_handle.printer_cut(96);
-                        prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); //reset printer before next task to avoid gibberish
-                        g_printing_flag = false;
-                        //prt_handle.push_printer_process_id(0x01);
-                        //prt_handle.printer_cut();
-                        //escpos_printer_feed(3);
-                        //escpos_printer_cut(1);   
+                        printf("err id is: %s\n", code->valuestring);
                         cJSON_free(json);
                         cJSON_free(code);
-                        // if (pn_data.len > 0)
-                        // {
-                        //     process_tcp_data(pn_data);
-                        // }
-                                     
-                    }                    
+                        return;
+                    }                   
+                }
+                else
+                {
+                    printf("parse id error!\n");
+                    return;
+                }
+                g_timer_flag = 0;
+                g_add_count = 0;
+
+                code = cJSON_GetObjectItem(json, "data");
+                if(code != NULL)
+                {
+                    de_data_len = base64_decode(code->valuestring, &pn_data.data[pn_data.len]);
+                    pn_data.len += de_data_len;
+                    g_printing_flag = true;
+                    prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); 
+                    prt_handle.esc_2_prt(prt_list->data, memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len);
+                    prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+                    pn_data.len = 0;
+                    destroy_node(prt_list);
+                    g_waiting_online_code_flag = 0;
+                    printf("prt data 1, clear g_waiting_online_code_flag\n");
+                    usleep(10000);
+                    //prt_handle.esc_2_prt((unsigned char*)msg->payload.p,(int)msg->payload.len);
+                    usleep(10000);
+                    //    prt_handle.esc_2_prt(test_feed, 3);
+                    prt_handle.printer_cut(96);
+                    prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); //reset printer before next task to avoid gibberish
+                    g_printing_flag = false;
+                    //prt_handle.push_printer_process_id(0x01);
+                    //prt_handle.printer_cut();
+                    //escpos_printer_feed(3);
+                    //escpos_printer_cut(1);   
+                    cJSON_free(json);
+                    cJSON_free(code);
+                    // if (pn_data.len > 0)
+                    // {
+                    //     process_tcp_data(pn_data);
+                    // }
+                                    
+                }                    
 
               
             }
@@ -698,6 +698,7 @@ uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
     strcpy(g_uuid_buff, GF_GetGUID(uuid_buf));
     cJSON_ReplaceItemInObject(json, "id", cJSON_CreateString(g_uuid_buff));
     strncpy(g_uuid_buff, "00000000", 8);
+    strcpy(prt_list->id, g_uuid_buff);
     cJSON_ReplaceItemInObject(json, "data", cJSON_CreateString(b64_data));
 
 
@@ -718,7 +719,7 @@ uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
                 return D9_OK;
             }
             g_timer_flag = 1;
-            g_timer_count = 20;
+            g_timer_count = ONLINE_CODE_TIMEOUT;
             g_overtime_flag = 0;
             printf("m_mqtt.active_connections = %x\n", m_mqtt.active_connections);
             if(m_mqtt.active_connections != 0) {
