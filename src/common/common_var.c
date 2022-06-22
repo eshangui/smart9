@@ -1,7 +1,8 @@
 #include "common_var.h"
 #include "mongoose.h"
 
-char version[] = "SECURE_PRT_V10.40_DELAY_20S\n";
+//char version[] = "SECURE_PRT_V11.00_DELAY_20S\n";
+char version[] = "SECURE_PRT_V11.00\n";
 
 struct mg_mgr m_tcp;
 struct mg_mgr m_mqtt;
@@ -55,6 +56,7 @@ pdata_node malloc_node(unsigned char *buf, int len)
   memset(node->id, 0, sizeof(node->id));
   node->len = len;
   node->is_receipt = false;
+  node->is_copy = false;
   node->next = NULL;
 }
 
@@ -93,6 +95,7 @@ pdata_node create_node(unsigned char *buf, int len) {
     prt_list = node;
   }
   pthread_mutex_unlock(list_lock);
+  printf("create a node with length = %d\n", len);
   return node;
 }
 
@@ -134,3 +137,10 @@ void destroy_node(pdata_node node)
 pthread_mutex_t net_lock;
 
 pthread_mutex_t* list_lock = NULL;
+
+const char *g_key_words[] = {"official receipt", "struk resmi"};
+const int g_key_words_lengths[] = {strlen("official receipt"), strlen("stuck resmi")};
+// const char *g_key_words[] = {"scan kode sid9"};
+// const int g_key_words_lengths[] = {strlen("scan kode sid9")};
+
+const int g_key_words_count = sizeof(g_key_words_lengths) / sizeof(g_key_words_lengths[0]);

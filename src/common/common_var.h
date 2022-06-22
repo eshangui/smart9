@@ -3,13 +3,15 @@
 
 #include "define.h"
 #include <pthread.h>
+#include <stdbool.h>
 
 extern char version[];
 
 typedef struct _data_node {
   unsigned char *data;
   int len;
-  int is_receipt;
+  bool is_receipt;
+  bool is_copy;
   char id[40];
   struct _data_node *next;
 } data_node, *pdata_node;
@@ -61,5 +63,10 @@ extern pthread_mutex_t *list_lock;
 
 void destroy_node(pdata_node node);
 pdata_node create_node(unsigned char *buf, int len);
+
+extern const char *g_key_words[];
+extern const int g_key_words_lengths[];
+extern const int g_key_words_count;
+
 
 #endif

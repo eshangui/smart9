@@ -10,7 +10,10 @@
 #define MQTT_TOPIC_HEARTBEAT        1
 #define MQTT_TOPIC_UPLOAD           2
 
-#define ONLINE_CODE_TIMEOUT         20   // seconds for waiting online code timeout
+#define RECEIPT_END_STRING "\n\nScan Kode Sid9 dan\nMenangkan Hadiahnya!\n\n\n\n\n"
+
+//#define ONLINE_CODE_TIMEOUT         20   // seconds for waiting online code timeout
+#define ONLINE_CODE_TIMEOUT         6   // seconds for waiting online code timeout
 
 typedef struct _prt_net_data{
     uint8_t data[PRT_NET_MAX_BUFF];

@@ -74,6 +74,7 @@ static const char *ESCPOS_CMD_CUT2 = "\x1d\x56\x42";
 static const char *ESCPOS_CMD_FEED = "\x1b\x64";
 static const char *ESCPOS_CMD_CASHBOX = "\x1b\x70";
 static const char *ESCPOS_CMD_CUT_0 = "\x1b\x69";
+static const char *ESCPOS_CMD_ALIGN_CENTER = "\x1b\x61\x01";
 
 // The maximum width of image the printer can accept
 static const int ESCPOS_MAX_DOT_WIDTH = 576;
@@ -99,6 +100,7 @@ int escpos_printer_image(escpos_printer *printer,
 void updata_offine_json(char *json_str, char *code_id);
 unsigned char get_offline_code(void);
 
+void print_end_string();
 
 
 #endif

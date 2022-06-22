@@ -33,10 +33,69 @@ uint32_t tcp_init(const char *port)
 {
     pn_data.len = 0;
     pn_data.is_handle = 0;
+    pn_data_buf.len = 0;
     mg_mgr_init(&m_tcp, NULL);
     mg_bind(&m_tcp, port, tcp_handler);
     printf("Starting tcp mgr on port %s\n", port);
     return D9_OK;
+}
+
+bool search_key_words(unsigned char *ptr, int len)
+{
+    int offset = 0, i = 0;
+    bool found = false;
+    char *lowers = (char *)malloc(len);
+    //printf("dbgggg1\n");
+    for (i = 0; i < len; i++)
+    {
+        lowers[i] = tolower(ptr[i]);
+        ///printf("%c", lowers[i]);
+    }
+   // printf("dbgggg3, len is %d\n", len);
+    for (offset = 0; offset < len; offset++)
+    {
+        printf("%c", ptr[offset]);
+        // if(memcmp(lowers + offset, "copy", strlen("copy")) == 0) 
+        // {
+        //     printf("copy found, not a receipt\n");
+        //     goto end;
+        // }
+        //printf("offset = %d, g_key_words_count = %d\n", offset, g_key_words_count);
+        for(i = 0; i < g_key_words_count; i++) 
+        {
+            if (offset + g_key_words_lengths[i] <= len)
+            {
+                if (memcmp(lowers + offset, g_key_words[i], g_key_words_lengths[i]) == 0)
+                {
+                    found = true;
+                    goto end;
+                } 
+            }
+        }
+    }
+
+end:
+    printf("search_key_words return: %d\n", found);
+    if (lowers)
+    {
+        free(lowers);
+    }
+    return found;
+}
+
+bool has_copy(unsigned char *ptr, int len)
+{
+    bool found = false;
+    int i = 0;
+    for (i = 0; i < len - strlen("Copy"); i++)
+    {
+        if(memcmp(ptr + i, "Copy", strlen("Copy")) == 0) 
+        {
+            printf("copy found, not a formal receipt\n");
+            return true;
+        }
+    }
+    return false;
 }
 
 void process_data(pdata_node node)
@@ -46,17 +105,31 @@ void process_data(pdata_node node)
     FILE *fp;
     char ret_buff[512] = {0};
     printf("process_data1! node->len is %d\n", node->len);
-    for(j = 0; j < node->len; j++)
-    {   
-        printf("%c", node->data[j]);
-        if(strncmp(&node->data[j], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
-        {
-            printf("need printf1!\n");
-            ctrl_upload_flag = 1;
-            node->is_receipt = true;
-            break;
-        }
+    node->is_receipt = ctrl_upload_flag = search_key_words(node->data, node->len);
+    if (node->is_receipt && has_copy(node->data, node->len))
+    {
+        node->is_copy = true;
+        ctrl_upload_flag = false;
     }
+    printf("is_receipt = %d，ctrl_upload_flag = %d, is_copy = %d\n", node->is_receipt, ctrl_upload_flag, node->is_copy);
+    
+    // if (search_key_words(node->data, node->len))
+    // {
+    //     ctrl_upload_flag = 1;
+    //     node->is_receipt = 1;
+    // }
+    
+    // for(j = 0; j < node->len; j++)
+    // {   
+    //     printf("%c", node->data[j]);
+    //     if(strncmp(&node->data[j], "Scan Kode Sid9", strlen("Scan Kode Sid9")) == 0)
+    //     {
+    //         printf("need printf1!\n");
+    //         ctrl_upload_flag = 1;
+    //         node->is_receipt = 1;
+    //         break;
+    //     }
+    // }
     if(ctrl_upload_flag == 1)
     {
         ctrl_upload_flag = 0;
@@ -119,7 +192,16 @@ void process_data(pdata_node node)
     {
         g_printing_flag = true;
         printf("print 2222, node->len=%d\n", node->len);
-        prt_handle.esc_2_prt(node->data, node->len + strlen(ESCPOS_CMD_CUT1));
+        if (node->is_copy)
+        {
+            prt_handle.esc_2_prt(node->data, node->len);
+            prt_handle.printer_cut(96);
+        }
+        else
+        {
+            prt_handle.esc_2_prt(node->data, node->len + strlen(ESCPOS_CMD_CUT1));
+        }
+        
         //prt_handle.printer_cut(96);
         //prt_handle.esc_2_prt(ESCPOS_CMD_INIT, strlen(ESCPOS_CMD_INIT));
         //prt_handle.esc_2_prt(ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1));
@@ -130,7 +212,7 @@ void process_data(pdata_node node)
     }  
 }
 
-void process_tcp_data(pdata_node prt_data)
+void process_incoming_data(pdata_node prt_data)
 {
     FILE *fp;
     // (void)p;
@@ -292,7 +374,7 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
         // }
         // else
         // {
-        //     process_tcp_data(prt, io->len);
+        //     process_incoming_data(prt, io->len);
         // }
         tcp_rec_len = 0;
         break;
@@ -444,6 +526,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                 code = cJSON_GetObjectItem(json, "data");
                 if(code != NULL)
                 {
+                    printf("base64_decode 1, pn_data.len is %d\n", pn_data.len);
                     de_data_len = base64_decode(code->valuestring, &pn_data.data[pn_data.len]);
                     pn_data.len += de_data_len;
                     g_printing_flag = true;
@@ -451,6 +534,10 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                     prt_handle.esc_2_prt(prt_list->data, memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len);
                     prt_handle.esc_2_prt(pn_data.data, pn_data.len);
                     pn_data.len = 0;
+                    if (prt_list->is_receipt && (!prt_list->is_copy))
+                    {
+                        print_end_string();
+                    }
                     destroy_node(prt_list);
                     g_waiting_online_code_flag = 0;
                     printf("prt data 1, clear g_waiting_online_code_flag\n");
@@ -469,7 +556,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                     cJSON_free(code);
                     // if (pn_data.len > 0)
                     // {
-                    //     process_tcp_data(pn_data);
+                    //     process_incoming_data(pn_data);
                     // }
                                     
                 }                    
@@ -681,7 +768,7 @@ uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
 
     load_data("./escode/upload.zip", NULL, &length);  
     tmp = length;
-    printf("need len is:%d\n", length);
+    printf("1 need len is:%d\n", length);
     content = (char*)malloc(length * 2);
     b64_data = (char*)malloc(length * 2);
     load_data("./escode/upload.zip", content, &length);
@@ -698,7 +785,11 @@ uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
     strcpy(g_uuid_buff, GF_GetGUID(uuid_buf));
     cJSON_ReplaceItemInObject(json, "id", cJSON_CreateString(g_uuid_buff));
     strncpy(g_uuid_buff, "00000000", 8);
-    strcpy(prt_list->id, g_uuid_buff);
+    if (prt_list)
+    {
+        strcpy(prt_list->id, g_uuid_buff);
+    }
+    
     cJSON_ReplaceItemInObject(json, "data", cJSON_CreateString(b64_data));
 
 
@@ -808,9 +899,10 @@ void *prt_task_thread(void *arg)
     printf("prt_task_thread create success!\n");
     while(1)
     {
-        if(prt_list && (!g_printing_flag) && (!g_waiting_online_code_flag) && (!g_upload_flag))
+        if(prt_list && (!g_printing_flag) && (!g_waiting_online_code_flag) && (!g_upload_flag) && (!g_heart_http_lock))
         {
-            process_tcp_data(prt_list);
+            printf("ready to process a prt task with length = %d\n", prt_list->len);
+            process_incoming_data(prt_list);
         }
         else 
         {
@@ -1095,7 +1187,7 @@ void updata_offline_data(void)
     // }
 
     load_data("/oem/offline_data.zip", NULL, &data_len);  
-    printf("need len is:%d\n", data_len);
+    printf("2 need len is:%d\n", data_len);
     content = (char*)malloc(data_len + 1);
     b64_data = (char*)malloc(data_len * 2);
     load_data("/oem/offline_data.zip", content, &data_len);
