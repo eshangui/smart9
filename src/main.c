@@ -20,7 +20,7 @@ void print_init_info(void)
      FILE *fp = NULL;
      char mac_buff[64] = {0};
      char prt_mac_buff[64] = {0};
-     prt_handle.esc_2_prt(version, strlen(version));
+     prt_handle.esc_2_prt(D9MAIN_VERSION, strlen(D9MAIN_VERSION));
      prt_handle.esc_2_prt(g_prt_sn, strlen(g_prt_sn));   
 
 
@@ -60,6 +60,42 @@ void print_init_info(void)
 
 }
 
+// char g_mqtt_addr[256] = {0};
+// char g_mqtt_port[256] = {0};
+// char g_mqtt_username[256] = {0};
+// char g_mqtt_password[256] = {0};
+// char g_upload_addr[256] = {0};
+
+// char g_mqtt_full_addr[256] = {0};
+uint32_t load_config()
+{
+     unsigned char buf[256 * 5] = {0};
+     int len = sizeof(buf);
+     memset(buf, 0, sizeof(buf));
+     bool ret = load_conf("/oem/addr.conf", buf, &len);
+     if (len != sizeof(buf))
+     {
+          prt_handle.esc_2_prt("load config fail, reboot to try again\n", strlen("load config fail, reboot to try again\n"));
+          prt_handle.printer_cut(198);   
+          return 1;
+     }
+     memcpy(g_mqtt_addr, buf, 256);
+     memcpy(g_mqtt_port, buf + 256, 256);
+     memcpy(g_mqtt_username, buf + 256 * 2, 256);
+     memcpy(g_mqtt_password, buf + 256 * 3, 256);
+     memcpy(g_upload_addr, buf + 256 * 4, 256);
+     g_mqtt_port_num = atoi(g_mqtt_port);
+     snprintf(g_mqtt_full_addr, sizeof(g_mqtt_full_addr), "%s:%d", g_mqtt_addr, g_mqtt_port_num);
+     printf("g_mqtt_addr: %s\n", g_mqtt_addr);
+     printf("g_mqtt_port: %s\n", g_mqtt_port);
+     printf("g_mqtt_port_num: %d\n", g_mqtt_port_num);
+     printf("g_mqtt_username: %s\n", g_mqtt_username);
+     printf("g_mqtt_password: %s\n", g_mqtt_password);
+     printf("g_upload_addr: %s\n", g_upload_addr);
+     printf("g_mqtt_full_addr: %s\n", g_mqtt_full_addr);
+     return 0;
+}
+
 
 int main(int argc, char **argv)
 {
@@ -75,23 +111,31 @@ int main(int argc, char **argv)
     char tmp_buff[128] = {0};
 
     
-    prt_init();    
+    prt_init();
+
+    prt_handle.esc_2_prt(ESCPOS_CMD_INIT, strlen(ESCPOS_CMD_INIT));
+    if (load_config() != 0)
+    {
+         mprintf(0,"load_config error\n");
+         return 0; 
+    }    
 
     if(powerup() != 0)
     {
-         mprintf(0,"powerup error %d \n");
+         mprintf(0,"powerup error\n");
          return 0;      
     }
     if(selfcheck() != 0)
     {
-         mprintf(0,"selfcheck error %d \n");
+         mprintf(0,"selfcheck error\n");
          return 0;      
     }
     if(data_sync() != 0)
     {
-         mprintf(0,"sync error %d \n");
+         mprintf(0,"sync error\n");
          return 0;      
     }
+    
 //chester: add curl http sample function here
 //     printf("get URL\n");
 //     bool rv = curl_download("http://www.pixelauth.com/UpLoad/Images/202008/10e4252d59da4185996c04b89020c5f6.png","/oem/test.png");
@@ -129,8 +173,6 @@ int main(int argc, char **argv)
     pthread_create(&p_offline_op, NULL, offline_op_thread, NULL);
     pthread_detach(p_offline_op); 
 
-    prt_handle.esc_2_prt(ESCPOS_CMD_INIT, strlen(ESCPOS_CMD_INIT));
-
     while (1)
     {
           if(g_tcp_flag == 3)
@@ -157,7 +199,7 @@ int main(int argc, char **argv)
                     mqtt_free(&m_mqtt);
                //sleep(10);
                //mqtt_init("203.207.198.134:61613");
-               mqtt_init("121.36.3.243:61613");
+               mqtt_init(g_mqtt_full_addr);
                g_reconnect_flag = 0;
                //if(g_net_status_flag == 0)
                     
@@ -172,7 +214,7 @@ int main(int argc, char **argv)
                if(m_mqtt.active_connections != 0)
                     mqtt_free(&m_mqtt);
                //mqtt_init("203.207.198.134:61613");
-               mqtt_init("121.36.3.243:61613");
+               mqtt_init(g_mqtt_full_addr);
           }
 
           if(g_net_status_flag == 1)

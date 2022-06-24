@@ -5,8 +5,6 @@
 #include <pthread.h>
 #include <stdbool.h>
 
-extern char version[];
-
 typedef struct _data_node {
   unsigned char *data;
   int len;
@@ -55,8 +53,16 @@ extern volatile unsigned char g_waiting_online_code_flag;
 extern volatile unsigned char g_printing_flag;
 
 extern char g_uuid_buff[64];
-extern unsigned char g_download_url[64];
+extern unsigned char g_download_url[256];
 extern char g_prt_sn[64];
+
+extern char g_mqtt_addr[256];
+extern char g_mqtt_port[256];
+extern char g_mqtt_username[256];
+extern char g_mqtt_password[256];
+extern char g_upload_addr[256];
+extern int g_mqtt_port_num;
+extern char g_mqtt_full_addr[256];
 
 extern pthread_mutex_t net_lock;
 extern pthread_mutex_t *list_lock;

@@ -446,14 +446,17 @@ void check_net_thread(void)
     int ret=NET_FAILD, status = 0, count = 10, latency = 0;
     FILE* fp = NULL;
     char get_way[128] = {0};
-    char *set_route_head = "route add -host 121.36.3.243 gw ";
+    char set_route_head[64] = {0};
     //char *set_route_head = "route add -host 203.207.198.134 gw ";
     char set_route[128] = {0};
+    char del_route[128] = {0};
     const char* ifList[] = {"wlan0", "usb0", "eth0"};
+    snprintf(set_route_head, sizeof(set_route_head), "route add -host %s gw ", g_mqtt_addr);
+    snprintf(del_route, sizeof(del_route), "route del -host %s", g_mqtt_addr);
 
     while(ret)
     {
-        ret = PXAT_NS_Initialize(ifList, 3, "121.36.3.243", TYPE_IP_ADDRESS, 61613, "121.36.3.243", TYPE_IP_ADDRESS, 61613, 6000, 60000);
+        ret = PXAT_NS_Initialize(ifList, 3, g_mqtt_addr, TYPE_IP_ADDRESS, g_mqtt_port_num, g_mqtt_addr, TYPE_IP_ADDRESS, g_mqtt_port_num, 6000, 60000);
         //ret = PXAT_NS_Initialize(ifList, 3, "203.207.198.134", TYPE_IP_ADDRESS, 61613, "203.207.198.134", TYPE_IP_ADDRESS, 61613, 6000, 60000);
         printf("while------Initialize return %X\n", ret);
         usleep(1000 * 1000);
@@ -512,7 +515,7 @@ void check_net_thread(void)
                 strcat(set_route, get_way);
                 strcat(set_route, "dev eth0");
                 printf("set_route---->:%s\n", set_route);
-                fp = popen("route del -host 121.36.3.243", "r" );
+                fp = popen(del_route, "r" );
                 //fp = popen("route del -host 203.207.198.134", "r" );
                 if(fp != NULL)
                 {
@@ -582,7 +585,8 @@ void check_net_thread(void)
                     printf("set_route---->:%s\n", set_route);
 
                     //fp = popen("route del -host 121.36.3.243", "r" );
-                    fp = popen("route del -host 203.207.198.134", "r" );
+                    //fp = popen("route del -host 203.207.198.134", "r" );
+                    fp = popen(del_route, "r" );
                     if(fp != NULL)
                     {
                         while ( NULL != fgets(get_way, sizeof(get_way), fp ))

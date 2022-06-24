@@ -14,8 +14,8 @@ unsigned char g_upload_flag = 0;
 unsigned char s_exit_flag = 0;
 //static const char *s_user_name = "admin";
 //static const char *s_password = "password";
-static const char *s_user_name = "TaxPrinter";
-static const char *s_password = "F34500C275E5A4AA";
+// const char *s_user_name = "TaxPrinter";
+//static const char *s_password = "F34500C275E5A4AA";
 //static const char *pub_topic_heartbeat = "/smart9/up/heartbeat/";
 //static const char *sub_topic_heartbeat = "/smart9/down/heartbeat/1122334455667788";
 static const char *pub_topic_upload = "/smart9/up/upload/1122334455667788";
@@ -428,8 +428,8 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
     case MG_EV_CONNECT: {
         struct mg_send_mqtt_handshake_opts opts;
         memset(&opts, 0, sizeof(opts));
-        opts.user_name = s_user_name;
-        opts.password = s_password;
+        opts.user_name = g_mqtt_username;
+        opts.password = g_mqtt_password;
         opts.keep_alive = 10;
 
         mg_set_protocol_mqtt(nc);
@@ -730,7 +730,7 @@ void send_heart_beat(void)
     sprintf(tmp_buff, "%d", file_count);
     cJSON_ReplaceItemInObject(json, "data-stored", cJSON_CreateString(tmp_buff));
 
-    cJSON_ReplaceItemInObject(json, "message", cJSON_CreateString(version));
+    cJSON_ReplaceItemInObject(json, "message", cJSON_CreateString(D9MAIN_VERSION));
 
 
     memset(sn, 0, sizeof(sn));
@@ -832,33 +832,33 @@ uint32_t mqtt_publish_sync(uint32_t topic, char* data, uint32_t *len)
     return D9_OK;
 }
 
-int init_network (void)
-{
+// int init_network (void)
+// {
 
-    printf("start init mqtt!\n");
-    //mqtt_init("203.207.198.134.134:61613");
-    mqtt_init("121.36.3.243:61613");
-    // printf("g_net_status == %d\n", g_net_status);
-    // if(g_net_status < 5)
-    // {
-    //     printf("start 9100 server!\n");
-    //     tcp_init("9100"); 
-    //     prt_handle.esc_2_prt("9100 start!\n", 13);
-    // }
-    // if(g_net_status < 4)
-    // {
-    //     printf("start mqtt connect!\n");
-    //     mqtt_init("121.36.3.243:61613");
-    //     prt_handle.esc_2_prt("MQTT SERVER CON!\n", 18);
-    // }
-    // else
-    // {
-    //     g_offline_flag = 1;
-    // }
+//     printf("start init mqtt!\n");
+//     //mqtt_init("203.207.198.134.134:61613");
+//     mqtt_init("121.36.3.243:61613");
+//     // printf("g_net_status == %d\n", g_net_status);
+//     // if(g_net_status < 5)
+//     // {
+//     //     printf("start 9100 server!\n");
+//     //     tcp_init("9100"); 
+//     //     prt_handle.esc_2_prt("9100 start!\n", 13);
+//     // }
+//     // if(g_net_status < 4)
+//     // {
+//     //     printf("start mqtt connect!\n");
+//     //     mqtt_init("121.36.3.243:61613");
+//     //     prt_handle.esc_2_prt("MQTT SERVER CON!\n", 18);
+//     // }
+//     // else
+//     // {
+//     //     g_offline_flag = 1;
+//     // }
     
-    // prt_handle.printer_cut(128);
-    return 0;
-}
+//     // prt_handle.printer_cut(128);
+//     return 0;
+// }
 
 
 void *poll_thread(void *arg)
@@ -1247,7 +1247,7 @@ void updata_offline_data(void)
     s_exit_flag = 0;
 	 mg_mgr_init(&http_mgr, NULL);
      //8-9-9-4  5-0-1-0-1
-	 connection = mg_connect_http(&http_mgr, event_handler, "http://printer-pro.d9inggroup.cn/offline_upload", "Content-type: application/json\r\n", json_data);
+	 connection = mg_connect_http(&http_mgr, event_handler, g_upload_addr, "Content-type: application/json\r\n", json_data);
 	 mg_set_protocol_http_websocket(connection);
      g_http_cmd_flag = 1;
 	 while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
@@ -1307,7 +1307,7 @@ void updata_offline_data(void)
             s_exit_flag = 0;
             mg_mgr_free(&http_mgr);
             mg_mgr_init(&http_mgr, NULL);
-            connection = mg_connect_http(&http_mgr, event_handler, "http://printer-pro.d9inggroup.cn/offline_upload", "Content-type: application/json\r\n", json_data);
+            connection = mg_connect_http(&http_mgr, event_handler, g_upload_addr, "Content-type: application/json\r\n", json_data);
             mg_set_protocol_http_websocket(connection);
             g_http_cmd_flag = 1;
 	        while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
@@ -1354,7 +1354,7 @@ void updata_offline_data(void)
                 s_exit_flag = 0;
                 mg_mgr_free(&http_mgr);
                 mg_mgr_init(&http_mgr, NULL);
-                connection = mg_connect_http(&http_mgr, event_handler, "http://printer-pro.d9inggroup.cn/offline_upload", "Content-type: application/json\r\n", json_data);
+                connection = mg_connect_http(&http_mgr, event_handler, g_upload_addr, "Content-type: application/json\r\n", json_data);
                 mg_set_protocol_http_websocket(connection);
                 g_http_cmd_flag = 1;
                 while (s_exit_flag == 0 && g_upload_overtime_flag == 0)
@@ -1399,7 +1399,7 @@ void updata_offline_data(void)
         s_exit_flag = 0;
         mg_mgr_free(&http_mgr);
         mg_mgr_init(&http_mgr, NULL);
-        connection = mg_connect_http(&http_mgr, event_handler, "http://printer-pro.d9inggroup.cn/offline_upload", "Content-type: application/json\r\n", json_data);
+        connection = mg_connect_http(&http_mgr, event_handler, g_upload_addr, "Content-type: application/json\r\n", json_data);
         mg_set_protocol_http_websocket(connection);
         g_http_cmd_flag = 1;
         while (s_exit_flag == 0 && g_upload_overtime_flag == 0)

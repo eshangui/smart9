@@ -1,9 +1,6 @@
 #include "common_var.h"
 #include "mongoose.h"
 
-//char version[] = "SECURE_PRT_V11.00_DELAY_20S\n";
-char version[] = "SECURE_PRT_V11.00\n";
-
 struct mg_mgr m_tcp;
 struct mg_mgr m_mqtt;
 
@@ -45,8 +42,16 @@ volatile pdata_node prt_list = 0;
 
 
 char g_uuid_buff[64] = {0};
-unsigned char g_download_url[64] = {0};
+unsigned char g_download_url[256] = {0};
 char g_prt_sn[64] = {0};
+
+char g_mqtt_addr[256] = {0};
+char g_mqtt_port[256] = {0};
+char g_mqtt_username[256] = {0};
+char g_mqtt_password[256] = {0};
+char g_upload_addr[256] = {0};
+int g_mqtt_port_num;
+char g_mqtt_full_addr[256] = {0};
 
 pdata_node malloc_node(unsigned char *buf, int len)
 {

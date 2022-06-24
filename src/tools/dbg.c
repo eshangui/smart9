@@ -134,6 +134,32 @@ void load_data(char *path, uint8_t *data, int32_t *len)
     return;
 }
 
+bool load_conf(char *path, uint8_t *data, int32_t *len)
+{
+    FILE *pf;
+    int data_size = 0;
+    pf = fopen(path, "r");
+    if (!pf)
+    {
+            mprintf(0, "open file error \n");
+            return false;
+    }
+    mprintf(0, "open file success \n");
+    fseek(pf, 0, SEEK_END);
+    data_size = ftell(pf);
+    if(data == NULL)
+    {
+        *len = data_size;
+        fclose(pf);
+        return true;        
+    }
+    fseek(pf, 0, SEEK_SET);
+    fread(data, data_size, 1, pf);
+    *len = data_size;
+    fclose(pf);
+    return true;
+}
+
 int seq = 1;
 // void fbmp(uint8_t *img, int32_t w, int32_t h, char *name)
 // {

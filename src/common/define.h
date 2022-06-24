@@ -12,6 +12,9 @@
 
 #define RECEIPT_END_STRING "\n\nScan Kode Sid9 dan\nMenangkan Hadiahnya!\n\n\n\n\n"
 
+//#define D9MAIN_VERSION "SECURE_PRT_V11.01_DELAY_20S\n";
+#define D9MAIN_VERSION "SECURE_PRT_V11.01\n"
+
 //#define ONLINE_CODE_TIMEOUT         20   // seconds for waiting online code timeout
 #define ONLINE_CODE_TIMEOUT         6   // seconds for waiting online code timeout
 

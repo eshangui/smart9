@@ -488,22 +488,62 @@ void *ble_read_thread(void *arg)
             offset += i;
         }
 
-        if (g_ble_data[0] == 0xEF && g_ble_data[1] == 0x01) // EF 01 FF FF 00 00 XX XX 50 YY YY YY ... CRC1 CRC2, XX XX is length for 50 YY YY YY ...
+        // command structure:
+        // 81 XX XX D0 DATA CRC1 CRC2  XX XX is length for the whole data
+        // data structure
+        //             EF 01 FF FF 00 00 XX XX 50 YY YY YY ... CRC1 CRC2, XX XX is length for 50 YY YY YY ...
+        if (g_ble_data[0] == 0x81)
         {
-            if (g_ble_data[8] == 0x50)
+            printf("may be ble command , offset is %d\n", offset);
+            if (offset < 4)
             {
-                //TODO:: check crc
-                rec_len = g_ble_data[6] * 256 + g_ble_data[7];
-                printf("rec_len = %d\n", rec_len);
-                //print_array(g_ble_data, rec_len + 10);      
-                ret = parse_ble_data(&g_ble_data[9], rec_len - 1);
-                printf("ble cmd end\n");
+                continue;
             }
-            i = 0;
-            offset = 0;
-            memset(g_ble_data, 0, sizeof(g_ble_data));
-            continue;
-        }
+
+            printf("(g_ble_data[1] << 8 + g_ble_data[2]) is %d\n", ((g_ble_data[1] << 8) + g_ble_data[2]));
+            
+            if (offset < (((g_ble_data[1] << 8) + g_ble_data[2]))) 
+            {
+                continue;
+            }
+
+            if (g_ble_data[3] != 0xD0)
+            {
+                printf("g_ble_data[3] != 0xD0, not a ble command\n");
+                offset = 0;
+                continue;
+            }
+
+            if (g_ble_data[4] == 0xEF && g_ble_data[5] == 0x01) // 
+            {
+                printf("g_ble_data[4] == 0xEF && g_ble_data[5] == 0x01\n");
+                if (g_ble_data[12] == 0x50)
+                {
+                    printf("g_ble_data[12] == 0x50\n");
+                    //TODO:: check crc
+                    rec_len = g_ble_data[10] * 256 + g_ble_data[11];
+                    printf("rec_len = %d, ble command data is:\n", rec_len);
+                    for(j = 0; j < rec_len - 1; j++) 
+                    {
+                        printf("%c", g_ble_data[13 + j]);
+                    }
+                    printf("\n");
+                    //print_array(g_ble_data, rec_len + 10);      
+                    ret = parse_ble_data(&g_ble_data[13], rec_len - 1);
+                    printf("ble cmd end\n");
+                }
+                i = 0;
+                offset = 0;
+                memset(g_ble_data, 0, sizeof(g_ble_data));
+                continue;
+            }
+            else
+            {
+                printf("not a EF 01 ble command \n");
+                offset = 0;
+                continue;
+            }   
+        }        
 
         if (memcmp(ESCPOS_CMD_CUT_0, g_ble_data + offset - 2, strlen(ESCPOS_CMD_CUT_0)) == 0)
         {
