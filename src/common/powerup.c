@@ -645,7 +645,8 @@ void check_net_thread(void)
                         strcat(set_route, "dev usb0");
                         printf("set_route---->:%s\n", set_route);
                         //fp = popen("route del -host 121.36.3.243", "r" );
-                        fp = popen("route del -host 203.207.198.134", "r" );
+                        //fp = popen("route del -host 203.207.198.134", "r" );
+                        fp = popen(del_route, "r" );
                         if(fp != NULL)
                         {
                             while ( NULL != fgets(get_way, sizeof(get_way), fp ))

@@ -106,11 +106,18 @@ void process_data(pdata_node node)
     char ret_buff[512] = {0};
     printf("process_data1! node->len is %d\n", node->len);
     node->is_receipt = ctrl_upload_flag = search_key_words(node->data, node->len);
-    if (node->is_receipt && has_copy(node->data, node->len))
+    if (has_copy(node->data, node->len))
     {
         node->is_copy = true;
         ctrl_upload_flag = false;
+
     }
+    
+    // if (node->is_receipt && has_copy(node->data, node->len))
+    // {
+    //     node->is_copy = true;
+    //     ctrl_upload_flag = false;
+    // }
     printf("is_receipt = %d，ctrl_upload_flag = %d, is_copy = %d\n", node->is_receipt, ctrl_upload_flag, node->is_copy);
     
     // if (search_key_words(node->data, node->len))
@@ -192,15 +199,27 @@ void process_data(pdata_node node)
     {
         g_printing_flag = true;
         printf("print 2222, node->len=%d\n", node->len);
+        //prt_handle.esc_2_prt(ESCPOS_CMD_ALIGN_CENTER, strlen(ESCPOS_CMD_ALIGN_CENTER));
         if (node->is_copy)
         {
-            prt_handle.esc_2_prt(node->data, node->len);
+            //prt_handle.esc_2_prt(ESCPOS_CMD_INIT, strlen(ESCPOS_CMD_INIT));
+            printf("node end 10 bytes1: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X\n", node->data[node->len - 10], node->data[node->len - 9], node->data[node->len - 8], node->data[node->len - 7], node->data[node->len - 6], node->data[node->len - 5], node->data[node->len - 4], node->data[node->len - 3], node->data[node->len - 2], node->data[node->len - 1]);
+            memcpy(pn_buf.data, node->data, node->len);
+            pn_buf.len = node->len;
+            prt_handle.esc_2_prt(pn_buf.data, node->len);
+            //prt_handle.esc_2_prt(node->data, node->len);
             prt_handle.printer_cut(96);
         }
         else
         {
-            prt_handle.esc_2_prt(node->data, node->len + strlen(ESCPOS_CMD_CUT1));
+            //prt_handle.esc_2_prt(node->data, node->len + strlen(ESCPOS_CMD_CUT1));
+            printf("node end 10 bytes2: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X\n", node->data[node->len - 10], node->data[node->len - 9], node->data[node->len - 8], node->data[node->len - 7], node->data[node->len - 6], node->data[node->len - 5], node->data[node->len - 4], node->data[node->len - 3], node->data[node->len - 2], node->data[node->len - 1]);
+            printf("node end 10 bytes2-2: 0x%02X 0x%02X 0x%02X\n", node->data[node->len - 1], node->data[node->len - 0], node->data[node->len + 1], node->data[node->len + 2]);
+            memcpy(pn_buf.data, node->data, node->len + strlen(ESCPOS_CMD_CUT1));
+            pn_buf.len = node->len + strlen(ESCPOS_CMD_CUT1);
+            prt_handle.esc_2_prt(pn_buf.data, pn_buf.len);
         }
+        //prt_handle.esc_2_prt(ESCPOS_CMD_INIT, strlen(ESCPOS_CMD_INIT));
         
         //prt_handle.printer_cut(96);
         //prt_handle.esc_2_prt(ESCPOS_CMD_INIT, strlen(ESCPOS_CMD_INIT));
@@ -421,6 +440,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
     int de_data_len = 0;
     struct mg_mqtt_message *msg = (struct mg_mqtt_message *)p;
     (void)nc;
+    int prt_len = 0;
 
     if (ev != MG_EV_POLL) printf("mqtt GOT event %d\n", ev);
 
@@ -490,80 +510,105 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
             if(memcmp(msg->topic.p, sub_topic_prt, strlen(sub_topic_prt)) == 0)
             {
                 printf("publish 2\n");
-            //dump_data("./prt.bin", msg->payload.p,(int)msg->payload.len);
-            //prt_print(pn_data.data, pn_data.len);
-            //escpos_printer_feed(3);
-            if(g_overtime_flag == 0)
-            {
-                struct timeval tv;
-                gettimeofday (&tv, NULL);
-                printf("got online code time = %ld.%ld\n", tv.tv_sec, tv.tv_usec);
-                printf("publish 3\n");
-                json = cJSON_Parse(msg->payload.p);
-                if(!json)
+                //dump_data("./prt.bin", msg->payload.p,(int)msg->payload.len);
+                //prt_print(pn_data.data, pn_data.len);
+                //escpos_printer_feed(3);
+                if(g_overtime_flag == 0)
                 {
-                    printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
-                }     
-                code = cJSON_GetObjectItem(json, "id");
-                if(code != NULL)
-                {
-                    if(strcmp(code->valuestring, prt_list->id) != 0)
+                    struct timeval tv;
+                    gettimeofday (&tv, NULL);
+                    printf("got online code time = %ld.%ld\n", tv.tv_sec, tv.tv_usec);
+                    printf("publish 3\n");
+                    json = cJSON_Parse(msg->payload.p);
+                    if(!json)
                     {
-                        printf("err id is: %s\n", code->valuestring);
+                        printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
+                    }     
+                    code = cJSON_GetObjectItem(json, "id");
+                    if(code != NULL)
+                    {
+                        if(strcmp(code->valuestring, prt_list->id) != 0)
+                        {
+                            printf("err id is: %s\n", code->valuestring);
+                            cJSON_free(json);
+                            cJSON_free(code);
+                            return;
+                        }                   
+                    }
+                    else
+                    {
+                        printf("parse id error!\n");
+                        return;
+                    }
+                    g_timer_flag = 0;
+                    g_add_count = 0;
+
+                    code = cJSON_GetObjectItem(json, "data");
+                    if(code != NULL)
+                    {
+                        printf("base64_decode 1, pn_data.len is %d\n", pn_data.len);
+                        g_printing_flag = true;
+                        prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); //reset printer before next task to avoid gibberish
+                        usleep(1000 * 10);
+                        pn_buf.len = 0;
+                        memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
+                        pn_buf.len += 2;
+                        prt_len = memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len;
+                        memcpy(pn_buf.data + pn_buf.len, prt_list->data, prt_len);
+                        pn_buf.len += prt_len;
+                        de_data_len = base64_decode(code->valuestring, pn_buf.data + pn_buf.len);
+                        pn_buf.len += de_data_len;
+                        if (prt_list->is_receipt && (!prt_list->is_copy))
+                        {
+                            prt_len += print_end_string(pn_buf.data + pn_buf.len);
+                            pn_buf.len += prt_len;
+                        }
+                        memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
+                        pn_buf.len += 2;
+                        prt_handle.esc_2_prt(pn_buf.data, pn_buf.len);
+                        destroy_node(prt_list);
+                        g_waiting_online_code_flag = 0;
+                        printf("prt data 1, clear g_waiting_online_code_flag\n");
+                        prt_handle.printer_cut(96);
+                        //prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); //reset printer before next task to avoid gibberish
+
+
+                        // de_data_len = base64_decode(code->valuestring, &pn_data.data[pn_data.len]);
+                        // pn_data.len += de_data_len;
+                        // g_printing_flag = true;
+                        // prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); 
+                        // prt_handle.esc_2_prt(prt_list->data, memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len);
+                        // prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+                        // pn_data.len = 0;
+                        // if (prt_list->is_receipt && (!prt_list->is_copy))
+                        // {
+                        //     print_end_string();
+                        // }
+                        // destroy_node(prt_list);
+                        // g_waiting_online_code_flag = 0;
+                        // printf("prt data 1, clear g_waiting_online_code_flag\n");
+                        // usleep(10000);
+                        // //prt_handle.esc_2_prt((unsigned char*)msg->payload.p,(int)msg->payload.len);
+                        // usleep(10000);
+                        // //    prt_handle.esc_2_prt(test_feed, 3);
+                        // prt_handle.printer_cut(96);
+                        // prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); //reset printer before next task to avoid gibberish
+                        g_printing_flag = false;
+                        //prt_handle.push_printer_process_id(0x01);
+                        //prt_handle.printer_cut();
+                        //escpos_printer_feed(3);
+                        //escpos_printer_cut(1);   
                         cJSON_free(json);
                         cJSON_free(code);
-                        return;
-                    }                   
+                        // if (pn_data.len > 0)
+                        // {
+                        //     process_incoming_data(pn_data);
+                        // }
+                                        
+                    }                    
+
+                
                 }
-                else
-                {
-                    printf("parse id error!\n");
-                    return;
-                }
-                g_timer_flag = 0;
-                g_add_count = 0;
-
-                code = cJSON_GetObjectItem(json, "data");
-                if(code != NULL)
-                {
-                    printf("base64_decode 1, pn_data.len is %d\n", pn_data.len);
-                    de_data_len = base64_decode(code->valuestring, &pn_data.data[pn_data.len]);
-                    pn_data.len += de_data_len;
-                    g_printing_flag = true;
-                    prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); 
-                    prt_handle.esc_2_prt(prt_list->data, memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len);
-                    prt_handle.esc_2_prt(pn_data.data, pn_data.len);
-                    pn_data.len = 0;
-                    if (prt_list->is_receipt && (!prt_list->is_copy))
-                    {
-                        print_end_string();
-                    }
-                    destroy_node(prt_list);
-                    g_waiting_online_code_flag = 0;
-                    printf("prt data 1, clear g_waiting_online_code_flag\n");
-                    usleep(10000);
-                    //prt_handle.esc_2_prt((unsigned char*)msg->payload.p,(int)msg->payload.len);
-                    usleep(10000);
-                    //    prt_handle.esc_2_prt(test_feed, 3);
-                    prt_handle.printer_cut(96);
-                    prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); //reset printer before next task to avoid gibberish
-                    g_printing_flag = false;
-                    //prt_handle.push_printer_process_id(0x01);
-                    //prt_handle.printer_cut();
-                    //escpos_printer_feed(3);
-                    //escpos_printer_cut(1);   
-                    cJSON_free(json);
-                    cJSON_free(code);
-                    // if (pn_data.len > 0)
-                    // {
-                    //     process_incoming_data(pn_data);
-                    // }
-                                    
-                }                    
-
-              
-            }
-
             }
          
         }
@@ -899,10 +944,11 @@ void *prt_task_thread(void *arg)
     printf("prt_task_thread create success!\n");
     while(1)
     {
-        if(prt_list && (!g_printing_flag) && (!g_waiting_online_code_flag) && (!g_upload_flag) && (!g_heart_http_lock))
+        if(prt_list && (!prt_list->is_processed) && (!g_op_download_flag) && (!g_op_upload_flag) && (!g_printing_flag) && (!g_waiting_online_code_flag) && (!g_upload_flag) && (!g_heart_http_lock))
         {
             printf("ready to process a prt task with length = %d\n", prt_list->len);
-            process_incoming_data(prt_list);
+            prt_list->is_processed = true;
+            process_incoming_data(prt_list);\
         }
         else 
         {

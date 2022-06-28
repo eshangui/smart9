@@ -273,13 +273,16 @@ extern void lib_event_callback(hprt_lib_event_t e, const void *arg, unsigned int
             if(((tmp_data >> 2) & 0x01) == 0x00)
             {
                 printf("prt close!\n");
-                prt_handle.esc_2_prt(pn_data.data, pn_data.len);
-                prt_handle.printer_cut(84);
+                g_printing_flag = true;
+                prt_handle.esc_2_prt(pn_buf.data, pn_buf.len);
+                prt_handle.printer_cut(196);
+                //prt_handle.printer_cut(84);
                 printf("prt data 4\n");
                 //prt_handle.push_printer_process_id(0x01);
-                memset(pn_data.data, 0x00, pn_data.len);
-                pn_data.len = 0;
+                // memset(pn_data.data, 0x00, pn_data.len);
+                // pn_data.len = 0;
                 re_prt_flag = 0;
+                g_printing_flag = false;
             }
         break;
 
@@ -442,11 +445,20 @@ void read_sn (void)
 
 }
 
-void print_end_string()
+int print_end_string(void *buf)
 {
-    prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); 
-    prt_handle.esc_2_prt(ESCPOS_CMD_ALIGN_CENTER, strlen(ESCPOS_CMD_ALIGN_CENTER)); 
-    prt_handle.esc_2_prt(RECEIPT_END_STRING, strlen(RECEIPT_END_STRING));
+    int len = 0;
+    memcpy(buf + len, ESCPOS_CMD_INIT, 2);
+    len += 2;
+    memcpy(buf + len, ESCPOS_CMD_ALIGN_CENTER, strlen(ESCPOS_CMD_ALIGN_CENTER));
+    len += strlen(ESCPOS_CMD_ALIGN_CENTER);
+    memcpy(buf + len, RECEIPT_END_STRING, strlen(RECEIPT_END_STRING));
+    len += strlen(RECEIPT_END_STRING);
+    return len;
+
+    // prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); 
+    // prt_handle.esc_2_prt(ESCPOS_CMD_ALIGN_CENTER, strlen(ESCPOS_CMD_ALIGN_CENTER)); 
+    // prt_handle.esc_2_prt(RECEIPT_END_STRING, strlen(RECEIPT_END_STRING));
 }
 
 

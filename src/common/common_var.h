@@ -12,6 +12,7 @@ typedef struct _data_node {
   bool is_copy;
   char id[40];
   struct _data_node *next;
+  bool is_processed;
 } data_node, *pdata_node;
 
 extern volatile pdata_node prt_list;
@@ -21,6 +22,7 @@ extern struct mg_mgr m_mqtt;
 
 extern prt_net_data pn_data;
 extern prt_net_data pn_data_buf;
+extern prt_net_data pn_buf;
 
 extern unsigned char g_net_status;
 

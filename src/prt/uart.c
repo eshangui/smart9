@@ -735,6 +735,7 @@ void *timer_thread(void *arg)
     unsigned char heart_beat_count = 0;
     unsigned char http_download_count = 0;
     unsigned char reconnect_count = 0;
+    int prt_len = 0;
     while(1)
     {
         if(g_wait_net_flag == 1)
@@ -747,17 +748,39 @@ void *timer_thread(void *arg)
             {
                 get_offline_code();
                 printf("==================start offline prt=================%d\n", prt_list->len);
-                prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); 
-                prt_handle.esc_2_prt(prt_list->data, memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len);
-                prt_handle.esc_2_prt(pn_data.data, pn_data.len);
-                print_end_string();
+                g_printing_flag = true;
+                prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2);
+                usleep(1000 * 10);
+                pn_buf.len = 0;
+                memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
+                pn_buf.len += 2;
+                prt_len = memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len;
+                memcpy(pn_buf.data + pn_buf.len, prt_list->data, prt_len);
+                pn_buf.len += prt_len;
+                memcpy(pn_buf.data + pn_buf.len, pn_data.data, pn_data.len);
+                pn_buf.len += pn_data.len;
+                prt_len += print_end_string(pn_buf.data + pn_buf.len);
+                pn_buf.len += prt_len;
+                // memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
+                // pn_buf.len += 2;
+                memcpy(pn_buf.data + pn_buf.len, "---------CHECKED OUT--------\n", strlen("---------CHECKED OUT--------\n"));
+                pn_buf.len += strlen("---------CHECKED OUT--------\n");
+                memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
+                pn_buf.len += 2;
+                prt_handle.esc_2_prt(pn_buf.data, pn_buf.len);
+                printf("prt data 1, clear g_waiting_online_code_flag\n");
+                prt_handle.printer_cut(128);
+                // prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); 
+                // prt_handle.esc_2_prt(prt_list->data, memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len);
+                // prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+                // print_end_string();
             }
             destroy_node(prt_list);
             printf("offline prt, clear g_waiting_online_code_flag\n");
             pn_data.len = 0;
-            prt_handle.esc_2_prt("---------CHECKED OUT--------\n", 33);
-            prt_handle.printer_cut(128);      
-            prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); //reset printer before next task to avoid gibberish
+            // prt_handle.esc_2_prt("---------CHECKED OUT--------\n", 33);
+            // prt_handle.printer_cut(128);      
+            // prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); //reset printer before next task to avoid gibberish
             g_printing_flag = false;
             printf("prt data 5\n");
             // if (g_waiting_online_code_flag)

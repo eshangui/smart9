@@ -73,9 +73,11 @@ uint32_t load_config()
      int len = sizeof(buf);
      memset(buf, 0, sizeof(buf));
      bool ret = load_conf("/oem/addr.conf", buf, &len);
-     if (len != sizeof(buf))
+     
+     if ((!ret) || (len != sizeof(buf)))
      {
-          prt_handle.esc_2_prt("load config fail, reboot to try again\n", strlen("load config fail, reboot to try again\n"));
+          char *msg = "Load configuration fail, reboot to try again!\nIf this message still exists, \nPlease call for customer service.\n";
+          prt_handle.esc_2_prt(msg, strlen(msg));
           prt_handle.printer_cut(198);   
           return 1;
      }

@@ -100,7 +100,7 @@ int escpos_printer_image(escpos_printer *printer,
 void updata_offine_json(char *json_str, char *code_id);
 unsigned char get_offline_code(void);
 
-void print_end_string();
+int print_end_string(void *buf);
 
 
 #endif

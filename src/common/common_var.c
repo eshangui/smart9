@@ -6,6 +6,7 @@ struct mg_mgr m_mqtt;
 
 prt_net_data pn_data;
 prt_net_data pn_data_buf;
+prt_net_data pn_buf;
 
 unsigned char g_net_status;
 
@@ -62,6 +63,7 @@ pdata_node malloc_node(unsigned char *buf, int len)
   node->len = len;
   node->is_receipt = false;
   node->is_copy = false;
+  node->is_processed = false;
   node->next = NULL;
 }
 
