@@ -204,6 +204,8 @@ void process_data(pdata_node node)
         {
             //prt_handle.esc_2_prt(ESCPOS_CMD_INIT, strlen(ESCPOS_CMD_INIT));
             printf("node end 10 bytes1: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X\n", node->data[node->len - 10], node->data[node->len - 9], node->data[node->len - 8], node->data[node->len - 7], node->data[node->len - 6], node->data[node->len - 5], node->data[node->len - 4], node->data[node->len - 3], node->data[node->len - 2], node->data[node->len - 1]);
+            memset(pn_buf.data, 0, sizeof(pn_buf.data));
+            pn_buf.len = 0;
             memcpy(pn_buf.data, node->data, node->len);
             pn_buf.len = node->len;
             prt_handle.esc_2_prt(pn_buf.data, node->len);
@@ -215,6 +217,8 @@ void process_data(pdata_node node)
             //prt_handle.esc_2_prt(node->data, node->len + strlen(ESCPOS_CMD_CUT1));
             printf("node end 10 bytes2: 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X 0x%02X\n", node->data[node->len - 10], node->data[node->len - 9], node->data[node->len - 8], node->data[node->len - 7], node->data[node->len - 6], node->data[node->len - 5], node->data[node->len - 4], node->data[node->len - 3], node->data[node->len - 2], node->data[node->len - 1]);
             printf("node end 10 bytes2-2: 0x%02X 0x%02X 0x%02X\n", node->data[node->len - 1], node->data[node->len - 0], node->data[node->len + 1], node->data[node->len + 2]);
+            memset(pn_buf.data, 0, sizeof(pn_buf.data));
+            pn_buf.len = 0;
             memcpy(pn_buf.data, node->data, node->len + strlen(ESCPOS_CMD_CUT1));
             pn_buf.len = node->len + strlen(ESCPOS_CMD_CUT1);
             prt_handle.esc_2_prt(pn_buf.data, pn_buf.len);
@@ -550,6 +554,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                         g_printing_flag = true;
                         prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); //reset printer before next task to avoid gibberish
                         usleep(1000 * 10);
+                        memset(pn_data.data, 0, sizeof(pn_data.data));
                         pn_buf.len = 0;
                         memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
                         pn_buf.len += 2;
@@ -565,7 +570,12 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                         }
                         memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
                         pn_buf.len += 2;
-                        prt_handle.esc_2_prt(pn_buf.data, pn_buf.len);
+                        struct timeval tv1, tv2;
+                        gettimeofday (&tv1, NULL);
+                        printf("before print = %ld.%ld\n", tv1.tv_sec, tv1.tv_usec);
+                        unsigned int rtn = prt_handle.esc_2_prt(pn_buf.data, pn_buf.len);
+                        gettimeofday (&tv2, NULL);
+                        printf("after print = %ld.%ld, diff is %ld.%ld, data len is %d, prt rtn is %d\n", tv2.tv_sec, tv2.tv_usec, tv2.tv_sec - tv1.tv_sec, tv2.tv_usec - tv1.tv_usec, pn_buf.len, rtn);
                         destroy_node(prt_list);
                         g_waiting_online_code_flag = 0;
                         printf("prt data 1, clear g_waiting_online_code_flag\n");
@@ -1489,7 +1499,7 @@ void updata_offline_data(void)
     s_exit_flag = 0;
     mg_mgr_free(&http_mgr);
     mg_mgr_init(&http_mgr, NULL);
-    connection = mg_connect_http(&http_mgr, event_handler, "http://printer-pro.d9inggroup.cn/offline_upload", "Content-type: application/json\r\n", json_data);
+    connection = mg_connect_http(&http_mgr, event_handler, g_upload_addr, "Content-type: application/json\r\n", json_data);
     mg_set_protocol_http_websocket(connection);
     g_http_cmd_flag = 1;
     while (s_exit_flag == 0 && g_upload_overtime_flag == 0)

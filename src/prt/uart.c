@@ -751,6 +751,7 @@ void *timer_thread(void *arg)
                 g_printing_flag = true;
                 prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2);
                 usleep(1000 * 10);
+                memset(pn_buf.data, 0, sizeof(pn_buf.data));
                 pn_buf.len = 0;
                 memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
                 pn_buf.len += 2;
@@ -769,7 +770,7 @@ void *timer_thread(void *arg)
                 pn_buf.len += 2;
                 prt_handle.esc_2_prt(pn_buf.data, pn_buf.len);
                 printf("prt data 1, clear g_waiting_online_code_flag\n");
-                prt_handle.printer_cut(128);
+                prt_handle.printer_cut(196);
                 // prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); 
                 // prt_handle.esc_2_prt(prt_list->data, memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len);
                 // prt_handle.esc_2_prt(pn_data.data, pn_data.len);
