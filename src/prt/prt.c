@@ -206,9 +206,14 @@ void prt_init (void)
 	}
     printf("init success!\n");
 
-    prt_handle.get_printer_sn(sn_buff, 64);
+    memset(g_prt_sn, 0, sizeof(g_prt_sn));
+    strcpy(g_prt_sn, "SN: ");
+    prt_handle.get_printer_sn(g_prt_sn + strlen(g_prt_sn), 32);
 
-    printf(" sn is %s\n", sn_buff);
+    printf("%s\n", g_prt_sn);
+    strcpy(&g_prt_sn[strlen(g_prt_sn)], "\n");
+    printf("sn len = %d\n", strlen(g_prt_sn));
+
     usb_prt_buf.len = 0;
     memset(usb_prt_buf.data, 0, sizeof(usb_prt_buf.data));
 

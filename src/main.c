@@ -74,10 +74,13 @@ uint32_t load_config()
      memset(buf, 0, sizeof(buf));
      bool ret = load_conf("/oem/addr.conf", buf, &len);
      
-     if ((!ret) || (len != sizeof(buf)))
+     if ((!ret) || (len != sizeof(buf)) || (strlen(buf) == 0)
+          || (strlen(buf + 256) == 0) || (strlen(buf + 256 * 2) == 0)
+          || (strlen(buf + 256 * 3) == 0) || (strlen(buf + 256 * 4) == 0))
      {
-          char *msg = "Load configuration fail, reboot to try again!\nIf this message still exists, \nPlease call for customer service.\n";
-          prt_handle.esc_2_prt(msg, strlen(msg));
+          prt_handle.esc_2_prt(CONFIG_LOAD_FAILED_TIP, strlen(CONFIG_LOAD_FAILED_TIP));
+          // prt_handle.esc_2_prt(D9MAIN_VERSION, strlen(D9MAIN_VERSION));
+          // prt_handle.esc_2_prt(g_prt_sn, strlen(g_prt_sn));   
           prt_handle.printer_cut(198);   
           return 1;
      }

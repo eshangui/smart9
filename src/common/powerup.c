@@ -30,11 +30,11 @@ uint32_t var_init(void)
     uint32_t ret = 0;
     ret = config_init();
 
-    memset(g_prt_sn, 0, sizeof(g_prt_sn));
-    strcpy(g_prt_sn, "SN: ");
-    prt_handle.get_printer_sn(&g_prt_sn[strlen(g_prt_sn)], 32);
-    strcpy(&g_prt_sn[strlen(g_prt_sn)], "\n");
-    printf("sn len = %d\n", strlen(g_prt_sn));
+    // memset(g_prt_sn, 0, sizeof(g_prt_sn));
+    // strcpy(g_prt_sn, "SN: ");
+    // prt_handle.get_printer_sn(&g_prt_sn[strlen(g_prt_sn)], 32);
+    // strcpy(&g_prt_sn[strlen(g_prt_sn)], "\n");
+    // printf("sn len = %d\n", strlen(g_prt_sn));
     pn_data.len = 0;
 
     return D9_OK;
