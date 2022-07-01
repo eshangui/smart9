@@ -531,7 +531,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                     code = cJSON_GetObjectItem(json, "id");
                     if(code != NULL)
                     {
-                        if(strcmp(code->valuestring, prt_list->id) != 0)
+                        if((!prt_list) || strcmp(code->valuestring, prt_list->id) != 0)
                         {
                             printf("err id is: %s\n", code->valuestring);
                             cJSON_free(json);
@@ -554,8 +554,9 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                         g_printing_flag = true;
                         prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); //reset printer before next task to avoid gibberish
                         usleep(1000 * 10);
-                        memset(pn_data.data, 0, sizeof(pn_data.data));
-                        pn_buf.len = 0;
+                        // memset(pn_data.data, 0, sizeof(pn_data.data));
+                        // pn_buf.len = 0;
+                        memset(&pn_buf, 0, sizeof(pn_buf));
                         memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
                         pn_buf.len += 2;
                         prt_len = memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len;
@@ -958,7 +959,7 @@ void *prt_task_thread(void *arg)
         {
             printf("ready to process a prt task with length = %d\n", prt_list->len);
             prt_list->is_processed = true;
-            process_incoming_data(prt_list);\
+            process_incoming_data(prt_list);
         }
         else 
         {
@@ -1581,6 +1582,12 @@ void *offline_op_thread(void* arg)
 {
     while(1)
     {
+        if(g_printing_flag || g_upload_flag || prt_list)
+        {
+            printf("g_printing_flag = %d, g_upload_flag = %d, prt_list = %0x%x\n", g_printing_flag, g_upload_flag, prt_list);
+            usleep(1000 *1000);
+            continue;
+        }
         if(g_op_upload_flag == 1)
         {
             printf("start upload!\n");

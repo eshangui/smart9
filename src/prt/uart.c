@@ -744,39 +744,43 @@ void *timer_thread(void *arg)
             g_wait_net_flag = 0; 
             g_waiting_online_code_flag = 0;
             g_printing_flag = true;
-            if (prt_list->is_receipt && (!prt_list->is_copy))
+            if (prt_list)
             {
-                get_offline_code();
-                printf("==================start offline prt=================%d\n", prt_list->len);
-                g_printing_flag = true;
-                prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2);
-                usleep(1000 * 10);
-                memset(pn_buf.data, 0, sizeof(pn_buf.data));
-                pn_buf.len = 0;
-                memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
-                pn_buf.len += 2;
-                prt_len = memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len;
-                memcpy(pn_buf.data + pn_buf.len, prt_list->data, prt_len);
-                pn_buf.len += prt_len;
-                memcpy(pn_buf.data + pn_buf.len, pn_data.data, pn_data.len);
-                pn_buf.len += pn_data.len;
-                prt_len += print_end_string(pn_buf.data + pn_buf.len);
-                pn_buf.len += prt_len;
-                // memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
-                // pn_buf.len += 2;
-                memcpy(pn_buf.data + pn_buf.len, "---------CHECKED OUT--------\n", strlen("---------CHECKED OUT--------\n"));
-                pn_buf.len += strlen("---------CHECKED OUT--------\n");
-                memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
-                pn_buf.len += 2;
-                prt_handle.esc_2_prt(pn_buf.data, pn_buf.len);
-                printf("prt data 1, clear g_waiting_online_code_flag\n");
-                prt_handle.printer_cut(196);
-                // prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); 
-                // prt_handle.esc_2_prt(prt_list->data, memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len);
-                // prt_handle.esc_2_prt(pn_data.data, pn_data.len);
-                // print_end_string();
+                if (prt_list->is_receipt && (!prt_list->is_copy))
+                {
+                    get_offline_code();
+                    printf("==================start offline prt=================%d\n", prt_list->len);
+                    g_printing_flag = true;
+                    prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2);
+                    usleep(1000 * 10);
+                    memset(pn_buf.data, 0, sizeof(pn_buf.data));
+                    pn_buf.len = 0;
+                    memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
+                    pn_buf.len += 2;
+                    prt_len = memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len;
+                    memcpy(pn_buf.data + pn_buf.len, prt_list->data, prt_len);
+                    pn_buf.len += prt_len;
+                    memcpy(pn_buf.data + pn_buf.len, pn_data.data, pn_data.len);
+                    pn_buf.len += pn_data.len;
+                    prt_len += print_end_string(pn_buf.data + pn_buf.len);
+                    pn_buf.len += prt_len;
+                    // memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
+                    // pn_buf.len += 2;
+                    memcpy(pn_buf.data + pn_buf.len, "---------CHECKED OUT--------\n", strlen("---------CHECKED OUT--------\n"));
+                    pn_buf.len += strlen("---------CHECKED OUT--------\n");
+                    memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
+                    pn_buf.len += 2;
+                    prt_handle.esc_2_prt(pn_buf.data, pn_buf.len);
+                    printf("prt data 1, clear g_waiting_online_code_flag\n");
+                    prt_handle.printer_cut(196);
+                    // prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); 
+                    // prt_handle.esc_2_prt(prt_list->data, memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len);
+                    // prt_handle.esc_2_prt(pn_data.data, pn_data.len);
+                    // print_end_string();
+                }
+                destroy_node(prt_list);
             }
-            destroy_node(prt_list);
+            
             printf("offline prt, clear g_waiting_online_code_flag\n");
             pn_data.len = 0;
             // prt_handle.esc_2_prt("---------CHECKED OUT--------\n", 33);
