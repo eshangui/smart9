@@ -1584,7 +1584,7 @@ void *offline_op_thread(void* arg)
     {
         if(g_printing_flag || g_upload_flag || prt_list)
         {
-            printf("g_printing_flag = %d, g_upload_flag = %d, prt_list = %0x%x\n", g_printing_flag, g_upload_flag, prt_list);
+            //printf("g_printing_flag = %d, g_upload_flag = %d, prt_list = %0x%x\n", g_printing_flag, g_upload_flag, prt_list);
             usleep(1000 *1000);
             continue;
         }

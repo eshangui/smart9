@@ -3,6 +3,7 @@
 #include <termios.h> /* POSIX Terminal Control Definitions */
 #include <unistd.h>  /* UNIX Standard Definitions 	   */
 #include <errno.h>   /* ERROR Number Definitions           */
+#include <sys/ioctl.h>   
 #include "common_var.h"
 #include "uart.h"
 #include "net.h"
@@ -24,6 +25,12 @@ int ble_uart_init(void)
         printf ("\n Open Ble Uart Error \n");
         return 1;
     }
+    usleep(1000000);
+
+    //tcflush (fd, TCIOFLUSH); /* Discards old data in the io buffer            */
+
+    ioctl(fd, TCFLSH, 2);
+
     /*RX init*/
     struct termios SerialPortSettings; /* Create the structure                          */
     tcgetattr (fd, &SerialPortSettings); /* Get the current attributes of the Serial port */
@@ -58,8 +65,8 @@ int ble_uart_init(void)
         return 1;
     }
         
-    tcflush (fd, TCIFLUSH); /* Discards old data in the rx buffer            */
     g_ble_uart_dev = fd;
+
     return 0;
 
 

@@ -35,6 +35,9 @@ uint32_t var_init(void)
     // prt_handle.get_printer_sn(&g_prt_sn[strlen(g_prt_sn)], 32);
     // strcpy(&g_prt_sn[strlen(g_prt_sn)], "\n");
     // printf("sn len = %d\n", strlen(g_prt_sn));
+    memset(&pn_data, 0, sizeof(pn_data));
+    memset(&pn_buf, 0, sizeof(pn_buf));
+    memset(&pn_data_buf, 0, sizeof(pn_data_buf));
     pn_data.len = 0;
 
     return D9_OK;
