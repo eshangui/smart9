@@ -210,7 +210,7 @@ void process_data(pdata_node node)
             pn_buf.len = node->len;
             prt_handle.esc_2_prt(pn_buf.data, node->len);
             //prt_handle.esc_2_prt(node->data, node->len);
-            prt_handle.printer_cut(96);
+            prt_handle.printer_cut(196);
         }
         else
         {
@@ -580,7 +580,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                         destroy_node(prt_list);
                         g_waiting_online_code_flag = 0;
                         printf("prt data 1, clear g_waiting_online_code_flag\n");
-                        prt_handle.printer_cut(96);
+                        prt_handle.printer_cut(196);
                         //prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); //reset printer before next task to avoid gibberish
 
 
