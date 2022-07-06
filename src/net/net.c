@@ -569,6 +569,8 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                             prt_len += print_end_string(pn_buf.data + pn_buf.len);
                             pn_buf.len += prt_len;
                         }
+                        memcpy(pn_buf.data + pn_buf.len, "\n\n\n\n", 4);
+                        pn_buf.len += 4;
                         memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
                         pn_buf.len += 2;
                         struct timeval tv1, tv2;

@@ -253,6 +253,7 @@ void *ble_read_thread(void *arg)
     unsigned char tmp_data = 0;
     char ret_buff[128] = {0};
     unsigned char ctrl_upload_flag = 0;
+    unsigned char READY[] = {0x0D, 0x0A, 0x49, 0x4D, 0x5F, 0x43, 0x4F, 0x4E, 0x4E, 0x0D, 0x0A};
 
     printf("ble read pthread creat success!\n");
     memset(g_ble_data, 0, sizeof(g_ble_data));
@@ -492,6 +493,13 @@ void *ble_read_thread(void *arg)
         {
             printf("ble data received, len is %d \n", i);
             print_array(g_ble_data + offset, i);  
+
+            //SKIP "IMREADY"
+            if ((i == sizeof(READY)) && (memcmp(g_ble_data + offset, READY, sizeof(READY)) == 0))
+            {
+                printf("ble module ready msg received, len is %d, current offset is %d, discard it\n", i, offset);
+                continue;
+            }
             offset += i;
         }
 
@@ -775,6 +783,8 @@ void *timer_thread(void *arg)
                     // pn_buf.len += 2;
                     memcpy(pn_buf.data + pn_buf.len, "---------CHECKED OUT--------\n", strlen("---------CHECKED OUT--------\n"));
                     pn_buf.len += strlen("---------CHECKED OUT--------\n");
+                    memcpy(pn_buf.data + pn_buf.len, "\n\n\n\n", 4);
+                    pn_buf.len += 4;
                     memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
                     pn_buf.len += 2;
                     prt_handle.esc_2_prt(pn_buf.data, pn_buf.len);
