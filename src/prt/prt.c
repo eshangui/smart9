@@ -30,7 +30,7 @@ unsigned int usb_data_cb(void *buff, unsigned int size)
     memcpy(usb_prt_buf.data + (usb_prt_buf.len), buff, size);
     usb_prt_buf.len += size;
 
-    //printf("buff_index = %d, size = %d\n", buff_index, size);
+    //dbg_printf("buff_index = %d, size = %d\n", buff_index, size);
     //memcpy(&pn_data_buf.data[buff_index], buff, size);
     //buff_index += size;
 
@@ -143,8 +143,8 @@ void bmp_cb(const char *bmp_path)
 {
     FILE *fp;
     char ret_buff[128] = {0};
-    printf("function %s was called\n", __FUNCTION__);
-	printf("bmp_path = %s\n", bmp_path);
+    dbg_printf("function %s was called\n", __FUNCTION__);
+	dbg_printf("bmp_path = %s\n", bmp_path);
 	// if (prt_handle.bmp_print) {
 	// 	printf("start print bmp!\n");
 	// 	prt_handle.bmp_print(bmp_path);
@@ -160,7 +160,7 @@ void bmp_cb(const char *bmp_path)
             {
                 ret_buff[strlen(ret_buff)-1] = '\0';
             }
-            printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
+            dbg_printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
         }
         pclose(fp);                   
     }
@@ -173,7 +173,7 @@ void bmp_cb(const char *bmp_path)
             {
                 ret_buff[strlen(ret_buff)-1] = '\0';
             }
-            printf("zip = %s\r\n", ret_buff);
+            dbg_printf("zip = %s\r\n", ret_buff);
         }
         pclose(fp);                   
     }
@@ -189,7 +189,7 @@ void prt_init (void)
     unsigned char drawer_cmd[5] = {0x1b, 0x70, 0x30, 0x37, 0x79};
     unsigned char drawer_cmd1[5] = {0x10, 0x14, 0x00, 0x00, 0x00};
     char *prt_str = "INIT OK!\n";
-    printf ("prt_init \n");
+    dbg_printf ("prt_init \n");
     char bmp_path[] = "/smart9/escode/100000000018330045_100000000018330045_0017.bmp";
     char f_path[] = "/oem/fonts_gb18030.bin";
     memset(&prt_handle, 0, sizeof(prt_handle));
@@ -199,20 +199,20 @@ void prt_init (void)
 	prt_handle.usb_data_cb = usb_data_cb;
     //strcpy(prt_handle.bmp_path, bmp_path);
 	esc2bmp_version_print();
-    printf("start init!\n");
+    dbg_printf("start init!\n");
     if (esc2bmp_init(&prt_handle)) {
-		printf("Initial failed!!!\n");
+		dbg_printf("Initial failed!!!\n");
 		exit(1);
 	}
-    printf("init success!\n");
+    dbg_printf("init success!\n");
 
     memset(g_prt_sn, 0, sizeof(g_prt_sn));
     strcpy(g_prt_sn, "SN: ");
     prt_handle.get_printer_sn(g_prt_sn + strlen(g_prt_sn), 32);
 
-    printf("%s\n", g_prt_sn);
+    dbg_printf("%s\n", g_prt_sn);
     strcpy(&g_prt_sn[strlen(g_prt_sn)], "\n");
-    printf("sn len = %d\n", strlen(g_prt_sn));
+    dbg_printf("sn len = %d\n", strlen(g_prt_sn));
 
     usb_prt_buf.len = 0;
     memset(usb_prt_buf.data, 0, sizeof(usb_prt_buf.data));
@@ -235,7 +235,7 @@ void prt_init (void)
 
 void prt_print (unsigned char* data, int len)
 {
-   printf ("start prt_print! \n");
+   dbg_printf ("start prt_print! \n");
    uart_write (data, len);
 }
 
@@ -264,25 +264,25 @@ extern void lib_event_callback(hprt_lib_event_t e, const void *arg, unsigned int
 {
     volatile static unsigned char re_prt_flag = 0;
     unsigned char tmp_data = 0;
-    printf("callback id = %d, size = %d, data is:\n", e, size);
-    print_array(arg, size);
+    dbg_printf("callback id = %d, size = %d, data is:\n", e, size);
+    print_array((unsigned char *)arg, size);
     switch(e)
     {
         case HPRT_LIB_EVENT_STATUS:
             tmp_data = *(unsigned char *)arg;
             if(((tmp_data >> 2) & 0x01) == 0x01)
             {
-                printf("prt open!\n");
+                dbg_printf("prt open!\n");
                 re_prt_flag = 1;
             }
             if(((tmp_data >> 2) & 0x01) == 0x00)
             {
-                printf("prt close!\n");
+                dbg_printf("prt close!\n");
                 g_printing_flag = true;
                 prt_handle.esc_2_prt(pn_buf.data, pn_buf.len);
                 prt_handle.printer_cut(196);
                 //prt_handle.printer_cut(84);
-                printf("prt data 4\n");
+                dbg_printf("prt data 4\n");
                 //prt_handle.push_printer_process_id(0x01);
                 // memset(pn_data.data, 0x00, pn_data.len);
                 // pn_data.len = 0;
@@ -334,37 +334,37 @@ unsigned char get_offline_code(void)
         while (filename = readdir(dp))
         {
             file_count++;
-            //printf("filename:%-10s\t\n",filename->d_name);
+            //dbg_printf("filename:%-10s\t\n",filename->d_name);
             file_name_index = atoi(filename->d_name);
-            //printf("name index = %d\n", file_name_index);
+            //dbg_printf("name index = %d\n", file_name_index);
             if(file_name_index < min_num && file_name_index != 0x00)
             {
                 min_num = file_name_index;
                 strcpy(code_dir, filename->d_name);
             }
         }   
-        printf("file count = %d\n", file_count); 
+        dbg_printf("file count = %d\n", file_count); 
         if(file_count == 0x02)
             return 1;
     }
     closedir(dp);
-    printf("code dir is: %s\n", code_dir);
+    dbg_printf("code dir is: %s\n", code_dir);
     strcpy(&dir[strlen(dir)], code_dir);
     strcpy(&rm_str[strlen(rm_str)], dir);
     strcpy(&rm_str[strlen(rm_str)], " -r");
-    printf("rm_str = %s\n", rm_str);
+    dbg_printf("rm_str = %s\n", rm_str);
     strcpy(info_name_str, dir);
     strcpy(&info_name_str[strlen(info_name_str)], "/info.txt");
-    printf("info_name_str = %s\n", info_name_str);
+    dbg_printf("info_name_str = %s\n", info_name_str);
     load_data(info_name_str, info_text, &len);
-    printf("info_text = %s\n", info_text);
+    dbg_printf("info_text = %s\n", info_text);
     strcpy(&dir[strlen(dir)], code_name_str);
-    printf("dir is: %s\n", dir);
+    dbg_printf("dir is: %s\n", dir);
 
-    printf("pos data len = %d\n", pn_data.len);
+    dbg_printf("pos data len = %d\n", pn_data.len);
     print_array(&pn_data.data[0], pn_data.len);
     load_data(dir, &pn_data.data[pn_data.len], &len);
-    printf("offline data len = %d\n", len);
+    dbg_printf("offline data len = %d\n", len);
     print_array(&pn_data.data[pn_data.len], len);
     pn_data.len += (len - 2);
 
@@ -375,9 +375,9 @@ unsigned char get_offline_code(void)
     {
         while (filename = readdir(dp))
         {
-            //printf("filename:%-10s\t\n",filename->d_name);
+            //dbg_printf("filename:%-10s\t\n",filename->d_name);
             file_name_index = atoi(filename->d_name);
-            //printf("name index = %d\n", file_name_index);
+            //dbg_printf("name index = %d\n", file_name_index);
             if(file_name_index > min_num)
             {
                 min_num = file_name_index;
@@ -390,15 +390,15 @@ unsigned char get_offline_code(void)
         strcpy(&mkdir_str[strlen(mkdir_str)], tmp_str);
         strcpy(&cp_info[strlen(cp_info)], tmp_str);
         strcpy(&cp_zip[strlen(cp_zip)], tmp_str);
-        printf("mkdir str is: %s\n", mkdir_str);
-        printf("cpinfo str is: %s\n", cp_info);
-        printf("cpzip str is: %s\n", cp_zip);
+        dbg_printf("mkdir str is: %s\n", mkdir_str);
+        dbg_printf("cpinfo str is: %s\n", cp_info);
+        dbg_printf("cpzip str is: %s\n", cp_zip);
     }
     system_op(mkdir_str);
     system_op(cp_info);
     system_op(cp_zip);
 
-    printf("info json dir is: %s\n", info_json);
+    dbg_printf("info json dir is: %s\n", info_json);
     updata_offine_json(info_json, info_text);
 
 
@@ -419,15 +419,15 @@ void updata_offine_json(char *json_str, char *code_id)
 
 
     load_data(json_str, json_buf, &len);
-    printf("info_json is: %s\n", json_buf);
+    dbg_printf("info_json is: %s\n", json_buf);
     json = cJSON_Parse(json_buf);
     if(!json)
     {
-        printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
+        dbg_printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
     }
 
     gettimeofday (&tv, NULL);
-    printf("tv_sec; %d\n", tv.tv_sec);
+    dbg_printf("tv_sec; %d\n", tv.tv_sec);
     sprintf(tmp_buf, "%d", tv.tv_sec);
 
     cJSON_ReplaceItemInObject(json, "offline_id", cJSON_CreateString(code_id));

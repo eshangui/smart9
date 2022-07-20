@@ -22,7 +22,7 @@ int ble_uart_init(void)
     //fd = open ("/dev/ttyS4", O_RDWR | O_NOCTTY | O_NONBLOCK);
     fd = open ("/dev/ttyS4", O_RDWR | O_NOCTTY );
     if (fd < 0) {
-        printf ("\n Open Ble Uart Error \n");
+        dbg_printf ("\n Open Ble Uart Error \n");
         return 1;
     }
     usleep(1000000);
@@ -61,7 +61,7 @@ int ble_uart_init(void)
 
     if ((tcsetattr (fd, TCSANOW, &SerialPortSettings)) != 0) /* Set the attributes to the termios structure*/
     {
-        printf ("\n  ERROR ! in Setting attributes");
+        dbg_printf ("\n  ERROR ! in Setting attributes");
         return 1;
     }
         
@@ -78,23 +78,23 @@ int uart_init (int *dev){
     //fd = open ("/dev/ttyS1", O_RDWR | O_NOCTTY | O_NONBLOCK);
     fd = open ("/dev/ttyS1", O_RDWR | O_NOCTTY);
     if (fd < 0) {
-        printf ("\n Open Error \n");
+        dbg_printf ("\n Open Error \n");
         return 0;
     }
 
 
     flag = fcntl(fd, F_GETFL, 0);
-    printf("flag befor:%08X\n", flag);
+    dbg_printf("flag befor:%08X\n", flag);
     if (fcntl(fd, F_SETFL, 0) < 0)
     {
-        printf("fcntl failed!\n");
+        dbg_printf("fcntl failed!\n");
     }
     flag = fcntl(fd, F_GETFL, 0);
-    printf("flag after:%08X\n", flag);
+    dbg_printf("flag after:%08X\n", flag);
    
     // if (isatty(STDIN_FILENO) == 0)
     // {
-    //     printf("standard input is not a terminal device\n");
+    //     dbg_printf("standard input is not a terminal device\n");
     // }
     /*RX init*/
     struct termios SerialPortSettings; /* Create the structure                          */
@@ -125,7 +125,7 @@ int uart_init (int *dev){
     SerialPortSettings.c_cc[VTIME] = 0; /* Wait indefinetly   */
 
     if ((tcsetattr (fd, TCSANOW, &SerialPortSettings)) != 0) /* Set the attributes to the termios structure*/
-        printf ("\n  ERROR ! in Setting attributes");
+        dbg_printf ("\n  ERROR ! in Setting attributes");
     tcflush (fd, TCIFLUSH); /* Discards old data in the rx buffer            */
     *dev = fd;
     return 1;
@@ -135,11 +135,11 @@ int ble_write(unsigned char *data, int len)
 {
     int rv = 0;
     int i;
-    printf("write len %d, data is:%s\n", len, data);
+    dbg_printf("write len %d, data is:%s\n", len, data);
 
 
     rv = write (g_ble_uart_dev, data, len);
-    printf("write ret = %d\n", rv);
+    dbg_printf("write ret = %d\n", rv);
     return rv;
 
 }
@@ -176,11 +176,11 @@ int ble_at_read(unsigned char* data, int *len)
     int rv = 0;
     int i = 0;
     rv = ble_read(data, 3);
-    printf("rec %d %d %d\n", data[0], data[1], data[2]);
+    dbg_printf("rec %d %d %d\n", data[0], data[1], data[2]);
     while(1)
     {
         rv = ble_read(&data[3 + i], 1);
-        printf(" i  = %d, for read : %d\n", i, data[3 + i]);
+        dbg_printf(" i  = %d, for read : %d\n", i, data[3 + i]);
         if(data[3 + i] == '\r')
         {
             rv = ble_read(&data[3 + i + 1], 1);
@@ -213,7 +213,7 @@ int uart_read (unsigned char *data, int len){
     if (g_dev == 0 || g_dev < 0){
         rv = uart_init (&g_dev);
         if (rv == 0){
-            printf ("---------init- fail-g_dev=%d------\n", g_dev);
+            dbg_printf ("---------init- fail-g_dev=%d------\n", g_dev);
             return 0;
         }
     }
@@ -233,7 +233,7 @@ void uart_test(void)
     int rv = 0;
     rv = uart_init (&g_dev);
     if (rv == 0){
-        printf ("---------init- fail-g_dev=%d------\n", g_dev);
+        dbg_printf ("---------init- fail-g_dev=%d------\n", g_dev);
     }
     while(1)
     {
@@ -255,7 +255,7 @@ void *ble_read_thread(void *arg)
     unsigned char ctrl_upload_flag = 0;
     unsigned char READY[] = {0x0D, 0x0A, 0x49, 0x4D, 0x5F, 0x43, 0x4F, 0x4E, 0x4E, 0x0D, 0x0A};
 
-    printf("ble read pthread creat success!\n");
+    dbg_printf("ble read pthread creat success!\n");
     memset(g_ble_data, 0, sizeof(g_ble_data));
     while(1)
     {
@@ -491,13 +491,13 @@ void *ble_read_thread(void *arg)
         }
         else
         {
-            printf("ble data received, len is %d \n", i);
+            dbg_printf("ble data received, len is %d \n", i);
             print_array(g_ble_data + offset, i);  
 
             //SKIP "IMREADY"
             if ((i == sizeof(READY)) && (memcmp(g_ble_data + offset, READY, sizeof(READY)) == 0))
             {
-                printf("ble module ready msg received, len is %d, current offset is %d, discard it\n", i, offset);
+                dbg_printf("ble module ready msg received, len is %d, current offset is %d, discard it\n", i, offset);
                 continue;
             }
             offset += i;
@@ -509,13 +509,13 @@ void *ble_read_thread(void *arg)
         //             EF 01 FF FF 00 00 XX XX 50 YY YY YY ... CRC1 CRC2, XX XX is length for 50 YY YY YY ...
         if (g_ble_data[0] == 0x81)
         {
-            printf("may be ble command , offset is %d\n", offset);
+            dbg_printf("may be ble command , offset is %d\n", offset);
             if (offset < 4)
             {
                 continue;
             }
 
-            printf("(g_ble_data[1] << 8 + g_ble_data[2]) is %d\n", ((g_ble_data[1] << 8) + g_ble_data[2]));
+            dbg_printf("(g_ble_data[1] << 8 + g_ble_data[2]) is %d\n", ((g_ble_data[1] << 8) + g_ble_data[2]));
             
             if (offset < (((g_ble_data[1] << 8) + g_ble_data[2]))) 
             {
@@ -524,20 +524,20 @@ void *ble_read_thread(void *arg)
 
             if (g_ble_data[3] != 0xD0)
             {
-                printf("g_ble_data[3] != 0xD0, not a ble command\n");
+                dbg_printf("g_ble_data[3] != 0xD0, not a ble command\n");
                 offset = 0;
                 continue;
             }
 
             if (g_ble_data[4] == 0xEF && g_ble_data[5] == 0x01) // 
             {
-                printf("g_ble_data[4] == 0xEF && g_ble_data[5] == 0x01\n");
+                dbg_printf("g_ble_data[4] == 0xEF && g_ble_data[5] == 0x01\n");
                 if (g_ble_data[12] == 0x50)
                 {
-                    printf("g_ble_data[12] == 0x50\n");
+                    dbg_printf("g_ble_data[12] == 0x50\n");
                     //TODO:: check crc
                     rec_len = g_ble_data[10] * 256 + g_ble_data[11];
-                    printf("rec_len = %d, ble command data is:\n", rec_len);
+                    dbg_printf("rec_len = %d, ble command data is:\n", rec_len);
                     for(j = 0; j < rec_len - 1; j++) 
                     {
                         printf("%c", g_ble_data[13 + j]);
@@ -545,7 +545,7 @@ void *ble_read_thread(void *arg)
                     printf("\n");
                     //print_array(g_ble_data, rec_len + 10);      
                     ret = parse_ble_data(&g_ble_data[13], rec_len - 1);
-                    printf("ble cmd end\n");
+                    dbg_printf("ble cmd end\n");
                 }
                 i = 0;
                 offset = 0;
@@ -554,7 +554,7 @@ void *ble_read_thread(void *arg)
             }
             else
             {
-                printf("not a EF 01 ble command \n");
+                dbg_printf("not a EF 01 ble command \n");
                 offset = 0;
                 continue;
             }   
@@ -581,7 +581,7 @@ void *ble_read_thread(void *arg)
             else
             {
                 //if(prt_data.data[len - 4] == 0x70 && prt_data.data[len - 5] == 0x1b)
-                printf("debug 1112\n");
+                dbg_printf("debug 1112\n");
                 if ((offset) < 8) {
                     continue;
                 }
@@ -597,7 +597,7 @@ void *ble_read_thread(void *arg)
             }
         }
     }
-    printf("ble thread exits\n");
+    dbg_printf("ble thread exits\n");
 
 }
 
@@ -620,11 +620,11 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
     content = (char*)malloc(len + 1);
     memset(content, 0, len + 1);
     memcpy(content, data, len);
-    printf("str:%s\n", content);
+    dbg_printf("str:%s\n", content);
     json = cJSON_Parse(content);
     if(!json)
     {
-        printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
+        dbg_printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
         return 0xFF;
     }
     char *str = cJSON_Print(json); 
@@ -633,9 +633,9 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
     pwd_val = cJSON_GetObjectItem(json, "passWord");
     if((strcmp(ssid_val->valuestring, "") != 0) && (strcmp(pwd_val->valuestring, "") != 0) )
     {
-        printf("set net ssid&pwd\n");    
+        dbg_printf("set net ssid&pwd\n");    
         sprintf(shell_str, "/oem/test.sh \"%s\" \"%s\"", ssid_val->valuestring, pwd_val->valuestring);
-        printf("shell---->%s\n", shell_str);
+        dbg_printf("shell---->%s\n", shell_str);
         fp = popen(shell_str, "r");  
         if(fp != NULL)
         {
@@ -645,7 +645,7 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
                 {
                     ret_buff[strlen(ret_buff)-1] = '\0';
                 }
-                printf("set net work = %s\r\n", ret_buff);
+                dbg_printf("set net work = %s\r\n", ret_buff);
             }
             pclose(fp);
         }
@@ -654,20 +654,20 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
 
     // ssid_val = cJSON_GetObjectItem(json, "webConfig");
     // pwd_val = cJSON_GetObjectItem(ssid_val, "webDHCP");
-    // printf(" webDHCP : %s\n", pwd_val->valuestring);
+    // dbg_printf(" webDHCP : %s\n", pwd_val->valuestring);
     // if(strcmp(pwd_val->valuestring, "0") == 0 )
     // {
     //     ip = cJSON_GetObjectItem(ssid_val, "IP");
     //     mask = cJSON_GetObjectItem(ssid_val, "webMask");
     //     dns = cJSON_GetObjectItem(ssid_val, "webDNS");
     //     gate = cJSON_GetObjectItem(ssid_val, "webGate"); 
-    //     printf("static data\n %s\n %s\n %s\n %s\n", ip->valuestring, mask->valuestring, dns->valuestring, gate->valuestring);   
+    //     dbg_printf("static data\n %s\n %s\n %s\n %s\n", ip->valuestring, mask->valuestring, dns->valuestring, gate->valuestring);   
     //     SetStaticIP("wlan0", ip->valuestring, mask->valuestring, gate->valuestring, dns->valuestring);   
     // }
 
 
 
-    printf("set net end!-------------------------------------\n");
+    dbg_printf("set net end!-------------------------------------\n");
     fp = popen("sync", "r");
     if(fp != NULL)
     {
@@ -677,7 +677,7 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
             {
                 ret_buff[strlen(ret_buff)-1] = '\0';
             }
-            printf("sync = %s\r\n", ret_buff);
+            dbg_printf("sync = %s\r\n", ret_buff);
         }
         pclose(fp);
     }
@@ -696,7 +696,7 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
     // ssid_val = cJSON_GetObjectItem(json, "webTypePriority");
     // if(strcmp(ssid_val->valuestring, "4g") == 0)
     // {
-    //     printf("change network to 4G\n");
+    //     dbg_printf("change network to 4G\n");
     //     system("ifconfig wlan0 down");
     //     system("ifconfig usb0 up");
     //     sleep(1);
@@ -715,7 +715,7 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
     //     cfc_json = cJSON_Parse(tmp_con);
     //     if(!cfc_json)
     //     {
-    //         printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
+    //         dbg_printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
     //     }
     //     //char *str = cJSON_Print(json);
 
@@ -726,8 +726,8 @@ unsigned char parse_ble_data(unsigned char *data, unsigned int len)
 
     //     char *str1 = cJSON_Print(cfc_json);
 
-    //     printf("json --->\n%s", str1);
-    //     printf("str1 len = %d\n", strlen(str1));
+    //     dbg_printf("json --->\n%s", str1);
+    //     dbg_printf("str1 len = %d\n", strlen(str1));
 
     //     h_file = fopen("./smart9_scheme.json", "wb");
     //     fwrite(str1, 1, strlen(str1), h_file);
@@ -749,8 +749,10 @@ void *timer_thread(void *arg)
 {
     unsigned char heart_beat_count = 0;
     unsigned char http_download_count = 0;
+    unsigned char http_upload_count = 0;
     unsigned char reconnect_count = 0;
     int prt_len = 0;
+    unsigned char prt_status_count = 0;
     while(1)
     {
         if(g_wait_net_flag == 1)
@@ -764,7 +766,7 @@ void *timer_thread(void *arg)
                 if (prt_list->is_receipt && (!prt_list->is_copy))
                 {
                     get_offline_code();
-                    printf("==================start offline prt=================%d\n", prt_list->len);
+                    dbg_printf("==================start offline prt=================%d\n", prt_list->len);
                     g_printing_flag = true;
                     prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2);
                     usleep(1000 * 10);
@@ -783,12 +785,12 @@ void *timer_thread(void *arg)
                     // pn_buf.len += 2;
                     memcpy(pn_buf.data + pn_buf.len, "---------CHECKED OUT--------\n", strlen("---------CHECKED OUT--------\n"));
                     pn_buf.len += strlen("---------CHECKED OUT--------\n");
-                    memcpy(pn_buf.data + pn_buf.len, "\n\n\n\n", 4);
-                    pn_buf.len += 4;
+                    // memcpy(pn_buf.data + pn_buf.len, "\n\n\n\n", 4);
+                    // pn_buf.len += 4;
                     memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
                     pn_buf.len += 2;
                     prt_handle.esc_2_prt(pn_buf.data, pn_buf.len);
-                    printf("prt data 1, clear g_waiting_online_code_flag\n");
+                    dbg_printf("prt data 1, clear g_waiting_online_code_flag\n");
                     prt_handle.printer_cut(196);
                     // prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); 
                     // prt_handle.esc_2_prt(prt_list->data, memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len);
@@ -798,13 +800,13 @@ void *timer_thread(void *arg)
                 destroy_node(prt_list);
             }
             
-            printf("offline prt, clear g_waiting_online_code_flag\n");
+            dbg_printf("offline prt, clear g_waiting_online_code_flag\n");
             pn_data.len = 0;
             // prt_handle.esc_2_prt("---------CHECKED OUT--------\n", 33);
             // prt_handle.printer_cut(128);      
             // prt_handle.esc_2_prt(ESCPOS_CMD_INIT, 2); //reset printer before next task to avoid gibberish
             g_printing_flag = false;
-            printf("prt data 5\n");
+            dbg_printf("prt data 5\n");
             // if (g_waiting_online_code_flag)
             // {
             //     memcpy(pn_data.data, pn_data_buf.data, pn_data_buf.len);
@@ -823,7 +825,7 @@ void *timer_thread(void *arg)
             {
                 g_add_count = 0;
                 g_overtime_flag = 1;
-                printf("g_overtime_flag = 1\n"); 
+                dbg_printf("g_overtime_flag = 1\n"); 
                 g_timer_flag = 0;
                 g_timer_count = 0;
                 g_wait_net_flag = 1;
@@ -846,15 +848,29 @@ void *timer_thread(void *arg)
                 g_download_overtime_flag = 1;
             }       
         }
+        else
+        {
+            if (http_download_count)
+            {
+                http_download_count = 0;
+            }   
+        }
 
         if(g_uploading_flag == 1)
         {
-            http_download_count++;
-            if(http_download_count == 600)
+            http_upload_count++;
+            if(http_upload_count == 300)
             {
-                http_download_count = 0;
+                http_upload_count = 0;
                 g_upload_overtime_flag = 1;
             }       
+        }
+        else
+        {
+            if (http_upload_count)
+            {
+                http_upload_count = 0;
+            }
         }
 
         if(g_reconnect_flag == 1)
@@ -868,6 +884,24 @@ void *timer_thread(void *arg)
 
         }
 
+        {
+            if (prt_status_count == 10)
+            {
+                prt_status_count = 0;
+                dbg_printf("prt_list=0x%X, g_op_download_flag=%d, g_op_upload_flag=%d, g_printing_flag=%d, g_waiting_online_code_flag=%d, g_upload_flag=%d, g_heart_http_lock=%d\n", prt_list, g_op_download_flag, g_op_upload_flag, g_printing_flag, g_waiting_online_code_flag, g_upload_flag, g_heart_http_lock);
+                if (prt_list)
+                {
+                    dbg_printf("prt_list->is_processed=%d\n", prt_list->is_processed);
+                }
+            }
+            prt_status_count++;
+            if (prt_list)
+            {
+                if(g_op_upload_flag) g_op_upload_flag = 0;
+                if(g_op_download_flag) g_op_download_flag = 0;
+            }
+            
+        }
 
         sleep(1);
         heart_beat_count++;

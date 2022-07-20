@@ -39,3 +39,15 @@ clean:
 	mv ./../src/tools/sqlite3.o ./../src/tools/sqlite3.bak
 	rm -rf $(OBJS) $(TARGET)
 	mv ./../src/tools/sqlite3.bak ./../src/tools/sqlite3.o
+
+prod:
+	cp --remove-destination -f ./conf/prod/addr.conf ./../../smart9_release/oem
+	cp --remove-destination -f ./d9main ./../../smart9_release/oem
+
+release:
+	cp --remove-destination -f ./conf/release/addr.conf ./../../smart9_release/oem
+	cp --remove-destination -f ./d9main ./../../smart9_release/oem
+
+test:
+	cp --remove-destination -f ./conf/test/addr.conf ./../../smart9_release/oem
+	cp --remove-destination -f ./d9main ./../../smart9_release/oem

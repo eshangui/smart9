@@ -19,4 +19,6 @@ void str2hex( char *in, uint32_t len, uint8_t *out, uint32_t *out_len );
 unsigned char print_time(char *buff);
 void system_op(char * cmd_str);
 
-extern long long app_start_time;
+void dbg_printf(const char *fmt, ...);
+
+//extern static long long app_start_time;

@@ -33,7 +33,7 @@ uint32_t ble_check(void)
     rv =  ble_uart_init();
     if(rv != 0)
     {
-        printf("ble uart open error!\n");
+        dbg_printf("ble uart open error!\n");
     }
     else
     {

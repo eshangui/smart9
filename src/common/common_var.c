@@ -1,5 +1,6 @@
 #include "common_var.h"
 #include "mongoose.h"
+#include "dbg.h"
 
 struct mg_mgr m_tcp;
 struct mg_mgr m_mqtt;
@@ -102,7 +103,7 @@ pdata_node create_node(unsigned char *buf, int len) {
     prt_list = node;
   }
   pthread_mutex_unlock(list_lock);
-  printf("create a node with length = %d\n", len);
+  dbg_printf("create a node with length = %d\n", len);
   return node;
 }
 

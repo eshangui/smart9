@@ -15,7 +15,7 @@ uint32_t data_sync(void)
     }
     else
     {
-        printf("popen faild!!!!!!!!!!\n");
+        dbg_printf("popen faild!!!!!!!!!!\n");
     }    
     prt_handle.get_printer_sn(sn_buff, 32);
 
@@ -23,7 +23,7 @@ uint32_t data_sync(void)
 
     strcpy(&creat_pic_str[strlen(creat_pic_str)],".bmp");
 
-    printf("creat str is:%s\n", creat_pic_str);
+    dbg_printf("creat str is:%s\n", creat_pic_str);
 
     fp = popen(creat_pic_str , "r");
     if(fp != NULL)
@@ -32,7 +32,7 @@ uint32_t data_sync(void)
     }
     else
     {
-        printf("popen faild!!!!!!!!!!\n");
+        dbg_printf("popen faild!!!!!!!!!!\n");
     }    
 
     mprintf(0,"sync: no data to sync\n");

@@ -34,7 +34,7 @@ uint32_t var_init(void)
     // strcpy(g_prt_sn, "SN: ");
     // prt_handle.get_printer_sn(&g_prt_sn[strlen(g_prt_sn)], 32);
     // strcpy(&g_prt_sn[strlen(g_prt_sn)], "\n");
-    // printf("sn len = %d\n", strlen(g_prt_sn));
+    // dbg_printf("sn len = %d\n", strlen(g_prt_sn));
     memset(&pn_data, 0, sizeof(pn_data));
     memset(&pn_buf, 0, sizeof(pn_buf));
     memset(&pn_data_buf, 0, sizeof(pn_data_buf));
@@ -60,12 +60,12 @@ uint32_t config_init(void)
     fread(content, 1, len, h_file);
     fclose(h_file);
 
-    printf("addr = %p, str = %s\n", content, content);
+    dbg_printf("addr = %p, str = %s\n", content, content);
 
     json = cJSON_Parse(content);
     if(!json)
     {
-        printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
+        dbg_printf("ERROR before: [%s]\n", cJSON_GetErrorPtr());
     }
     char *str = cJSON_Print(json);
 
@@ -77,7 +77,7 @@ uint32_t config_init(void)
     if(strcmp(json_ip->valuestring, "cellar") == 0)
     {
         // system("route add -net 203.207.198.0 netmask 255.255.255.0 dev usb0");
-        // printf("change network to 4G\n");
+        // dbg_printf("change network to 4G\n");
         // system("ifconfig wlan0 down");
         // system("ifconfig usb0 up");
         // sleep(1);
@@ -126,7 +126,7 @@ static int check_interface_fromproc(char *interface)
   fp = fopen (_PATH_PROC_NET_DEV, "r");
   if (fp == NULL)
   {
-      printf("open proc file error\n");
+      dbg_printf("open proc file error\n");
       return -1;
    }
 
@@ -156,7 +156,7 @@ unsigned char usb_read(int usb_fd, unsigned char *rec_buff)
     while(1)
     {
         nread = read(usb_fd, tmp_buff, sizeof(tmp_buff));
-        printf("first read nread = %d\n", nread);
+        dbg_printf("first read nread = %d\n", nread);
         if(nread > 0)
         {
             while(1)
@@ -164,7 +164,7 @@ unsigned char usb_read(int usb_fd, unsigned char *rec_buff)
                 i = read(usb_fd, &tmp_buff[nread], sizeof(tmp_buff));
                 if(i > 0)
                 {
-                    printf("i = %d\n", i);
+                    dbg_printf("i = %d\n", i);
                     nread += i;
                 }
                 else
@@ -174,7 +174,7 @@ unsigned char usb_read(int usb_fd, unsigned char *rec_buff)
                 }
                 if(count == 1000)
                 {
-                    printf("rec %d byte : \n", nread);
+                    dbg_printf("rec %d byte : \n", nread);
                     for(i = 0; i < nread; i++)
                     {
                         printf("%c", tmp_buff[i]);
@@ -351,9 +351,9 @@ unsigned char check_celler(void)
 
     while(count--)
     {
-        printf("check USB0 node...count = %d\n", (30 - count));
+        dbg_printf("check USB0 node...count = %d\n", (30 - count));
         ret = check_interface_fromproc("usb0");
-        printf("check_interface_fromproc ret = %d\n", ret);
+        dbg_printf("check_interface_fromproc ret = %d\n", ret);
         if(ret == 1)
             break;
         else
@@ -366,7 +366,7 @@ unsigned char check_celler(void)
 
     fd = open ("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NONBLOCK);
     if (fd < 0) {
-        printf ("\n Open Error \n");
+        dbg_printf ("\n Open Error \n");
         return 0;
     }
 
@@ -377,7 +377,7 @@ unsigned char check_celler(void)
     }
 
     ret = write(fd, " AT^CURC=0\r\n", strlen(" AT^CURC=0\r\n") + 1);
-    printf("AT^CURC write ret = %d\n", ret);
+    dbg_printf("AT^CURC write ret = %d\n", ret);
     memset(rec_buff, 0x00, sizeof(rec_buff));
     //usleep(1 * 1000);
     ret = usb_read(fd, rec_buff);
@@ -387,7 +387,7 @@ unsigned char check_celler(void)
     }
     else
     {
-        printf("AT_REC Faild\n");
+        dbg_printf("AT_REC Faild\n");
     }
 
     // sleep(2);
@@ -397,7 +397,7 @@ unsigned char check_celler(void)
     // sleep(2);
 
     ret = write(fd, "AT+CPIN?\r\n", strlen("AT+CPIN?\r\n") + 1);
-    printf("CPINusb write ret = %d\n", ret);
+    dbg_printf("CPINusb write ret = %d\n", ret);
     memset(rec_buff, 0x00, sizeof(rec_buff));
     //usleep(10 * 1000);
     ret = usb_read(fd, rec_buff);
@@ -407,11 +407,11 @@ unsigned char check_celler(void)
     }
     else
     {
-        printf("AT_REC Faild\n");
+        dbg_printf("AT_REC Faild\n");
     }
 
     ret = write(fd, " AT+CSQ\r\n", strlen(" AT+CSQ\r\n") + 1);
-    printf("CSQusb write ret = %d\n", ret);
+    dbg_printf("CSQusb write ret = %d\n", ret);
     memset(rec_buff, 0x00, sizeof(rec_buff));
     //usleep(100 * 1000);
     ret = usb_read(fd, rec_buff);
@@ -421,11 +421,11 @@ unsigned char check_celler(void)
     }
     else
     {
-        printf("AT_REC Faild\n");
+        dbg_printf("AT_REC Faild\n");
     }
 
     ret = write(fd, " AT^NDISDUP=1,1\r\n", strlen(" AT^NDISDUP=1,1\r\n") + 1);
-    printf("usb write ret = %d\n", ret);
+    dbg_printf("usb write ret = %d\n", ret);
     memset(rec_buff, 0x00, sizeof(rec_buff));
     //usleep(10 * 1000);
     ret = usb_read(fd, rec_buff);
@@ -435,7 +435,7 @@ unsigned char check_celler(void)
     }
     else
     {
-        printf("AT_REC Faild\n");
+        dbg_printf("AT_REC Faild\n");
     }
     //popen("udhcpc -i usb0", "r");
 
@@ -443,7 +443,9 @@ unsigned char check_celler(void)
     return 0;    
 }
 
-void check_net_thread(void)
+void print_init_info(void);
+
+void *check_net_thread(void* arg)
 {
     unsigned int time_count = 0;
     int ret=NET_FAILD, status = 0, count = 10, latency = 0;
@@ -461,10 +463,10 @@ void check_net_thread(void)
     {
         ret = PXAT_NS_Initialize(ifList, 3, g_mqtt_addr, TYPE_IP_ADDRESS, g_mqtt_port_num, g_mqtt_addr, TYPE_IP_ADDRESS, g_mqtt_port_num, 6000, 60000);
         //ret = PXAT_NS_Initialize(ifList, 3, "203.207.198.134", TYPE_IP_ADDRESS, 61613, "203.207.198.134", TYPE_IP_ADDRESS, 61613, 6000, 60000);
-        printf("while------Initialize return %X\n", ret);
+        dbg_printf("while------Initialize return %X\n", ret);
         usleep(1000 * 1000);
     }
-    printf("Initialize return %X\n", ret);
+    dbg_printf("Initialize return %X\n", ret);
 
     
     while(1) 
@@ -472,10 +474,10 @@ void check_net_thread(void)
         if(time_count == 20)
         {
             time_count = 30;
-            printf("g_net_status_flag == %d\n", g_net_status_flag);
+            dbg_printf("g_net_status_flag == %d\n", g_net_status_flag);
             if(g_net_status_flag == 0)
             {
-               printf("offline!!!\n");
+               dbg_printf("offline!!!\n");
                g_net_status_flag = 10;
                 if(g_status_print_flag == 0)
                 {
@@ -486,7 +488,7 @@ void check_net_thread(void)
             }
         }
         ret = PXAT_NS_GetNetStatus("eth0", &status, &latency);
-        //printf("---eth---PXAT_NS_GetNetStatus return %X, status is %X, latency is %dms--g_net_status_flag = %d g_net_way = %d g_net_change_flag = %d\n", ret, status, latency, g_net_status_flag, g_net_way, g_net_change_flag);
+        //dbg_printf("---eth---PXAT_NS_GetNetStatus return %X, status is %X, latency is %dms--g_net_status_flag = %d g_net_way = %d g_net_change_flag = %d\n", ret, status, latency, g_net_status_flag, g_net_way, g_net_change_flag);
         if(ret == 0)
         {
             if((status & 0x01) == 0x01)
@@ -506,7 +508,7 @@ void check_net_thread(void)
                 {
                     while ( NULL != fgets(get_way, sizeof(get_way), fp ))
                     {
-                        printf("gateway=%s\n",get_way);
+                        dbg_printf("gateway=%s\n",get_way);
                         break;
                     }                    
                     pclose(fp);                   
@@ -517,14 +519,14 @@ void check_net_thread(void)
                 strcat(set_route, set_route_head);
                 strcat(set_route, get_way);
                 strcat(set_route, "dev eth0");
-                printf("set_route---->:%s\n", set_route);
+                dbg_printf("set_route---->:%s\n", set_route);
                 fp = popen(del_route, "r" );
                 //fp = popen("route del -host 203.207.198.134", "r" );
                 if(fp != NULL)
                 {
                     while ( NULL != fgets(get_way, sizeof(get_way), fp ))
                     {
-                        printf("route del=%s\n",get_way);
+                        dbg_printf("route del=%s\n",get_way);
                         break;
                     }                    
                     pclose(fp);                   
@@ -534,7 +536,7 @@ void check_net_thread(void)
                 {
                     while ( NULL != fgets(get_way, sizeof(get_way), fp ))
                     {
-                        printf("set_route=%s\n",get_way);
+                        dbg_printf("set_route=%s\n",get_way);
                         break;
                     }   
                     pclose(fp);                   
@@ -552,7 +554,7 @@ void check_net_thread(void)
         else
         {
             ret = PXAT_NS_GetNetStatus("wlan0", &status, &latency);
-            //printf("---wlan0---PXAT_NS_GetNetStatus return %X, status is %X, latency is %dms--g_net_status_flag = %d g_net_way = %d g_net_change_flag = %d\n", ret, status, latency, g_net_status_flag, g_net_way, g_net_change_flag);
+            //dbg_printf("---wlan0---PXAT_NS_GetNetStatus return %X, status is %X, latency is %dms--g_net_status_flag = %d g_net_way = %d g_net_change_flag = %d\n", ret, status, latency, g_net_status_flag, g_net_way, g_net_change_flag);
             if(ret == 0)
             {
                 if((status & 0x01) == 0x01)
@@ -573,7 +575,7 @@ void check_net_thread(void)
                     {
                         while ( NULL != fgets(get_way, sizeof(get_way), fp ))
                         {
-                            printf("gateway=%s\n",get_way);
+                            dbg_printf("gateway=%s\n",get_way);
                             break;
                         }                    
                         pclose(fp);                   
@@ -585,7 +587,7 @@ void check_net_thread(void)
                     strcat(set_route, set_route_head);
                     strcat(set_route, get_way);
                     strcat(set_route, "dev wlan0");
-                    printf("set_route---->:%s\n", set_route);
+                    dbg_printf("set_route---->:%s\n", set_route);
 
                     //fp = popen("route del -host 121.36.3.243", "r" );
                     //fp = popen("route del -host 203.207.198.134", "r" );
@@ -594,7 +596,7 @@ void check_net_thread(void)
                     {
                         while ( NULL != fgets(get_way, sizeof(get_way), fp ))
                         {
-                            printf("route del=%s\n",get_way);
+                            dbg_printf("route del=%s\n",get_way);
                             break;
                         }      
                         pclose(fp);                   
@@ -604,7 +606,7 @@ void check_net_thread(void)
                     {
                         while ( NULL != fgets(get_way, sizeof(get_way), fp ))
                         {
-                            printf("set_route=%s\n",get_way);
+                            dbg_printf("set_route=%s\n",get_way);
                             break;
                         }      
                         pclose(fp);                   
@@ -621,7 +623,7 @@ void check_net_thread(void)
             else
             {
                 ret = PXAT_NS_GetNetStatus("usb0", &status, &latency);
-                //printf("usb0PXAT_NS_GetNetStatus return %X, status is %X, latency is %dms, g_net_way = %d\n", ret, status, latency, g_net_way);
+                //dbg_printf("usb0PXAT_NS_GetNetStatus return %X, status is %X, latency is %dms, g_net_way = %d\n", ret, status, latency, g_net_way);
                 if(ret == 0 && status == 0x07 && (latency < 3000))
                 {
                     if(g_net_way != NET_WAY_CELL)
@@ -634,7 +636,7 @@ void check_net_thread(void)
                         {
                             while ( NULL != fgets(get_way, sizeof(get_way), fp ))
                             {
-                                printf("gateway=%s\n",get_way);
+                                dbg_printf("gateway=%s\n",get_way);
                                 break;
                             }                    
                             pclose(fp);                   
@@ -646,7 +648,7 @@ void check_net_thread(void)
                         strcat(set_route, set_route_head);
                         strcat(set_route, get_way);
                         strcat(set_route, "dev usb0");
-                        printf("set_route---->:%s\n", set_route);
+                        dbg_printf("set_route---->:%s\n", set_route);
                         //fp = popen("route del -host 121.36.3.243", "r" );
                         //fp = popen("route del -host 203.207.198.134", "r" );
                         fp = popen(del_route, "r" );
@@ -654,7 +656,7 @@ void check_net_thread(void)
                         {
                             while ( NULL != fgets(get_way, sizeof(get_way), fp ))
                             {
-                                printf("route del=%s\n",get_way);
+                                dbg_printf("route del=%s\n",get_way);
                                 break;
                             }  
                             pclose(fp);                   
@@ -664,7 +666,7 @@ void check_net_thread(void)
                         {
                             while ( NULL != fgets(get_way, sizeof(get_way), fp ))
                             {
-                                printf("set_route=%s\n",get_way);
+                                dbg_printf("set_route=%s\n",get_way);
                                 break;
                             }  
                             pclose(fp);                   
@@ -692,7 +694,8 @@ void check_net_thread(void)
         usleep(1000 * 1000);
         if(time_count < 25)
             time_count++;
-    }   
+    }
+    return 0;   
 
 }
 
@@ -777,7 +780,7 @@ int set_gpio(unsigned int gpio_group_num,unsigned int gpio_chip_num, unsigned in
 	sprintf(file_name, "/sys/class/gpio/export");
 	fp = fopen(file_name, "w");
 	if (fp == NULL) {
-		printf("Cannot open %s.\n", file_name);
+		dbg_printf("Cannot open %s.\n", file_name);
 		return -1;
 	}
 	fprintf(fp, "%d", gpio_num);
@@ -785,7 +788,7 @@ int set_gpio(unsigned int gpio_group_num,unsigned int gpio_chip_num, unsigned in
 	sprintf(file_name, "/sys/class/gpio/gpio%d/direction", gpio_num);
 	fp = fopen(file_name, "rb+");
 	if (fp == NULL) {
-		printf("Cannot open %s.\n", file_name);
+		dbg_printf("Cannot open %s.\n", file_name);
 		return -1;
 	}
 	fprintf(fp, "out");
@@ -793,7 +796,7 @@ int set_gpio(unsigned int gpio_group_num,unsigned int gpio_chip_num, unsigned in
 	sprintf(file_name, "/sys/class/gpio/gpio%d/value", gpio_num);
 	fp = fopen(file_name, "rb+");
 	if (fp == NULL) {
-		printf("Cannot open %s.\n", file_name);
+		dbg_printf("Cannot open %s.\n", file_name);
 		return -1;
 	}
 	if (gpio_out_val)
@@ -801,13 +804,13 @@ int set_gpio(unsigned int gpio_group_num,unsigned int gpio_chip_num, unsigned in
 	else
 		strcpy(buf,"0");
 	fwrite(buf, sizeof(char), sizeof(buf) - 1, fp);
-	printf("%s: gpio%d_%d = %s\n", __func__,
+	dbg_printf("%s: gpio%d_%d = %s\n", __func__,
 	gpio_chip_num, gpio_offset_num, buf);
 	fclose(fp);
 	sprintf(file_name, "/sys/class/gpio/unexport");
 	fp = fopen(file_name, "w");
 	if (fp == NULL) {
-		printf("Cannot open %s.\n", file_name);
+		dbg_printf("Cannot open %s.\n", file_name);
 		return -1;
 	}
 	fprintf(fp, "%d", gpio_num);

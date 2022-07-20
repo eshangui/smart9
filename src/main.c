@@ -30,7 +30,7 @@ void print_init_info(void)
           memset( mac_buff, 0, sizeof(mac_buff) );
           while ( NULL != fgets(mac_buff, sizeof(mac_buff), fp ))
           {
-               printf("wlan mac=%s\n",mac_buff);
+               dbg_printf("wlan mac=%s\n",mac_buff);
                break;
           }  
           memset(prt_mac_buff, 0 , sizeof(prt_mac_buff));
@@ -46,7 +46,7 @@ void print_init_info(void)
           memset( mac_buff, 0, sizeof(mac_buff) );
           while ( NULL != fgets(mac_buff, sizeof(mac_buff), fp ))
           {
-               printf("wlan mac=%s\n",mac_buff);
+               dbg_printf("wlan mac=%s\n",mac_buff);
                break;
           }  
           memset(prt_mac_buff, 0 , sizeof(prt_mac_buff));
@@ -79,8 +79,8 @@ uint32_t load_config()
           || (strlen(buf + 256 * 3) == 0) || (strlen(buf + 256 * 4) == 0))
      {
           prt_handle.esc_2_prt(CONFIG_LOAD_FAILED_TIP, strlen(CONFIG_LOAD_FAILED_TIP));
-          // prt_handle.esc_2_prt(D9MAIN_VERSION, strlen(D9MAIN_VERSION));
-          // prt_handle.esc_2_prt(g_prt_sn, strlen(g_prt_sn));   
+          prt_handle.esc_2_prt(D9MAIN_VERSION, strlen(D9MAIN_VERSION));
+          prt_handle.esc_2_prt(g_prt_sn, strlen(g_prt_sn));   
           prt_handle.printer_cut(198);   
           return 1;
      }
@@ -91,13 +91,13 @@ uint32_t load_config()
      memcpy(g_upload_addr, buf + 256 * 4, 256);
      g_mqtt_port_num = atoi(g_mqtt_port);
      snprintf(g_mqtt_full_addr, sizeof(g_mqtt_full_addr), "%s:%d", g_mqtt_addr, g_mqtt_port_num);
-     printf("g_mqtt_addr: %s\n", g_mqtt_addr);
-     printf("g_mqtt_port: %s\n", g_mqtt_port);
-     printf("g_mqtt_port_num: %d\n", g_mqtt_port_num);
-     printf("g_mqtt_username: %s\n", g_mqtt_username);
-     printf("g_mqtt_password: %s\n", g_mqtt_password);
-     printf("g_upload_addr: %s\n", g_upload_addr);
-     printf("g_mqtt_full_addr: %s\n", g_mqtt_full_addr);
+     dbg_printf("g_mqtt_addr: %s\n", g_mqtt_addr);
+     dbg_printf("g_mqtt_port: %s\n", g_mqtt_port);
+     dbg_printf("g_mqtt_port_num: %d\n", g_mqtt_port_num);
+     dbg_printf("g_mqtt_username: %s\n", g_mqtt_username);
+     dbg_printf("g_mqtt_password: %s\n", g_mqtt_password);
+     dbg_printf("g_upload_addr: %s\n", g_upload_addr);
+     dbg_printf("g_mqtt_full_addr: %s\n", g_mqtt_full_addr);
      return 0;
 }
 
@@ -212,7 +212,7 @@ int main(int argc, char **argv)
 
           if(g_reconnect_flag == 2)
           {
-               printf("start reconnect!\n");
+               dbg_printf("start reconnect!\n");
                g_reconnect_flag = 0;
                g_unprint_flag = 1;
                g_offline_flag = 1;
@@ -262,14 +262,14 @@ int main(int argc, char **argv)
           }  
           if(g_net_status_flag == 2)
           {
-               printf("offline!!!\n");
+               dbg_printf("offline!!!\n");
                g_net_status_flag = 10;
                prt_handle.esc_2_prt("---READY---\n", strlen("---READY---"));
                print_init_info();  
           }
           if(g_tcp_flag == 1 || g_tcp_flag == 2)
           {
-               printf("start 9100 server!\n");
+               dbg_printf("start 9100 server!\n");
                tcp_init("9100");
                prt_handle.esc_2_prt("---NET-PRT_READY---\n", strlen("---NET-PRT_READY---\n") + 1);
 
@@ -286,10 +286,10 @@ int main(int argc, char **argv)
                     memset( server_ip, 0, sizeof(server_ip) );
                     while ( NULL != fgets(server_ip, sizeof(server_ip), fp ))
                     {
-                         printf("ip=%s\n",server_ip);
+                         dbg_printf("ip=%s\n",server_ip);
                          break;
                     }              
-                    printf("ip len = %d\n", strlen(server_ip));
+                    dbg_printf("ip len = %d\n", strlen(server_ip));
                     for(i = 0; i < (strlen(server_ip)); i++)
                     {
                          printf("%02X ", server_ip[i]);
@@ -304,7 +304,7 @@ int main(int argc, char **argv)
                }
                else
                {
-                    printf("get 9100 ip faild!\n");
+                    dbg_printf("get 9100 ip faild!\n");
                }
 
           }

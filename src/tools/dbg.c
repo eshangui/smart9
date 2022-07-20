@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <stdarg.h>
+#include <string.h>
 #include "type.h"
 #include "common_var.h"
 //#include "bmp.h"
@@ -17,7 +18,7 @@
 #define PRT_TIME
 
 #ifdef PRT_TIME
-long long app_start_time = 0;
+static long long app_start_time = 0;
 
 long long getSystemTime()
 {
@@ -51,6 +52,24 @@ PRT:
         vprintf(cmd, args);
         va_end(args);
 #endif
+}
+
+void dbg_printf(const char *fmt, ...)
+{
+    va_list args;
+    long long this_print_time;
+    if (app_start_time == 0)
+    {
+        app_start_time = getSystemTime();
+        this_print_time = app_start_time;
+    }
+    else
+        this_print_time = getSystemTime();
+
+    printf("time: %lldms - ", this_print_time-app_start_time);
+    va_start(args, fmt);
+    vprintf(fmt, args);
+    va_end(args);
 }
 
 void ByteToHexStr(const unsigned char *source, char *dest, int sourceLen)
