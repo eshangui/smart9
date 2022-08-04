@@ -89,6 +89,8 @@ uint32_t load_config()
      memcpy(g_mqtt_username, buf + 256 * 2, 256);
      memcpy(g_mqtt_password, buf + 256 * 3, 256);
      memcpy(g_upload_addr, buf + 256 * 4, 256);
+     g_mqtt_addr_type = g_mqtt_port[255] == 0 ? 0 : g_mqtt_port[255] - '0'; // use the last byte of port number to store addr type
+     g_mqtt_port[255] = 0;
      g_mqtt_port_num = atoi(g_mqtt_port);
      snprintf(g_mqtt_full_addr, sizeof(g_mqtt_full_addr), "%s:%d", g_mqtt_addr, g_mqtt_port_num);
      dbg_printf("g_mqtt_addr: %s\n", g_mqtt_addr);

@@ -461,7 +461,7 @@ void *check_net_thread(void* arg)
 
     while(ret)
     {
-        ret = PXAT_NS_Initialize(ifList, 3, g_mqtt_addr, TYPE_IP_ADDRESS, g_mqtt_port_num, g_mqtt_addr, TYPE_IP_ADDRESS, g_mqtt_port_num, 6000, 60000);
+        ret = PXAT_NS_Initialize(ifList, 3, g_mqtt_addr, g_mqtt_addr_type, g_mqtt_port_num, g_mqtt_addr, g_mqtt_addr_type, g_mqtt_port_num, 6000, 60000);
         //ret = PXAT_NS_Initialize(ifList, 3, "203.207.198.134", TYPE_IP_ADDRESS, 61613, "203.207.198.134", TYPE_IP_ADDRESS, 61613, 6000, 60000);
         dbg_printf("while------Initialize return %X\n", ret);
         usleep(1000 * 1000);

@@ -65,6 +65,7 @@ extern char g_mqtt_password[256];
 extern char g_upload_addr[256];
 extern int g_mqtt_port_num;
 extern char g_mqtt_full_addr[256];
+extern int g_mqtt_addr_type;
 
 extern pthread_mutex_t net_lock;
 extern pthread_mutex_t *list_lock;

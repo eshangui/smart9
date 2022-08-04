@@ -52,6 +52,7 @@ char g_mqtt_port[256] = {0};
 char g_mqtt_username[256] = {0};
 char g_mqtt_password[256] = {0};
 char g_upload_addr[256] = {0};
+int g_mqtt_addr_type = 0; //refer to enum NET_NAME_TYPE
 int g_mqtt_port_num;
 char g_mqtt_full_addr[256] = {0};
 
