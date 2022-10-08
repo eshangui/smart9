@@ -775,6 +775,7 @@ void *timer_thread(void *arg)
                     memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
                     pn_buf.len += 2;
                     prt_len = memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len;
+                    dbg_printf("======pn_buf.data=0x%08X pn_buf.len=%d prt_list->data=0x%08X prt_len=%d\n", pn_buf.data, pn_buf.len, prt_list->data, prt_len);
                     memcpy(pn_buf.data + pn_buf.len, prt_list->data, prt_len);
                     pn_buf.len += prt_len;
                     memcpy(pn_buf.data + pn_buf.len, pn_data.data, pn_data.len);

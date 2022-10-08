@@ -16,7 +16,7 @@
 
 //#define D9MAIN_VERSION "SECURE_PRT_V11.11_DELAY_20S\n"
 //#define D9MAIN_VERSION "SECURE_PRT_V11.11_TEST_ADDR\n"
-#define D9MAIN_VERSION "SECURE_PRT_V11.16\n"
+#define D9MAIN_VERSION "SECURE_PRT_V11.22_new\n"
 
 //#define ONLINE_CODE_TIMEOUT         20   // seconds for waiting online code timeout
 #define ONLINE_CODE_TIMEOUT         6   // seconds for waiting online code timeout

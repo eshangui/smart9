@@ -114,6 +114,7 @@ int main(int argc, char **argv)
     pthread_t p_heart_beat;
     pthread_t p_prt_task;
     pthread_t p_offline_op;
+    pthread_t p_cellular_op;
     char server_ip[32] = {0};
     char tmp_buff[128] = {0};
 
@@ -126,22 +127,25 @@ int main(int argc, char **argv)
          mprintf(0,"load_config error\n");
          return 0; 
     }    
-
+    dbg_printf("load config finished\n");
     if(powerup() != 0)
     {
          mprintf(0,"powerup error\n");
          return 0;      
     }
+    dbg_printf("power up finished\n");
     if(selfcheck() != 0)
     {
          mprintf(0,"selfcheck error\n");
          return 0;      
     }
+    dbg_printf("self check finished\n");
     if(data_sync() != 0)
     {
          mprintf(0,"sync error\n");
          return 0;      
     }
+    dbg_printf("data sync finished\n");
     
 //chester: add curl http sample function here
 //     printf("get URL\n");
@@ -178,7 +182,17 @@ int main(int argc, char **argv)
     pthread_create(&p_prt_task, NULL, prt_task_thread, NULL);
     pthread_detach(p_prt_task);
     pthread_create(&p_offline_op, NULL, offline_op_thread, NULL);
-    pthread_detach(p_offline_op); 
+    pthread_detach(p_offline_op);
+    if (g_sim_flag)
+    {
+         pthread_create(&p_cellular_op, NULL, cellular_work_thread, NULL);
+         pthread_detach(p_cellular_op);
+    }
+    else
+    {
+         dbg_printf("sim not detected, cellular thread will not run\n");
+    }
+    
 
     while (1)
     {

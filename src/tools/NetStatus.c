@@ -17,6 +17,7 @@
 #include <sys/time.h>
 
 #include "NetStatus.h"
+#include "global.h"
 
 
 typedef int BOOL;
@@ -235,6 +236,7 @@ int PXAT_NS_Initialize(const char **ifList, const int ifCount,
     if (ifCount <= 0 || ifCount >= 16)
     {
         iRtn = STATUS_ARGUMENT_BAD;
+        dbg_printf("PXAT_NS_Initialize, ifCount = %d invalid\n", ifCount);
         goto END;
     }
 
@@ -251,6 +253,7 @@ int PXAT_NS_Initialize(const char **ifList, const int ifCount,
     if (flagType == TYPE_DOMAIN_NAME)
     {
         iRtn = pxat_ns_get_ip(flagServer, ns_ipFlagServer);
+        dbg_printf("PXAT_NS_Initialize, pxat_ns_get_ip return %d, flagServer = %s, ip = %s\n", iRtn, flagServer, ns_ipFlagServer);
         if (iRtn != STATUS_OK)
         {
             goto END;
@@ -264,6 +267,7 @@ int PXAT_NS_Initialize(const char **ifList, const int ifCount,
     if (mqttType == TYPE_DOMAIN_NAME)
     {
         iRtn = pxat_ns_get_ip(mqttServer, ns_ipTargetServer);
+        dbg_printf("PXAT_NS_Initialize, pxat_ns_get_ip return %d, mqttServer = %s, ip = %s\n", iRtn, mqttServer, ns_ipTargetServer);
         if (iRtn != STATUS_OK)
         {
             goto END;
@@ -286,6 +290,7 @@ int PXAT_NS_Initialize(const char **ifList, const int ifCount,
         usleep(1000);
     }
     
+    dbg_printf("leave PXAT_NS_Initialize, iRtn = %d\n", iRtn);
 END:
     return iRtn;
 }

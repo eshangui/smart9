@@ -342,6 +342,15 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
     struct mbuf *io = &nc->recv_mbuf;
     static int tcp_rec_len = 0;
     prt_net_data *prt;
+    /*
+
+    char addr[32];
+  mg_sock_addr_to_str(&nc->sa, addr, sizeof(addr),
+                      MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
+
+  snprintf(buf, sizeof(buf), "%s %.*s", addr, (int) msg.len, msg.p);
+    
+    */
 
     switch (ev)
     {

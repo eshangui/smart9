@@ -53,10 +53,15 @@ extern volatile unsigned char g_unprint_flag;
 extern volatile unsigned char g_reconnect_flag;
 extern volatile unsigned char g_waiting_online_code_flag;
 extern volatile unsigned char g_printing_flag;
+extern volatile unsigned char g_sim_flag;
+
+extern int g_cellular_fd;
 
 extern char g_uuid_buff[64];
 extern unsigned char g_download_url[256];
 extern char g_prt_sn[64];
+
+extern unsigned char g_tmp_buff[1024 * 10];
 
 extern char g_mqtt_addr[256];
 extern char g_mqtt_port[256];

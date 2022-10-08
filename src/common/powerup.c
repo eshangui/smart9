@@ -89,7 +89,7 @@ uint32_t config_init(void)
     {
         //tcp_init("9100");
     }
-    
+
     free(content);
     if(json != NULL)
         cJSON_free(json);
@@ -104,33 +104,33 @@ uint32_t config_init(void)
 
 static char * interface_name_cut(char *buf, char **name)
 {
-	char *stat;
-	/* Skip white space.  Line will include header spaces. */
-	while (*buf == ' ')
-	buf++;
-	*name = buf;
-	/* Cut interface name. */
+    char *stat;
+    /* Skip white space.  Line will include header spaces. */
+    while (*buf == ' ')
+        buf++;
+    *name = buf;
+    /* Cut interface name. */
 	stat = strrchr (buf, ':');
-	*stat++ = '\0';
-	return stat;
+    *stat++ = '\0';
+    return stat;
 }
 
 static int check_interface_fromproc(char *interface)
 {
-  FILE *fp;
-  char buf[PROCBUFSIZ];
-  struct interface *ifp;
-  char *name;
+    FILE *fp;
+    char buf[PROCBUFSIZ];
+    struct interface *ifp;
+    char *name;
 
-  /* Open /proc/net/dev. */
+    /* Open /proc/net/dev. */
   fp = fopen (_PATH_PROC_NET_DEV, "r");
   if (fp == NULL)
   {
-      dbg_printf("open proc file error\n");
-      return -1;
-   }
+        dbg_printf("open proc file error\n");
+        return -1;
+    }
 
-  /* Drop header lines. */
+    /* Drop header lines. */
   fgets (buf, PROCBUFSIZ, fp);
   fgets (buf, PROCBUFSIZ, fp);
 
@@ -139,10 +139,10 @@ static int check_interface_fromproc(char *interface)
     {
       interface_name_cut (buf, &name);
       if(strcmp(interface, name) == 0)
-          return 1;
+            return 1;
     }
-  fclose(fp);
-  return 0;
+    fclose(fp);
+    return 0;
 }
 
 
@@ -150,18 +150,25 @@ unsigned char usb_read(int usb_fd, unsigned char *rec_buff)
 {
     int count = 0;
     int fd;
-    int nread, i;
-    unsigned char tmp_buff[1024 * 10] = {0};
+    int nread, i, lastread = -1;
+    int tmp_buff_size = sizeof(g_tmp_buff);
+    unsigned char *tmp_buff = g_tmp_buff;
 
     while(1)
     {
-        nread = read(usb_fd, tmp_buff, sizeof(tmp_buff));
-        dbg_printf("first read nread = %d\n", nread);
-        if(nread > 0)
+        memset(tmp_buff, 0, tmp_buff_size);
+        nread = read(usb_fd, tmp_buff, tmp_buff_size);
+        if ((lastread != nread) || (nread > 0))
         {
-            while(1)
+            dbg_printf("first read nread = %d\n", nread);
+        }
+        lastread = nread;
+        
+        if (nread > 0)
+        {
+            while (1)
             {
-                i = read(usb_fd, &tmp_buff[nread], sizeof(tmp_buff));
+                i = read(usb_fd, tmp_buff + nread, tmp_buff_size - nread);
                 if(i > 0)
                 {
                     dbg_printf("i = %d\n", i);
@@ -180,14 +187,14 @@ unsigned char usb_read(int usb_fd, unsigned char *rec_buff)
                         printf("%c", tmp_buff[i]);
                     }
                     printf("\n");
-                    memcpy(rec_buff, tmp_buff, nread);   
-                    return nread;                 
+                    memcpy(rec_buff, tmp_buff, nread);
+                    return nread;
                 }
                 
             }
             
-        }            
-        usleep(1 * 1000);        
+        }
+        usleep(1 * 1000);
     }
 
 
@@ -199,7 +206,7 @@ char searial_parameter[32];
 
 int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop)
 {
-	speed_t speed;
+    speed_t speed;
     struct termios newtio, oldtio;
     if (tcgetattr(fd, &oldtio) != 0)
     {
@@ -217,7 +224,7 @@ int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop)
         strcat(searial_parameter," 9600");
         break;
     case 19200:
-    	speed = B19200;
+        speed = B19200;
         strcat(searial_parameter," 19200");
         break;
     case 38400:
@@ -232,35 +239,35 @@ int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop)
         speed = B115200;
         strcat(searial_parameter," 115200");
         break;
-   	case 230400:
+    case 230400:
         speed = B230400;
         strcat(searial_parameter," 230400");
         break;
-	case 460800:
+    case 460800:
         speed = B460800;
         strcat(searial_parameter," 460800");
         break;
-	case 500000:
+    case 500000:
         speed = B500000;
         strcat(searial_parameter," 500000");
         break;
-	case 576000:
+    case 576000:
         speed = B576000;
         strcat(searial_parameter," 576000");
         break;
-	case 921600:
+    case 921600:
         speed = B921600;
         strcat(searial_parameter," 921600");
         break;
-	case 1000000:
+    case 1000000:
         speed = B1000000;
         strcat(searial_parameter," 1000000");
         break;
-	case 1152000:
+    case 1152000:
         speed = B1152000;
         strcat(searial_parameter," 1152000");
         break;
-	case 1500000:
+    case 1500000:
         speed = B1500000;
         strcat(searial_parameter," 1500000");
         break;
@@ -269,12 +276,12 @@ int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop)
         strcat(searial_parameter," 115200");
         break;
     }
-    
+
     switch (nBits)
     {
     case 7:
         newtio.c_cflag |= CS7;
-        
+
         break;
     case 8:
         newtio.c_cflag |= CS8;
@@ -339,9 +346,21 @@ int set_opt(int fd, int nSpeed, int nBits, char nEvent, int nStop)
     return 0;
 }
 
+void *custom_find(void *dest, int dest_len, void *pattern, int pattern_len) {
+    int offset = 0;
+    while ((dest_len - offset) >= pattern_len) {
+        if (memcmp(dest + offset, pattern, pattern_len) == 0)
+        {
+            return dest + offset;
+        }
+        offset++;
+    }
+    return NULL;
+}
+
 unsigned char check_celler(void)
 {
-    int count = 30;    
+    int count = 30;
     int fd;
     int ret;
     int nread, i;
@@ -381,66 +400,208 @@ unsigned char check_celler(void)
     memset(rec_buff, 0x00, sizeof(rec_buff));
     //usleep(1 * 1000);
     ret = usb_read(fd, rec_buff);
-    if(ret != 0)
+    if (ret != 0)
     {
-        //printf("CURC_REC len = %d----->:%s\n", ret, rec_buff);
+        dbg_printf("AT^CURC=0 len = %d----->:%s\n", ret, rec_buff);
+        if ((!custom_find(rec_buff, ret, "OK", 2)) && (!custom_find(rec_buff, ret, "ok", 2))) {
+            dbg_printf("AT^CURC=0 Faild, no ok returned\n");
+        }
     }
     else
     {
-        dbg_printf("AT_REC Faild\n");
+        dbg_printf("AT^CURC=0 Faild\n");
     }
 
-    // sleep(2);
-    // printf("-----------------------------------\n");
-    // usb_read(fd, rec_buff);
-    // printf("===================================\n");
-    // sleep(2);
+    ret = write(fd, " ate0\r\n", strlen(" ate0\r\n") + 1);
+    dbg_printf("ate0 write ret = %d\n", ret);
+    memset(rec_buff, 0x00, sizeof(rec_buff));
+    usleep(1 * 1000);
+    ret = usb_read(fd, rec_buff);
+    if (ret != 0) {
+        dbg_printf("ate0 len = %d----->:%s\n", ret, rec_buff);
+        if ((!custom_find(rec_buff, ret, "OK", 2)) && (!custom_find(rec_buff, ret, "ok", 2))) {
+            dbg_printf("ate0 Faild, no ok returned\n");
+        }
+    } else {
+        dbg_printf("ate0 Faild\n");
+    }
 
     ret = write(fd, "AT+CPIN?\r\n", strlen("AT+CPIN?\r\n") + 1);
-    dbg_printf("CPINusb write ret = %d\n", ret);
+    dbg_printf("AT+CPIN? write ret = %d\n", ret);
     memset(rec_buff, 0x00, sizeof(rec_buff));
     //usleep(10 * 1000);
     ret = usb_read(fd, rec_buff);
     if(ret != 0)
     {
-        //printf("CPIN_REC len = %d----->:%s\n", ret, rec_buff);
+        dbg_printf("AT+CPIN? len = %d----->:%s\n", ret, rec_buff);
+        if ((!custom_find(rec_buff, ret, "OK", 2)) && (!custom_find(rec_buff, ret, "ok", 2))) {
+            dbg_printf("AT+CPIN? Faild, no ok returned\n");
+        } else {
+            g_sim_flag = 1;
+            dbg_printf("========================sim detected\n");
+        }
     }
     else
     {
-        dbg_printf("AT_REC Faild\n");
+        dbg_printf("AT+CPIN? Faild\n");
     }
 
-    ret = write(fd, " AT+CSQ\r\n", strlen(" AT+CSQ\r\n") + 1);
-    dbg_printf("CSQusb write ret = %d\n", ret);
+    // ret = write(fd, " at+cgdcont=1,\"IP\",\"M2MINTERNET\"\r\n",
+    //             strlen(" at+cgdcont=1,\"IP\",\"M2MINTERNET\"\r\n") + 1);
+    // dbg_printf("at+cgdcont=1,\"IP\",\"M2MINTERNET\" write ret = %d\n", ret);
+    // memset(rec_buff, 0x00, sizeof(rec_buff));
+    // usleep(1 * 1000);
+    // ret = usb_read(fd, rec_buff);
+    // if (ret != 0) {
+    //     dbg_printf("at+cgdcont=1,\"IP\",\"M2MINTERNET\" len = %d----->:%s\n",
+    //                ret, rec_buff);
+    //     if ((!custom_find(rec_buff, ret, "OK", 2)) && (!custom_find(rec_buff, ret, "ok", 2))) {
+    //         dbg_printf(
+    //             "at+cgdcont=1,\"IP\",\"M2MINTERNET\" Faild, no ok returned\n");
+    //     }
+    // } else {
+    //     dbg_printf("at+cgdcont=1,\"IP\",\"M2MINTERNET\" Faild\n");
+    // }
+
+    ret = write(fd, " at+cgdcont=1,\"IP\",\"\"\r\n",
+                strlen(" at+cgdcont=1,\"IP\",\"\"\r\n") + 1);
+    dbg_printf("at+cgdcont=1,\"IP\",\"\" write ret = %d\n", ret);
     memset(rec_buff, 0x00, sizeof(rec_buff));
-    //usleep(100 * 1000);
+    usleep(1 * 1000);
     ret = usb_read(fd, rec_buff);
-    if(ret != 0)
-    {
-        //printf("CSQ_REC len = %d----->:%s\n", ret, rec_buff);
+    if (ret != 0) {
+        dbg_printf("at+cgdcont=1,\"IP\",\"\" len = %d----->:%s\n",
+                   ret, rec_buff);
+        if ((!custom_find(rec_buff, ret, "OK", 2)) && (!custom_find(rec_buff, ret, "ok", 2))) {
+            dbg_printf(
+                "at+cgdcont=1,\"IP\",\"\" Faild, no ok returned\n");
+        }
+    } else {
+        dbg_printf("at+cgdcont=1,\"IP\",\"\" Faild\n");
     }
-    else
-    {
-        dbg_printf("AT_REC Faild\n");
+
+    ret = write(fd, " at+cfun=0\r\n", strlen(" at+cfun=0\r\n") + 1);
+    dbg_printf("at+cfun=0 write ret = %d\n", ret);
+    memset(rec_buff, 0x00, sizeof(rec_buff));
+    usleep(1 * 1000);
+    ret = usb_read(fd, rec_buff);
+    if (ret != 0) {
+        dbg_printf("at+cfun=0 len = %d----->:%s\n", ret, rec_buff);
+        if ((!custom_find(rec_buff, ret, "OK", 2)) && (!custom_find(rec_buff, ret, "ok", 2))) {
+            dbg_printf("at+cfun=0 Faild, no ok returned\n");
+        }
+    } else {
+        dbg_printf("at+cfun=0 Faild\n");
+    }
+
+    ret = write(fd, " at+cfun=1\r\n", strlen(" at+cfun=1\r\n") + 1);
+    dbg_printf("at+cfun=1 write ret = %d\n", ret);
+    memset(rec_buff, 0x00, sizeof(rec_buff));
+    usleep(1 * 1000);
+    ret = usb_read(fd, rec_buff);
+    if (ret != 0) {
+        dbg_printf("at+cfun=1 len = %d----->:%s\n", ret, rec_buff);
+        if ((!custom_find(rec_buff, ret, "OK", 2)) && (!custom_find(rec_buff, ret, "ok", 2))) {
+            dbg_printf("at+cfun=1 Faild, no ok returned\n");
+        }
+    } else {
+        dbg_printf("at+cfun=1 Faild\n");
+    }
+
+    ret = write(fd, " at+cgdcont? \r\n", strlen(" at+cgdcont? \r\n") + 1);
+    dbg_printf("at+cgdcont?  write ret = %d\n", ret);
+    memset(rec_buff, 0x00, sizeof(rec_buff));
+    usleep(1 * 1000);
+    ret = usb_read(fd, rec_buff);
+    if (ret != 0) {
+        dbg_printf("at+cgdcont?  len = %d----->:%s\n", ret, rec_buff);
+        if ((!custom_find(rec_buff, ret, "OK", 2)) && (!custom_find(rec_buff, ret, "ok", 2))) {
+            dbg_printf("at+cgdcont?  Faild, no ok returned\n");
+        }
+    } else {
+        dbg_printf("at+cgdcont?  Faild\n");
     }
 
     ret = write(fd, " AT^NDISDUP=1,1\r\n", strlen(" AT^NDISDUP=1,1\r\n") + 1);
-    dbg_printf("usb write ret = %d\n", ret);
+    dbg_printf(" AT^NDISDUP=1,1 write ret = %d\n", ret);
     memset(rec_buff, 0x00, sizeof(rec_buff));
     //usleep(10 * 1000);
     ret = usb_read(fd, rec_buff);
     if(ret != 0)
     {
-        //printf("NDISDUPAT_REC----->:%s\n", rec_buff);
+        dbg_printf("AT^NDISDUP=1,1 len = %d----->:%s\n", ret, rec_buff);
+        if ((!custom_find(rec_buff, ret, "OK", 2)) && (!custom_find(rec_buff, ret, "ok", 2))) {
+            dbg_printf("AT^NDISDUP=1,1  Faild, no ok returned\n");
+        }
+    }else{
+        dbg_printf("AT^NDISDUP=1,1 Faild\n");
     }
-    else
-    {
-        dbg_printf("AT_REC Faild\n");
-    }
-    //popen("udhcpc -i usb0", "r");
+
+    // ret = write(fd, " AT^CURC=0\r\n", strlen(" AT^CURC=0\r\n") + 1);
+    // dbg_printf("AT^CURC write ret = %d\n", ret);
+    // memset(rec_buff, 0x00, sizeof(rec_buff));
+    // //usleep(1 * 1000);
+    // ret = usb_read(fd, rec_buff);
+    // if(ret != 0)
+    // {
+    //     //printf("CURC_REC len = %d----->:%s\n", ret, rec_buff);
+    // }
+    // else
+    // {
+    //     dbg_printf("AT_REC Faild\n");
+    // }
+
+    // // sleep(2);
+    // // printf("-----------------------------------\n");
+    // // usb_read(fd, rec_buff);
+    // // printf("===================================\n");
+    // // sleep(2);
+
+    // ret = write(fd, "AT+CPIN?\r\n", strlen("AT+CPIN?\r\n") + 1);
+    // dbg_printf("CPINusb write ret = %d\n", ret);
+    // memset(rec_buff, 0x00, sizeof(rec_buff));
+    // //usleep(10 * 1000);
+    // ret = usb_read(fd, rec_buff);
+    // if(ret != 0)
+    // {
+    //     //printf("CPIN_REC len = %d----->:%s\n", ret, rec_buff);
+    // }
+    // else
+    // {
+    //     dbg_printf("AT_REC Faild\n");
+    // }
+
+    // ret = write(fd, " AT+CSQ\r\n", strlen(" AT+CSQ\r\n") + 1);
+    // dbg_printf("CSQusb write ret = %d\n", ret);
+    // memset(rec_buff, 0x00, sizeof(rec_buff));
+    // //usleep(100 * 1000);
+    // ret = usb_read(fd, rec_buff);
+    // if(ret != 0)
+    // {
+    //     //printf("CSQ_REC len = %d----->:%s\n", ret, rec_buff);
+    // }
+    // else
+    // {
+    //     dbg_printf("AT_REC Faild\n");
+    // }
+
+    // ret = write(fd, " AT^NDISDUP=1,1\r\n", strlen(" AT^NDISDUP=1,1\r\n") +
+    // 1); dbg_printf("usb write ret = %d\n", ret); memset(rec_buff, 0x00,
+    // sizeof(rec_buff));
+    // //usleep(10 * 1000);
+    // ret = usb_read(fd, rec_buff);
+    // if(ret != 0)
+    // {
+    //     //printf("NDISDUPAT_REC----->:%s\n", rec_buff);
+    // }
+    // else
+    // {
+    //     dbg_printf("AT_REC Faild\n");
+    // }
+    // popen("udhcpc -i usb0", "r");
 
     close(fd);
-    return 0;    
+    return 0;
 }
 
 void print_init_info(void);
@@ -458,33 +619,49 @@ void *check_net_thread(void* arg)
     const char* ifList[] = {"wlan0", "usb0", "eth0"};
     snprintf(set_route_head, sizeof(set_route_head), "route add -host %s gw ", g_mqtt_addr);
     snprintf(del_route, sizeof(del_route), "route del -host %s", g_mqtt_addr);
+    unsigned char initialized = 0;
 
-    while(ret)
-    {
-        ret = PXAT_NS_Initialize(ifList, 3, g_mqtt_addr, g_mqtt_addr_type, g_mqtt_port_num, g_mqtt_addr, g_mqtt_addr_type, g_mqtt_port_num, 6000, 60000);
-        //ret = PXAT_NS_Initialize(ifList, 3, "203.207.198.134", TYPE_IP_ADDRESS, 61613, "203.207.198.134", TYPE_IP_ADDRESS, 61613, 6000, 60000);
-        dbg_printf("while------Initialize return %X\n", ret);
-        usleep(1000 * 1000);
-    }
-    dbg_printf("Initialize return %X\n", ret);
+    // while (ret) {
+    //     ret = PXAT_NS_Initialize(ifList, 3, g_mqtt_addr, g_mqtt_addr_type,
+    //                              g_mqtt_port_num, g_mqtt_addr, g_mqtt_addr_type,
+    //                              g_mqtt_port_num, 6000, 60000);
+    //     // ret = PXAT_NS_Initialize(ifList, 3, "203.207.198.134",
+    //     // TYPE_IP_ADDRESS, 61613, "203.207.198.134", TYPE_IP_ADDRESS, 61613,
+    //     // 6000, 60000);
+    //     dbg_printf("while------Initialize return %X\n", ret);
+    //     usleep(1000 * 1000);
+    // }
+    // dbg_printf("Initialize return %X\n", ret);
 
-    
-    while(1) 
-    {
-        if(time_count == 20)
+    while (1){
+        if (!initialized)
+        {
+            ret = PXAT_NS_Initialize(ifList, 3, g_mqtt_addr, g_mqtt_addr_type,
+                                 g_mqtt_port_num, g_mqtt_addr, g_mqtt_addr_type,
+                                 g_mqtt_port_num, 6000, 60000);
+            // ret = PXAT_NS_Initialize(ifList, 3, "203.207.198.134",
+            // TYPE_IP_ADDRESS, 61613, "203.207.198.134", TYPE_IP_ADDRESS, 61613,
+            // 6000, 60000);
+            dbg_printf("while------Initialize return %X\n", ret);
+            initialized = (ret == 0);
+            usleep(1000 * 1000);
+        }
+        
+
+        if (time_count == 20)
         {
             time_count = 30;
             dbg_printf("g_net_status_flag == %d\n", g_net_status_flag);
             if(g_net_status_flag == 0)
             {
-               dbg_printf("offline!!!\n");
-               g_net_status_flag = 10;
+                dbg_printf("offline!!!\n");
+                g_net_status_flag = 10;
                 if(g_status_print_flag == 0)
                 {
                     g_status_print_flag = 1;
                     prt_handle.esc_2_prt("---READY---\n", strlen("---READY---") + 1);
-                    print_init_info();  
-                }            
+                    print_init_info();
+                }
             }
         }
         ret = PXAT_NS_GetNetStatus("eth0", &status, &latency);
@@ -510,9 +687,9 @@ void *check_net_thread(void* arg)
                     {
                         dbg_printf("gateway=%s\n",get_way);
                         break;
-                    }                    
-                    pclose(fp);                   
-                }                
+                    }
+                    pclose(fp);
+                }
                 count = strlen(get_way);
                 get_way[count - 1] = ' ';
                 memset(set_route, 0, sizeof(set_route));
@@ -528,8 +705,8 @@ void *check_net_thread(void* arg)
                     {
                         dbg_printf("route del=%s\n",get_way);
                         break;
-                    }                    
-                    pclose(fp);                   
+                    }
+                    pclose(fp);
                 }
                 fp = popen(set_route, "r" );
                 if(fp != NULL)
@@ -538,8 +715,8 @@ void *check_net_thread(void* arg)
                     {
                         dbg_printf("set_route=%s\n",get_way);
                         break;
-                    }   
-                    pclose(fp);                   
+                    }
+                    pclose(fp);
                 }
                 //g_offline_flag = 0;
                 //sleep(1);
@@ -577,9 +754,9 @@ void *check_net_thread(void* arg)
                         {
                             dbg_printf("gateway=%s\n",get_way);
                             break;
-                        }                    
-                        pclose(fp);                   
-                    }   
+                        }
+                        pclose(fp);
+                    }
 
                     count = strlen(get_way);
                     get_way[count - 1] = ' ';
@@ -598,8 +775,8 @@ void *check_net_thread(void* arg)
                         {
                             dbg_printf("route del=%s\n",get_way);
                             break;
-                        }      
-                        pclose(fp);                   
+                        }
+                        pclose(fp);
                     }
                     fp = popen(set_route, "r" );
                     if(fp != NULL)
@@ -608,8 +785,8 @@ void *check_net_thread(void* arg)
                         {
                             dbg_printf("set_route=%s\n",get_way);
                             break;
-                        }      
-                        pclose(fp);                   
+                        }
+                        pclose(fp);
                     }
                     //g_offline_flag = 0;
                     //sleep(1);
@@ -638,9 +815,9 @@ void *check_net_thread(void* arg)
                             {
                                 dbg_printf("gateway=%s\n",get_way);
                                 break;
-                            }                    
-                            pclose(fp);                   
-                        }  
+                            }
+                            pclose(fp);
+                        }
 
                         count = strlen(get_way);
                         get_way[count - 1] = ' ';
@@ -658,8 +835,8 @@ void *check_net_thread(void* arg)
                             {
                                 dbg_printf("route del=%s\n",get_way);
                                 break;
-                            }  
-                            pclose(fp);                   
+                            }
+                            pclose(fp);
                         }
                         fp = popen(set_route, "r" );
                         if(fp != NULL)
@@ -668,8 +845,8 @@ void *check_net_thread(void* arg)
                             {
                                 dbg_printf("set_route=%s\n",get_way);
                                 break;
-                            }  
-                            pclose(fp);                   
+                            }
+                            pclose(fp);
                         }
                         //g_offline_flag = 0;
                         //sleep(1);
@@ -686,16 +863,16 @@ void *check_net_thread(void* arg)
                     g_net_way = NET_WAY_NULL;
                 }
                         
-            }            
+            }
         }
-                
+
 
 
         usleep(1000 * 1000);
         if(time_count < 25)
             time_count++;
     }
-    return 0;   
+    return 0;
 
 }
 
@@ -716,19 +893,19 @@ unsigned char check_net_init(void)
 
 
 int findChar(char *sz, char c, int occurences) {
-	int count = 0;
-	char *p = sz;
-	while (*p) {
-		if (*p == c) {
-			count++;
-			if (count == occurences) {
-				return (p - sz);
-			}
-		}
-		p++;
-	}
+    int count = 0;
+    char *p = sz;
+    while (*p) {
+        if (*p == c) {
+            count++;
+            if (count == occurences) {
+                return (p - sz);
+            }
+        }
+        p++;
+    }
 
-	return -1;
+    return -1;
 }
 
 int SetStaticIP(const char *  ifname, const char * ip, const char * netmask, const char* gateway, const char* dns) {
@@ -736,86 +913,86 @@ int SetStaticIP(const char *  ifname, const char * ip, const char * netmask, con
 	char szData [4096] = { 0 };
 	char szNetWork [16] = { 0 };
 	char szBroadcast [16] = { 0 };
-	int index = -1;
-	int iRtn = 0;
-	FILE *fp = NULL;
+    int index = -1;
+    int iRtn = 0;
+    FILE *fp = NULL;
 	strcpy (szNetWork, ip);
 	strcpy (szBroadcast, ip);
-	index = findChar(szNetWork, '.', 3);
-	if (index == -1) {
-		iRtn = -1;
-		goto END;
-	}
-	strcpy(szNetWork + index + 1, "0");
-	strcpy(szBroadcast + index + 1, "255");
-	
+    index = findChar(szNetWork, '.', 3);
+    if (index == -1) {
+        iRtn = -1;
+        goto END;
+    }
+    strcpy(szNetWork + index + 1, "0");
+    strcpy(szBroadcast + index + 1, "255");
+
 	sprintf(szData, config, ifname, ifname, ip, netmask, szNetWork, szBroadcast, gateway, dns);
 
-	fp = fopen("/etc/network/interfaces", "wb");
-	if (!fp) {
-		iRtn = -2;
-		goto END;
-	}
-	
-	iRtn = fwrite(szData, strlen(szData), 1, fp);
-	if (iRtn != 1) {
-		iRtn = -3;
-		goto END;
-	}
+    fp = fopen("/etc/network/interfaces", "wb");
+    if (!fp) {
+        iRtn = -2;
+        goto END;
+    }
+
+    iRtn = fwrite(szData, strlen(szData), 1, fp);
+    if (iRtn != 1) {
+        iRtn = -3;
+        goto END;
+    }
 
 END:
-	if (fp) 
-		fclose(fp);
-	return iRtn;
+    if (fp)
+        fclose(fp);
+    return iRtn;
 }
 
 //SetStaticIP("wlan0", "192.168.3.10-0", "255.255.255.0", "192.168.3.1", "192.168.3.1, 8.8.8.8");
 int set_gpio(unsigned int gpio_group_num,unsigned int gpio_chip_num, unsigned int gpio_offset_num, unsigned int gpio_out_val)
 {
-	FILE *fp;
-	char file_name[50];
-	unsigned char buf[10];
-	unsigned int gpio_num;
+    FILE *fp;
+    char file_name[50];
+    unsigned char buf[10];
+    unsigned int gpio_num;
 	gpio_num =gpio_group_num*32+ gpio_chip_num * 8 + gpio_offset_num;
-	sprintf(file_name, "/sys/class/gpio/export");
-	fp = fopen(file_name, "w");
-	if (fp == NULL) {
-		dbg_printf("Cannot open %s.\n", file_name);
-		return -1;
-	}
-	fprintf(fp, "%d", gpio_num);
-	fclose(fp);
-	sprintf(file_name, "/sys/class/gpio/gpio%d/direction", gpio_num);
-	fp = fopen(file_name, "rb+");
-	if (fp == NULL) {
-		dbg_printf("Cannot open %s.\n", file_name);
-		return -1;
-	}
-	fprintf(fp, "out");
-	fclose(fp);
-	sprintf(file_name, "/sys/class/gpio/gpio%d/value", gpio_num);
-	fp = fopen(file_name, "rb+");
-	if (fp == NULL) {
-		dbg_printf("Cannot open %s.\n", file_name);
-		return -1;
-	}
-	if (gpio_out_val)
+    sprintf(file_name, "/sys/class/gpio/export");
+    fp = fopen(file_name, "w");
+    if (fp == NULL) {
+        dbg_printf("Cannot open %s.\n", file_name);
+        return -1;
+    }
+    fprintf(fp, "%d", gpio_num);
+    fclose(fp);
+    sprintf(file_name, "/sys/class/gpio/gpio%d/direction", gpio_num);
+    fp = fopen(file_name, "rb+");
+    if (fp == NULL) {
+        dbg_printf("Cannot open %s.\n", file_name);
+        return -1;
+    }
+    fprintf(fp, "out");
+    fclose(fp);
+    sprintf(file_name, "/sys/class/gpio/gpio%d/value", gpio_num);
+    fp = fopen(file_name, "rb+");
+    if (fp == NULL) {
+        dbg_printf("Cannot open %s.\n", file_name);
+        return -1;
+    }
+    if (gpio_out_val)
 		strcpy(buf,"1");
-	else
+    else
 		strcpy(buf,"0");
-	fwrite(buf, sizeof(char), sizeof(buf) - 1, fp);
+    fwrite(buf, sizeof(char), sizeof(buf) - 1, fp);
 	dbg_printf("%s: gpio%d_%d = %s\n", __func__,
 	gpio_chip_num, gpio_offset_num, buf);
-	fclose(fp);
-	sprintf(file_name, "/sys/class/gpio/unexport");
-	fp = fopen(file_name, "w");
-	if (fp == NULL) {
-		dbg_printf("Cannot open %s.\n", file_name);
-		return -1;
-	}
-	fprintf(fp, "%d", gpio_num);
-	fclose(fp);
-	return 0;
+    fclose(fp);
+    sprintf(file_name, "/sys/class/gpio/unexport");
+    fp = fopen(file_name, "w");
+    if (fp == NULL) {
+        dbg_printf("Cannot open %s.\n", file_name);
+        return -1;
+    }
+    fprintf(fp, "%d", gpio_num);
+    fclose(fp);
+    return 0;
 }
 
 int power_up_ble()
@@ -834,4 +1011,191 @@ int power_up_ble()
     rtn = set_gpio(4,1,3,1);  //RESET = 1 
     if(rtn!=0)
         return rtn;
+}
+
+void *cellular_work_thread(void *arg) {
+    //int fd = -1;
+    int ret;
+    int nread, i;
+    unsigned char redial = 0;
+    unsigned char rec_buff[1024 * 10];
+    unsigned char tmp[1024 * 10];
+
+    while (1) {
+        if (g_cellular_fd < 0)
+        {
+            g_cellular_fd = open("/dev/ttyUSB0", O_RDWR | O_NOCTTY | O_NONBLOCK);
+
+            if (g_cellular_fd < 0) {
+                dbg_printf("\n Open Error \n");
+                goto END;
+            }
+
+            if (set_opt(g_cellular_fd, 115200, 8, 'N', 1) < 0) {
+                perror("set_opt error");
+                goto END;
+            }
+        }
+
+        ret = write(g_cellular_fd, " at^curc=0\r\n", strlen(" at^curc=0\r\n") + 1);
+        dbg_printf("at^curc=0 write ret = %d\n", ret);
+        memset(rec_buff, 0x00, sizeof(rec_buff));
+        usleep(1 * 1000);
+        ret = usb_read(g_cellular_fd, rec_buff);
+        if (ret != 0) {
+            dbg_printf("at^curc=0 len = %d----->:%s\n", ret, rec_buff);
+            if ((!custom_find(rec_buff, ret, "OK", 2)) && (!custom_find(rec_buff, ret, "ok", 2))) {
+                dbg_printf("at^curc=0 Faild, no ok returned\n");
+                goto END;
+            }
+        } else {
+            dbg_printf("at^curc=0 Faild\n");
+            goto END;
+        }
+
+        ret = write(g_cellular_fd, " ate0\r\n", strlen(" ate0\r\n") + 1);
+        dbg_printf("ate0 write ret = %d\n", ret);
+        memset(rec_buff, 0x00, sizeof(rec_buff));
+        usleep(1 * 1000);
+        ret = usb_read(g_cellular_fd, rec_buff);
+        if (ret != 0) {
+            dbg_printf("ate0 len = %d----->:%s\n", ret, rec_buff);
+            if ((!custom_find(rec_buff, ret, "OK", 2)) && (!custom_find(rec_buff, ret, "ok", 2))) {
+                dbg_printf("ate0 Faild, no ok returned\n");
+                goto END;
+            }
+        } else {
+            dbg_printf("ate0 Faild\n");
+            goto END;
+        }
+
+        // SIM卡在位 -> +cops? -> (+cfun=0 +cfun=1若掉网) -> +cgpaddr ->
+        // (^ndisdup=1,1若无ip)
+        ret = write(g_cellular_fd, " at+cpin?\r\n", strlen(" at+cpin?\r\n") + 1);
+        dbg_printf("at+cpin? write ret = %d\n", ret);
+        memset(rec_buff, 0x00, sizeof(rec_buff));
+        usleep(1 * 1000);
+        ret = usb_read(g_cellular_fd, rec_buff);
+        if (ret != 0) {
+            dbg_printf("at+cpin? len = %d----->:%s\n", ret, rec_buff);
+            if ((!custom_find(rec_buff, ret, "OK", 2)) && (!custom_find(rec_buff, ret, "ok", 2))) {
+                dbg_printf("at+cpin? Faild, no ok returned\n");
+                goto END;
+            }
+        } else {
+            dbg_printf("at+cpin? Faild\n");
+            goto END;
+        }
+
+        ret = write(g_cellular_fd, " at+cops?\r\n", strlen(" at+cops?\r\n") + 1);
+        dbg_printf("at+cops? write ret = %d\n", ret);
+        memset(rec_buff, 0x00, sizeof(rec_buff));
+        usleep(1 * 1000);
+        ret = usb_read(g_cellular_fd, rec_buff);
+        if (ret != 0) {
+            dbg_printf("at+cops? len = %d----->:%s\n", ret, rec_buff);
+            if ((!custom_find(rec_buff, ret, "OK", 2)) && (!custom_find(rec_buff, ret, "ok", 2))) {
+                dbg_printf("at+cops? Faild, no ok returned\n");
+
+                redial = 1;
+                goto REDIAL;
+
+                // goto END;
+            }
+        } else {
+            dbg_printf("at+cops? Faild\n");
+            goto END;
+        }
+
+        ret = write(g_cellular_fd, " at+cgpaddr\r\n", strlen(" at+cgpaddr\r\n") + 1);
+        dbg_printf("at+cgpaddr write ret = %d\n", ret);
+        memset(rec_buff, 0x00, sizeof(rec_buff));
+        usleep(1 * 1000);
+        ret = usb_read(g_cellular_fd, rec_buff);
+        if (ret != 0) {
+            dbg_printf("at+cgpaddr len = %d----->:%s\n", ret, rec_buff);
+            if ((ret < 25) || ((!custom_find(rec_buff, ret, "OK", 2)) && (!custom_find(rec_buff, ret, "+CGPADDR:", 9)))) {
+                dbg_printf("at+cgpaddr Faild, no ok or ip returned\n");
+                redial = 1;
+                goto REDIAL;
+            }
+        } else {
+            dbg_printf("at+cgpaddr Faild\n");
+            redial = 1;
+            goto REDIAL;
+        }
+
+    REDIAL:
+        if (redial)
+        {
+            ret = write(g_cellular_fd, " at+cfun=0\r\n", strlen(" at+cfun=0\r\n") + 1);
+            dbg_printf("at+cfun=0 write ret = %d\n", ret);
+            memset(rec_buff, 0x00, sizeof(rec_buff));
+            usleep(1 * 1000);
+            ret = usb_read(g_cellular_fd, rec_buff);
+            if (ret != 0) {
+                dbg_printf("at+cfun=0 len = %d----->:%s\n", ret, rec_buff);
+                if ((!strstr(rec_buff, "OK")) &&
+                    (!strstr(rec_buff, "ok"))) {
+                    dbg_printf("at+cfun=0 Faild, no ok returned\n");
+                }
+            } else {
+                dbg_printf("at+cfun=0 Faild\n");
+                goto END;
+            }
+
+            ret = write(g_cellular_fd, " at+cfun=1\r\n", strlen(" at+cfun=1\r\n") + 1);
+            dbg_printf("at+cfun=1 write ret = %d\n", ret);
+            memset(rec_buff, 0x00, sizeof(rec_buff));
+            usleep(1 * 1000);
+            ret = usb_read(g_cellular_fd, rec_buff);
+            if (ret != 0) {
+                dbg_printf("at+cfun=1 len = %d----->:%s\n", ret, rec_buff);
+                if ((!strstr(rec_buff, "OK")) &&
+                    (!strstr(rec_buff, "ok"))) {
+                    dbg_printf("at+cfun=1 Faild, no ok returned\n");
+                    goto END;
+                }
+            } else {
+                dbg_printf("at+cfun=1 Faild\n");
+                goto END;
+            }
+
+            ret = write(g_cellular_fd, " AT^NDISDUP=1,1\r\n",
+                            strlen(" AT^NDISDUP=1,1\r\n") + 1);
+            dbg_printf(" AT^NDISDUP=1,1 write ret = %d\n", ret);
+            memset(rec_buff, 0x00, sizeof(rec_buff));
+            usleep(10 * 1000);
+            ret = usb_read(g_cellular_fd, rec_buff);
+            if (ret != 0) {
+                dbg_printf("AT^NDISDUP=1,1 len = %d----->:%s\n", ret,
+                            rec_buff);
+                if ((!strstr(rec_buff, "OK")) &&
+                    (!strstr(rec_buff, "ok"))) {
+                    dbg_printf("AT^NDISDUP=1,1  Faild, no ok returned\n");
+                }
+            } else {
+                dbg_printf("AT^NDISDUP=1,1 Faild\n");
+            }
+        }
+        
+    END:
+        // if (g_cellular_fd >= 0) {
+        //     close(g_cellular_fd);
+        //     g_cellular_fd = -1;
+        // }
+        if (redial)
+        {
+            redial = 0;
+        }
+        
+        usleep(30 * 1000 * 1000);
+    }
+
+    if (g_cellular_fd >= 0) {
+        close(g_cellular_fd);
+        g_cellular_fd = -1;
+    }
+
+    return 0;
 }

@@ -38,8 +38,11 @@ volatile unsigned char g_unprint_flag = 0;
 volatile unsigned char g_reconnect_flag = 0;
 volatile unsigned char g_waiting_online_code_flag = 0;
 volatile unsigned char g_printing_flag = 0;
+volatile unsigned char g_sim_flag = 0;
 
 volatile pdata_node prt_list = 0;
+
+int g_cellular_fd = -1;
 
 
 
@@ -55,6 +58,7 @@ char g_upload_addr[256] = {0};
 int g_mqtt_addr_type = 0; //refer to enum NET_NAME_TYPE
 int g_mqtt_port_num;
 char g_mqtt_full_addr[256] = {0};
+unsigned char g_tmp_buff[1024 * 10] = {0};
 
 pdata_node malloc_node(unsigned char *buf, int len)
 {
