@@ -55,7 +55,7 @@ bool search_key_words(unsigned char *ptr, int len)
    // dbg_printf("dbgggg3, len is %d\n", len);
     for (offset = 0; offset < len; offset++)
     {
-        printf("%c", ptr[offset]);
+        //printf("%c", ptr[offset]);
         // if(memcmp(lowers + offset, "copy", strlen("copy")) == 0) 
         // {
         //     dbg_printf("copy found, not a receipt\n");
@@ -86,17 +86,55 @@ end:
 
 bool has_copy(unsigned char *ptr, int len)
 {
+    int offset = 0, i = 0;
     bool found = false;
-    int i = 0;
-    for (i = 0; i < len - strlen("Copy"); i++)
+    char *lowers = (char *)malloc(len);
+    for (i = 0; i < len; i++)
     {
-        if(memcmp(ptr + i, "Copy", strlen("Copy")) == 0) 
+        lowers[i] = tolower(ptr[i]);
+    }
+    for (offset = 0; offset < len; offset++)
+    {
+        for(i = 0; i < g_copy_words_count; i++) 
         {
-            dbg_printf("copy found, not a formal receipt\n");
-            return true;
+            if (offset + g_copy_words_lengths[i] <= len)
+            {
+                if (memcmp(lowers + offset, g_copy_words[i], g_copy_words_lengths[i]) == 0)
+                {
+                    dbg_printf("copy word %s found, not a formal receipt\n", g_copy_words[i]);
+                    found = true;
+                    goto end;
+                } 
+            }
         }
     }
-    return false;
+
+end:
+    dbg_printf("search_copy_words return: %d\n", found);
+    if (lowers)
+    {
+        free(lowers);
+    }
+    return found;
+}
+
+int search_cut_ends(unsigned char *prt, int len)
+{
+    if (memcmp(prt + len - sizeof(ESCPOS_CMD_CUT_0), ESCPOS_CMD_CUT_0, sizeof(ESCPOS_CMD_CUT_0)) == 0) {
+        return sizeof(ESCPOS_CMD_CUT_0);
+    } else if (memcmp(prt + len - sizeof(ESCPOS_CMD_CUT_1), ESCPOS_CMD_CUT_1, sizeof(ESCPOS_CMD_CUT_1)) == 0) {
+        return sizeof(ESCPOS_CMD_CUT_1);
+    } else if (memcmp(prt + len - sizeof(ESCPOS_CMD_CUT0), ESCPOS_CMD_CUT0, sizeof(ESCPOS_CMD_CUT0)) == 0) {
+        return sizeof(ESCPOS_CMD_CUT0);
+    } else if (memcmp(prt + len - sizeof(ESCPOS_CMD_CUT1), ESCPOS_CMD_CUT1, sizeof(ESCPOS_CMD_CUT1)) == 0) {
+        return sizeof(ESCPOS_CMD_CUT1);
+    } else if ((memcmp(prt + len - sizeof(ESCPOS_CMD_CUT2), ESCPOS_CMD_CUT2, sizeof(ESCPOS_CMD_CUT2)) == 0)) {
+        return sizeof(ESCPOS_CMD_CUT2);
+    } else if ((memcmp(prt + len - sizeof(ESCPOS_CMD_CUT3), ESCPOS_CMD_CUT3, sizeof(ESCPOS_CMD_CUT3)) == 0)) {
+        return sizeof(ESCPOS_CMD_CUT2);
+    } else {
+        return -1;
+    }    
 }
 
 void process_data(pdata_node node)
@@ -119,10 +157,10 @@ void process_data(pdata_node node)
     //     node->is_copy = true;
     //     ctrl_upload_flag = false;
     // }
-    dbg_printf("is_receipt = %d，ctrl_upload_flag = %d, is_copy = %d\n", node->is_receipt, ctrl_upload_flag, node->is_copy);
+    dbg_printf("is_receipt = %d, ctrl_upload_flag = %d, is_copy = %d\n", node->is_receipt, ctrl_upload_flag, node->is_copy);
     
     // if (search_key_words(node->data, node->len))
-    // {
+    // { 
     //     ctrl_upload_flag = 1;
     //     node->is_receipt = 1;
     // }
@@ -242,72 +280,75 @@ void process_incoming_data(pdata_node prt_data)
     // (void)p;
     char ret_buff[512] = {0};
 
-    if(prt_data->data[prt_data->len - 1] == 0x69 && prt_data->data[prt_data->len - 2] == 0x1b)
-    {
-        dbg_printf("start combine data2!\n");
-        prt_data->len -= 2;
+    // if(prt_data->data[prt_data->len - 1] == 0x69 && prt_data->data[prt_data->len - 2] == 0x1b)
+    // {
+    //     dbg_printf("start combine data2!\n");
+    //     prt_data->len -= 2;
         
-        fp = popen("rm ./escode/code.bin", "r");
-        if(fp != NULL)
-        {
-            while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
-            {
-                if('\n' == ret_buff[strlen(ret_buff)-1])
-                {
-                    ret_buff[strlen(ret_buff)-1] = '\0';
-                }
-                dbg_printf("rm ./escode/code.bin = %s\r\n", ret_buff);
-            }
-            pclose(fp);
-        }
-        else
-        {
-            dbg_printf("popen faild!!!!!!!!!!\n");
-        }
-        //system("rm ./escode/code.bin");
-        dump_data("./escode/code.bin", prt_data->data, prt_data->len);
-        fp = popen("rm ./escode/upload.zip", "r");
-        if(fp != NULL)
-        {
-            while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
-            {
-                if('\n' == ret_buff[strlen(ret_buff)-1])
-                {
-                    ret_buff[strlen(ret_buff)-1] = '\0';
-                }
-                dbg_printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
-            }
-            pclose(fp);
-        }
-        else
-        {
-            dbg_printf("popen faild!!!!!!!!!!\n");
-        }
-        fp = popen("zip -r ./escode/upload.zip ./escode/*", "r");
-        if(fp != NULL)
-        {
-            while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
-            {
-                if('\n' == ret_buff[strlen(ret_buff)-1])
-                {
-                    ret_buff[strlen(ret_buff)-1] = '\0';
-                }
-                dbg_printf("zip = %s\r\n", ret_buff);
-            }
-            pclose(fp);
-        }
-        else
-        {
-            dbg_printf("popen faild!!!!!!!!!!\n");
-        }            
-        g_upload_flag = 1;            
-    }
+    //     fp = popen("rm ./escode/code.bin", "r");
+    //     if(fp != NULL)
+    //     {
+    //         while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+    //         {
+    //             if('\n' == ret_buff[strlen(ret_buff)-1])
+    //             {
+    //                 ret_buff[strlen(ret_buff)-1] = '\0';
+    //             }
+    //             dbg_printf("rm ./escode/code.bin = %s\r\n", ret_buff);
+    //         }
+    //         pclose(fp);
+    //     }
+    //     else
+    //     {
+    //         dbg_printf("popen faild!!!!!!!!!!\n");
+    //     }
+    //     //system("rm ./escode/code.bin");
+    //     dump_data("./escode/code.bin", prt_data->data, prt_data->len);
+    //     fp = popen("rm ./escode/upload.zip", "r");
+    //     if(fp != NULL)
+    //     {
+    //         while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+    //         {
+    //             if('\n' == ret_buff[strlen(ret_buff)-1])
+    //             {
+    //                 ret_buff[strlen(ret_buff)-1] = '\0';
+    //             }
+    //             dbg_printf("rm ./escode/upload.zip = %s\r\n", ret_buff);
+    //         }
+    //         pclose(fp);
+    //     }
+    //     else
+    //     {
+    //         dbg_printf("popen faild!!!!!!!!!!\n");
+    //     }
+    //     fp = popen("zip -r ./escode/upload.zip ./escode/*", "r");
+    //     if(fp != NULL)
+    //     {
+    //         while(fgets(ret_buff, sizeof(ret_buff), fp) != NULL)
+    //         {
+    //             if('\n' == ret_buff[strlen(ret_buff)-1])
+    //             {
+    //                 ret_buff[strlen(ret_buff)-1] = '\0';
+    //             }
+    //             dbg_printf("zip = %s\r\n", ret_buff);
+    //         }
+    //         pclose(fp);
+    //     }
+    //     else
+    //     {
+    //         dbg_printf("popen faild!!!!!!!!!!\n");
+    //     }            
+    //     g_upload_flag = 1;            
+    // }
     dbg_printf("debug 102, prt_data.len - 3 = %d\n", prt_data->len - 3);
 
     //if(prt_data.data[len - 3] == 0x1d && prt_data.data[len - 2] == 0x56 && prt_data.data[len - 1] == 0x01)
-    if((memcmp(&prt_data->data[prt_data->len - 3], ESCPOS_CMD_CUT0, strlen(ESCPOS_CMD_CUT0)) == 0) 
-    || (memcmp(&prt_data->data[prt_data->len - 3], ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0) 
-    || (memcmp(&prt_data->data[prt_data->len - 3], ESCPOS_CMD_CUT2, strlen(ESCPOS_CMD_CUT2)) == 0))
+    // if( (memcmp(&prt_data->data[prt_data->len - sizeof(ESCPOS_CMD_CUT_0)], ESCPOS_CMD_CUT_0, sizeof(ESCPOS_CMD_CUT_0)) == 0)
+    // || (memcmp(&prt_data->data[prt_data->len - sizeof(ESCPOS_CMD_CUT_1)], ESCPOS_CMD_CUT_1, sizeof(ESCPOS_CMD_CUT_1))) == 0
+    // || (memcmp(&prt_data->data[prt_data->len - sizeof(ESCPOS_CMD_CUT0)], ESCPOS_CMD_CUT0, sizeof(ESCPOS_CMD_CUT0)) == 0) 
+    // || (memcmp(&prt_data->data[prt_data->len - sizeof(ESCPOS_CMD_CUT1)], ESCPOS_CMD_CUT1, sizeof(ESCPOS_CMD_CUT1)) == 0) 
+    // || (memcmp(&prt_data->data[prt_data->len - sizeof(ESCPOS_CMD_CUT2)], ESCPOS_CMD_CUT2, sizeof(ESCPOS_CMD_CUT2)) == 0))
+    if(search_cut_ends(prt_data->data, prt_data->len) >= 0)
     {
         dbg_printf("debug 103\n");
         // prt_handle.esc_2_prt(prt_data.data, (len - 3));
@@ -335,6 +376,8 @@ void process_incoming_data(pdata_node prt_data)
     }
 }
 
+char addr[32];
+
 void tcp_handler(struct mg_connection *nc, int ev, void *p)
 {
     //int i, j = 0;
@@ -342,19 +385,19 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
     struct mbuf *io = &nc->recv_mbuf;
     static int tcp_rec_len = 0;
     prt_net_data *prt;
-    /*
-
-    char addr[32];
-  mg_sock_addr_to_str(&nc->sa, addr, sizeof(addr),
-                      MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
-
-  snprintf(buf, sizeof(buf), "%s %.*s", addr, (int) msg.len, msg.p);
+    pdata_node node;
     
-    */
+
+  //snprintf(buf, sizeof(buf), "%s %.*s", addr, (int) msg.len, msg.p);
+  //dbg_printf("client addr is %s\n", addr);
+        
+    
 
     switch (ev)
     {
     case MG_EV_RECV:
+        memset(addr, 0, sizeof(addr));
+        mg_sock_addr_to_str(&nc->sa, addr, sizeof(addr), MG_SOCK_STRINGIFY_IP | MG_SOCK_STRINGIFY_PORT);
         //mg_send(nc, io->buf, io->len); // Echo message back
         // if (g_waiting_online_code_flag)
         // {
@@ -364,7 +407,7 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
         // {
         //     prt = &pn_data;
         // }
-        dbg_printf("get through socket len = %zd, current tcp_rec_len is %d, current prt->len is %d, waiting code flag is %d\n", io->len, tcp_rec_len, prt->len, g_waiting_online_code_flag);
+        dbg_printf("origin addr=%s, get through socket len = %zd, current tcp_rec_len is %d, current prt->len is %d, waiting code flag is %d\n", addr, io->len, tcp_rec_len, prt->len, g_waiting_online_code_flag);
         print_array(io->buf,io->len);
         memcpy(prt->data + (prt->len), io->buf, io->len);
         
@@ -373,31 +416,40 @@ void tcp_handler(struct mg_connection *nc, int ev, void *p)
         mbuf_remove(io, io->len); // Discard message from recv buffer
         dbg_printf("debug 101\n");
         //process loop
-        if (memcmp(ESCPOS_CMD_CUT_0, prt->data + prt->len - 2, strlen(ESCPOS_CMD_CUT_0)) == 0)
+
+        // if ((memcmp(ESCPOS_CMD_CUT_0, prt->data + prt->len - strlen(ESCPOS_CMD_CUT_0), strlen(ESCPOS_CMD_CUT_0)) == 0) 
+        //     || (memcmp(ESCPOS_CMD_CUT_1, prt->data + prt->len - strlen(ESCPOS_CMD_CUT_1), strlen(ESCPOS_CMD_CUT_1)) == 0))
+        // {
+        //     create_node(prt->data, prt->len);
+        //     prt->len = 0;
+        // }
+        // else
+        // {
+            
+        // }
+
+        // if( (memcmp(&prt->data[prt->len - sizeof(ESCPOS_CMD_CUT_0)], ESCPOS_CMD_CUT_0, sizeof(ESCPOS_CMD_CUT_0)) == 0)
+        //     || (memcmp(&prt->data[prt->len - sizeof(ESCPOS_CMD_CUT_1)], ESCPOS_CMD_CUT_1, sizeof(ESCPOS_CMD_CUT_1)) == 0)
+        //     || (memcmp(&prt->data[prt->len - sizeof(ESCPOS_CMD_CUT0)], ESCPOS_CMD_CUT0, sizeof(ESCPOS_CMD_CUT0)) == 0) 
+        //     || (memcmp(&prt->data[prt->len - sizeof(ESCPOS_CMD_CUT1)], ESCPOS_CMD_CUT1, sizeof(ESCPOS_CMD_CUT1)) == 0) 
+        //     || (memcmp(&prt->data[prt->len - sizeof(ESCPOS_CMD_CUT2)], ESCPOS_CMD_CUT2, sizeof(ESCPOS_CMD_CUT2)) == 0))
+        if(search_cut_ends(prt->data, prt->len) >= 0)
         {
             create_node(prt->data, prt->len);
-            prt->len = 0;
+            prt->len = 0;      
         }
         else
         {
-            if((memcmp(prt->data + prt->len - 3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0))
+            //if(prt_data.data[len - 4] == 0x70 && prt_data.data[len - 5] == 0x1b)
+            dbg_printf("debug 1112\n");
+            if ((prt->len) < 8) {
+                break;
+            }
+            
+            if(memcmp(prt->data + prt->len - 5, ESCPOS_CMD_CASHBOX, strlen(ESCPOS_CMD_CASHBOX)) == 0)
             {
                 create_node(prt->data, prt->len);
-                prt->len = 0;      
-            }
-            else
-            {
-                //if(prt_data.data[len - 4] == 0x70 && prt_data.data[len - 5] == 0x1b)
-                dbg_printf("debug 1112\n");
-                if ((prt->len) < 8) {
-                    break;
-                }
-                
-                if(memcmp(prt->data + prt->len - 5, ESCPOS_CMD_CASHBOX, strlen(ESCPOS_CMD_CASHBOX)) == 0)
-                {
-                    create_node(prt->data, prt->len);
-                    prt->len = 0;    
-                }
+                prt->len = 0;
             }
         }
         
@@ -475,7 +527,7 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
     }
     case MG_EV_MQTT_CONNACK:
         if (msg->connack_ret_code != MG_EV_MQTT_CONNACK_ACCEPTED) {
-            dbg_printf("Got mqtt connection error: %d\n", msg->connack_ret_code);
+            dbg_printf("Got mqtt connection error: %d, application will exit...\n", msg->connack_ret_code);
             exit(1);
         }
 
@@ -569,7 +621,10 @@ void mqtt_handler(struct mg_connection *nc, int ev, void *p)
                         memset(&pn_buf, 0, sizeof(pn_buf));
                         memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
                         pn_buf.len += 2;
-                        prt_len = memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len;
+                        //prt_len = memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len;
+                        int cut_len = search_cut_ends(prt_list->data, prt_list->len);
+                        prt_len = (cut_len < 0) ? prt_list->len : (prt_list->len - cut_len);
+                        
                         memcpy(pn_buf.data + pn_buf.len, prt_list->data, prt_len);
                         pn_buf.len += prt_len;
                         de_data_len = base64_decode(code->valuestring, pn_buf.data + pn_buf.len);

@@ -17,6 +17,15 @@ typedef struct _data_node {
 
 extern volatile pdata_node prt_list;
 
+typedef struct _buf_node {
+  uint8_t origin_ip[32];
+  uint8_t data[PRT_NET_MAX_BUFF];
+  uint32_t len;
+  struct _buf_node *next;
+} buf_node, *pbuf_node;
+
+extern volatile pbuf_node buf_list;
+
 extern struct mg_mgr m_tcp;
 extern struct mg_mgr m_mqtt;
 
@@ -74,13 +83,21 @@ extern int g_mqtt_addr_type;
 
 extern pthread_mutex_t net_lock;
 extern pthread_mutex_t *list_lock;
+extern pthread_mutex_t *buf_list_lock;
 
 void destroy_node(pdata_node node);
 pdata_node create_node(unsigned char *buf, int len);
 
+void destroy_buf_node(pbuf_node node);
+pbuf_node create_buf_node(char *origin_ip);
+
 extern const char *g_key_words[];
 extern const int g_key_words_lengths[];
 extern const int g_key_words_count;
+
+extern const char *g_copy_words[];
+extern const int g_copy_words_lengths[];
+extern const int g_copy_words_count;
 
 
 #endif

@@ -223,7 +223,7 @@ int seq = 1;
 void print_array(unsigned char *buf, int len)
 {
         for (int i = 0; i < len; i++)
-                printf("0x%02X ", buf[i]);
+                printf("%02X ", buf[i]);
         printf("\n");
 }
 

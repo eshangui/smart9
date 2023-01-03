@@ -30,6 +30,7 @@ TARGET = d9main
 $(TARGET):$(OBJS)
 	$(CC) -o $@ $(OBJS) $(LDFLAGS)
 
+	cp -f ./d9main ../../smart9_release/oem/
 	adb push ./d9main /oem
 
 %.o:%c 

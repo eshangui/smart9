@@ -67,6 +67,8 @@ int ble_uart_init(void)
         
     g_ble_uart_dev = fd;
 
+    ble_write("AT+BTMODE=1\n", strlen("AT+BTMODE=1\n"));
+
     return 0;
 
 
@@ -560,40 +562,48 @@ void *ble_read_thread(void *arg)
             }   
         }        
 
-        if (memcmp(ESCPOS_CMD_CUT_0, g_ble_data + offset - 2, strlen(ESCPOS_CMD_CUT_0)) == 0)
+        // if ((memcmp(ESCPOS_CMD_CUT_0, g_ble_data + offset - 2, strlen(ESCPOS_CMD_CUT_0)) == 0) 
+        //     || memcmp(ESCPOS_CMD_CUT_1, g_ble_data + offset - 2, strlen(ESCPOS_CMD_CUT_1)) == 0)
+        // {
+        //     create_node(g_ble_data, offset);
+        //     i = 0;
+        //     offset = 0;
+        //     memset(g_ble_data, 0, sizeof(g_ble_data));
+        //     continue;
+        // }
+        // else
+        // {
+            
+        // }
+
+        // if((memcmp(g_ble_data + offset - sizeof(ESCPOS_CMD_CUT_0), ESCPOS_CMD_CUT_0, sizeof(ESCPOS_CMD_CUT_0)) == 0)
+        //    || (memcmp(g_ble_data + offset - sizeof(ESCPOS_CMD_CUT_1), ESCPOS_CMD_CUT_1, sizeof(ESCPOS_CMD_CUT_1)) == 0) 
+        //    || (memcmp(g_ble_data + offset - sizeof(ESCPOS_CMD_CUT0), ESCPOS_CMD_CUT0, sizeof(ESCPOS_CMD_CUT0)) == 0)
+        //    || (memcmp(g_ble_data + offset - sizeof(ESCPOS_CMD_CUT1), ESCPOS_CMD_CUT1, sizeof(ESCPOS_CMD_CUT1)) == 0)
+        //    || (memcmp(g_ble_data + offset - sizeof(ESCPOS_CMD_CUT2), ESCPOS_CMD_CUT2, sizeof(ESCPOS_CMD_CUT2)) == 0))
+        if (search_cut_ends(g_ble_data, offset) >= 0)
         {
             create_node(g_ble_data, offset);
             i = 0;
             offset = 0;
             memset(g_ble_data, 0, sizeof(g_ble_data));
-            continue;
+            continue;   
         }
         else
         {
-            if((memcmp(g_ble_data + offset - 3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0))
+            //if(prt_data.data[len - 4] == 0x70 && prt_data.data[len - 5] == 0x1b)
+            dbg_printf("debug 1112\n");
+            if ((offset) < 8) {
+                continue;
+            }
+            
+            if(memcmp(g_ble_data + offset- 5, ESCPOS_CMD_CASHBOX, strlen(ESCPOS_CMD_CASHBOX)) == 0)
             {
                 create_node(g_ble_data, offset);
                 i = 0;
                 offset = 0;
                 memset(g_ble_data, 0, sizeof(g_ble_data));
-                continue;   
-            }
-            else
-            {
-                //if(prt_data.data[len - 4] == 0x70 && prt_data.data[len - 5] == 0x1b)
-                dbg_printf("debug 1112\n");
-                if ((offset) < 8) {
-                    continue;
-                }
-                
-                if(memcmp(g_ble_data + offset- 5, ESCPOS_CMD_CASHBOX, strlen(ESCPOS_CMD_CASHBOX)) == 0)
-                {
-                    create_node(g_ble_data, offset);
-                    i = 0;
-                    offset = 0;
-                    memset(g_ble_data, 0, sizeof(g_ble_data));
-                    continue;     
-                }
+                continue;     
             }
         }
     }
@@ -774,7 +784,9 @@ void *timer_thread(void *arg)
                     pn_buf.len = 0;
                     memcpy(pn_buf.data + pn_buf.len, ESCPOS_CMD_INIT, 2);
                     pn_buf.len += 2;
-                    prt_len = memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len;
+                    //prt_len = memcmp(prt_list->data + prt_list->len -3, ESCPOS_CMD_CUT1, strlen(ESCPOS_CMD_CUT1)) == 0 ? prt_list->len -3 : prt_list->len;
+                    int cut_len = search_cut_ends(prt_list->data, prt_list->len);
+                    prt_len = (cut_len < 0) ? prt_list->len : (prt_list->len - cut_len);
                     dbg_printf("======pn_buf.data=0x%08X pn_buf.len=%d prt_list->data=0x%08X prt_len=%d\n", pn_buf.data, pn_buf.len, prt_list->data, prt_len);
                     memcpy(pn_buf.data + pn_buf.len, prt_list->data, prt_len);
                     pn_buf.len += prt_len;

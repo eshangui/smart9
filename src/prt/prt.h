@@ -66,14 +66,16 @@ typedef struct
 ClImage* clLoadImage(char* path);
 bool clSaveImage(char* path, ClImage* bmpImg);
 
-static const char *ESCPOS_CMD_INIT = "\x1b\x40";
+static const unsigned char ESCPOS_CMD_INIT[] = {0x1b, 0x40};
 //static const char *ESCPOS_CMD_PRINT_RASTER_BIT_IMAGE = "\x1d\x76\x30\x00";
-static const char *ESCPOS_CMD_CUT0 = "\x1d\x56\x0";
-static const char *ESCPOS_CMD_CUT1 = "\x1d\x56\x1";
-static const char *ESCPOS_CMD_CUT2 = "\x1d\x56\x42";
-static const char *ESCPOS_CMD_FEED = "\x1b\x64";
-static const char *ESCPOS_CMD_CASHBOX = "\x1b\x70";
-static const char *ESCPOS_CMD_CUT_0 = "\x1b\x69";
+static const unsigned char ESCPOS_CMD_CUT0[] = {0x1d, 0x56, 0x0};
+static const unsigned char ESCPOS_CMD_CUT1[] = {0x1d, 0x56, 0x1};
+static const unsigned char ESCPOS_CMD_CUT2[] = {0x1d, 0x56, 0x42, 0x00}; //static const char *ESCPOS_CMD_CUT2 = "\x1d\x56\x42";
+static const unsigned char ESCPOS_CMD_CUT3[] = {0x1d, 0x0c}; // unknown command by PAWOON, assume it to be CUT cmd
+static const unsigned char ESCPOS_CMD_FEED[] = {0x1b, 0x64};
+static const unsigned char ESCPOS_CMD_CASHBOX[] = {0x1b, 0x70};
+static const unsigned char ESCPOS_CMD_CUT_0[] = {0x1b, 0x69};
+static const unsigned char ESCPOS_CMD_CUT_1[] = {0x1b, 0x6D};
 static const char *ESCPOS_CMD_ALIGN_CENTER = "\x1b\x61\x01";
 
 // The maximum width of image the printer can accept

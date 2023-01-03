@@ -32,6 +32,7 @@ void *prt_task_thread(void *arg);
 void *offline_op_thread(void *arg);
 unsigned char parse_op(char *op_json, int len);
 void process_incoming_data(pdata_node prt_data);
+int search_cut_ends(unsigned char *prt, int len);
 
 bool curl_download(char* url, char *filename);
 bool curl_post(char* url,char* content, char* result);
