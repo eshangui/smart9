@@ -241,7 +241,8 @@ const char *g_key_words[] = {
   "net total",
   "total amount",
   "change",
-  "pb1"
+  "pb1",
+  "terbayar"
 };
 
 const int g_key_words_lengths[] = {
@@ -253,14 +254,14 @@ const int g_key_words_lengths[] = {
   strlen("net total"),
   strlen("total amount"),
   strlen("change"),
-  strlen("pb1")
+  strlen("pb1"),
+  strlen("terbayar")
 };
 
 const int g_key_words_count = sizeof(g_key_words_lengths) / sizeof(g_key_words_lengths[0]);
 
 const char *g_copy_words[] = {
   "presettlement bill", 
-  "tagihan",
   "this is not a receipt",
   "this is not valid proof of payment",
   "bukan bukti pembayaran",
@@ -281,7 +282,6 @@ const char *g_copy_words[] = {
 
 const int g_copy_words_lengths[] = {
   strlen("presettlement bill"), 
-  strlen("tagihan"),
   strlen("this is not a receipt"),
   strlen("this is not valid proof of payment"),
   strlen("bukan bukti pembayaran"),

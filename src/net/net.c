@@ -279,6 +279,7 @@ void process_incoming_data(pdata_node prt_data)
     FILE *fp;
     // (void)p;
     char ret_buff[512] = {0};
+    int cut_len = 0;
 
     // if(prt_data->data[prt_data->len - 1] == 0x69 && prt_data->data[prt_data->len - 2] == 0x1b)
     // {
@@ -366,11 +367,22 @@ void process_incoming_data(pdata_node prt_data)
             return;
         }
         dbg_printf("debug 1111 0x%02X 0x%02X\n", prt_data->data[prt_data->len - 5], prt_data->data[prt_data->len - 4]);
+        //cash box command format: 1B 70 XX XX XX, total 5 bytes
         if(memcmp(&prt_data->data[prt_data->len - 5], ESCPOS_CMD_CASHBOX, strlen(ESCPOS_CMD_CASHBOX)) == 0)
         {
             dbg_printf("start combine data!\n");
-            memcpy(&prt_data->data[prt_data->len- 8], &prt_data->data[prt_data->len - 5], 5);
-            prt_data->len -= 3;
+            cut_len = search_cut_ends(prt_data->data, prt_data->len - 5);
+            if (cut_len == -1)
+            {
+                //cut_len = 0
+            }
+            else
+            {
+                memcpy(&prt_data->data[prt_data->len- 5 - cut_len], &prt_data->data[prt_data->len - 5], 5);
+                prt_data->len -= cut_len;
+            }
+            
+            
             process_data(prt_data);               
         }
     }
@@ -1419,10 +1431,19 @@ int updata_offline_data(void)
 	 mg_mgr_init(&http_mgr, NULL);
      //8-9-9-4  5-0-1-0-1
 	 connection = mg_connect_http(&http_mgr, event_handler, g_upload_addr, "Content-type: application/json\r\n", json_data);
-	 mg_set_protocol_http_websocket(connection);
-     g_http_cmd_flag = 1;
-	 while ((s_exit_flag == 0) && (g_upload_overtime_flag == 0) && (!prt_list))
-	 	mg_mgr_poll(&http_mgr, 100);
+	 if (connection)
+     {
+        mg_set_protocol_http_websocket(connection);
+        g_http_cmd_flag = 1;
+        while ((s_exit_flag == 0) && (g_upload_overtime_flag == 0) && (!prt_list))
+            mg_mgr_poll(&http_mgr, 100);
+     }
+     else
+     {
+        dbg_printf("mg_connect_http failed, returned connection is 0\n");
+        s_exit_flag = 1;
+     }
+     
     dbg_printf("exit http poll 0, exit_flag == %d, g_upload_overtime_flag == %d, prt_list = 0x%X\n", s_exit_flag, g_upload_overtime_flag, prt_list);
     if((g_upload_overtime_flag == 1 ) || (s_exit_flag != 1) || prt_list)
     {

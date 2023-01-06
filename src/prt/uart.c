@@ -20,6 +20,8 @@ int ble_uart_init(void)
 {
     int fd;
     //fd = open ("/dev/ttyS4", O_RDWR | O_NOCTTY | O_NONBLOCK);
+    unsigned char buf[100];
+    int len = sizeof(buf); 
     fd = open ("/dev/ttyS4", O_RDWR | O_NOCTTY );
     if (fd < 0) {
         dbg_printf ("\n Open Ble Uart Error \n");
@@ -43,8 +45,8 @@ int ble_uart_init(void)
     SerialPortSettings.c_cflag &= ~CSIZE;  /* Clears the mask for setting the data size             */
     SerialPortSettings.c_cflag |= CS8;     /* Set the data bits = 8                                 */
 
-    SerialPortSettings.c_cflag &= ~CRTSCTS;       /* No Hardware flow Control                         */
-    //SerialPortSettings.c_cflag |= CRTSCTS;       /* Hardware flow Control                         */
+    //SerialPortSettings.c_cflag &= ~CRTSCTS;       /* No Hardware flow Control                         */
+    SerialPortSettings.c_cflag |= CRTSCTS;       /* Hardware flow Control                         */
 
     SerialPortSettings.c_cflag |= CREAD | CLOCAL; /* Enable receiver,Ignore Modem Control lines       */
 
@@ -56,8 +58,8 @@ int ble_uart_init(void)
     SerialPortSettings.c_iflag &= ~ICRNL;
 
     /* Setting Time outs */
-    SerialPortSettings.c_cc[VMIN] = 1;  /* Read at least 10 characters */
-    SerialPortSettings.c_cc[VTIME] = 20; /* Wait indefinetly   */
+    SerialPortSettings.c_cc[VMIN] = 0;  /* Read at least 10 characters */
+    SerialPortSettings.c_cc[VTIME] = 0; /* Wait indefinetly   */
 
     if ((tcsetattr (fd, TCSANOW, &SerialPortSettings)) != 0) /* Set the attributes to the termios structure*/
     {
@@ -67,7 +69,28 @@ int ble_uart_init(void)
         
     g_ble_uart_dev = fd;
 
-    ble_write("AT+BTMODE=1\n", strlen("AT+BTMODE=1\n"));
+    memset(buf, 0, len);
+    ble_write("AT+BTMODE=1\r", strlen("AT+BTMODE=1\r"));
+    usleep(2000000);
+    len = ble_read(buf, len);
+    dbg_printf ("AT+BTMODE=1 command return len: %d\n", len);
+    if (len > 0)
+    {
+        dbg_printf ("AT+BTMODE=1 command return: %s\n", buf);
+        //print_array(buf, len);
+    }
+
+    len = sizeof(buf);
+    memset(buf, 0, len);
+    ble_write("AT+BTMODE?\r", strlen("AT+BTMODE?\r"));
+    usleep(2000000);
+    len = ble_read(buf, len);
+    dbg_printf ("AT+BTMODE? command return len: %d\n", len);
+    if (len > 0)
+    {
+        dbg_printf ("AT+BTMODE? command return: %s\n", buf);
+    }
+    
 
     return 0;
 
@@ -255,7 +278,8 @@ void *ble_read_thread(void *arg)
     unsigned char tmp_data = 0;
     char ret_buff[128] = {0};
     unsigned char ctrl_upload_flag = 0;
-    unsigned char READY[] = {0x0D, 0x0A, 0x49, 0x4D, 0x5F, 0x43, 0x4F, 0x4E, 0x4E, 0x0D, 0x0A};
+    unsigned char READY1[] = {0x0D, 0x0A, 0x49, 0x4D, 0x5F, 0x52, 0x45, 0x41, 0x44, 0x59, 0x0D, 0x0A};
+    unsigned char READY2[] = {0x0D, 0x0A, 0x49, 0x4D, 0x5F, 0x43, 0x4F, 0x4E, 0x4E, 0x0D, 0x0A};
 
     dbg_printf("ble read pthread creat success!\n");
     memset(g_ble_data, 0, sizeof(g_ble_data));
@@ -484,9 +508,9 @@ void *ble_read_thread(void *arg)
         //usleep(1000);    
         */ 
         i = ble_read(g_ble_data + offset, sizeof(g_ble_data) - offset);
-        if (i < 0)
+        if (i <= 0)
         {
-            if (offset == 0)
+            //if (offset == 0)
             {
                 continue;
             }
@@ -497,9 +521,14 @@ void *ble_read_thread(void *arg)
             print_array(g_ble_data + offset, i);  
 
             //SKIP "IMREADY"
-            if ((i == sizeof(READY)) && (memcmp(g_ble_data + offset, READY, sizeof(READY)) == 0))
+            if ((i == sizeof(READY1)) && (memcmp(g_ble_data + offset, READY1, sizeof(READY1)) == 0))
             {
-                dbg_printf("ble module ready msg received, len is %d, current offset is %d, discard it\n", i, offset);
+                dbg_printf("ble module ready1 msg received, len is %d, current offset is %d, discard it\n", i, offset);
+                continue;
+            }
+            else if ((i == sizeof(READY2)) && (memcmp(g_ble_data + offset, READY2, sizeof(READY2)) == 0))
+            {
+                dbg_printf("ble module ready2 msg received, len is %d, current offset is %d, discard it\n", i, offset);
                 continue;
             }
             offset += i;
